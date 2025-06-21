@@ -1,0 +1,6 @@
+{
+  "name": "Stock Market Simulator",
+  "description": "A web application that simulates stock trading, allowing users to view stock charts, buy, and sell stocks, and manage their funds.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

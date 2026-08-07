@@ -8,6 +8,7 @@ import LeaguePage from "./pages/LeaguePage";
 import SellStockForm from "./components/SellStockForm";
 import NoticeBanner from "./components/NoticeBanner";
 import HotSidebar from "./components/HotSidebar";
+import RankSidebar from "./components/RankSidebar";
 import StockDetailModal from "./components/StockDetailModal";
 import RequirePlayer from "./components/RequirePlayer";
 import { StockProvider } from "./context/StockContext";
@@ -57,6 +58,7 @@ const App: React.FC = () => {
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>
+              <RankSidebar />
             </div>
             <footer className="relative z-10 mt-auto border-t border-gray-700 bg-gray-800 px-4 py-5 text-center text-sm text-gray-500">
               <p className="mx-auto mb-3 max-w-3xl text-left text-xs leading-relaxed text-gray-400 sm:text-center">

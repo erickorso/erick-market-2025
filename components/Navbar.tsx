@@ -42,6 +42,13 @@ const Navbar: React.FC = () => {
             >
               {UI.MY_FUND_LINK}
             </Link>
+            <Link
+              data-testid="League"
+              to="/league"
+              className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 transition duration-300 hover:text-white"
+            >
+              {UI.LEAGUE_LINK}
+            </Link>
           </div>
           <input
             type="search"

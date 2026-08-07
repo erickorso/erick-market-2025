@@ -26,6 +26,11 @@ import {
   parseCategory,
   tickStockPrices,
 } from "../services/stockService";
+import {
+  archiveLocalMonth,
+  currentMonthKey,
+  getLocalArchive,
+} from "../services/leagueService";
 
 const initialState: StockContextState = {
   allStocks: [],
@@ -68,26 +73,38 @@ function writeQueryFilters(q: string, category: CategoryId) {
   }
 }
 
-function loadPersisted(): { portfolio: PortfolioItem[]; fund: number } | null {
+function loadPersisted(): {
+  portfolio: PortfolioItem[];
+  fund: number;
+  month: string;
+} | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as {
       portfolio?: PortfolioItem[];
       fund?: number;
+      month?: string;
     };
     if (!Array.isArray(parsed.portfolio) || typeof parsed.fund !== "number") {
       return null;
     }
-    return { portfolio: parsed.portfolio, fund: parsed.fund };
+    return {
+      portfolio: parsed.portfolio,
+      fund: parsed.fund,
+      month: parsed.month || currentMonthKey(),
+    };
   } catch {
     return null;
   }
 }
 
-function persist(portfolio: PortfolioItem[], fund: number) {
+function persist(portfolio: PortfolioItem[], fund: number, month: string) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ portfolio, fund }));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ portfolio, fund, month }),
+    );
   } catch {
     /* ignore quota */
   }
@@ -378,9 +395,34 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (hydrated.current) return;
     hydrated.current = true;
+    const month = currentMonthKey();
     const saved = loadPersisted();
     if (saved) {
-      dispatch({ type: "HYDRATE_PORTFOLIO", payload: saved });
+      if (saved.month !== month) {
+        archiveLocalMonth(saved.month);
+        const winner = getLocalArchive(saved.month)?.winner;
+        dispatch({
+          type: "HYDRATE_PORTFOLIO",
+          payload: { portfolio: [], fund: INITIAL_FUND_AMOUNT },
+        });
+        persist([], INITIAL_FUND_AMOUNT, month);
+        dispatch({
+          type: "SET_NOTICE",
+          payload: {
+            type: "info",
+            message: winner
+              ? `New month ${month}. Last winner: ${winner.name} ($${winner.equity.toFixed(0)}). Fresh $${INITIAL_FUND_AMOUNT} training start.`
+              : `New month ${month}. Portfolio reset to $${INITIAL_FUND_AMOUNT} for the training league.`,
+          },
+        });
+      } else {
+        dispatch({
+          type: "HYDRATE_PORTFOLIO",
+          payload: { portfolio: saved.portfolio, fund: saved.fund },
+        });
+      }
+    } else {
+      persist([], INITIAL_FUND_AMOUNT, month);
     }
     void loadStocks({
       q: searchRef.current,
@@ -421,7 +463,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     if (state.isLoading) return;
-    persist(state.portfolio, state.fund);
+    persist(state.portfolio, state.fund, currentMonthKey());
   }, [state.portfolio, state.fund, state.isLoading]);
 
   useEffect(() => {

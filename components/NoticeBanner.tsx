@@ -8,22 +8,22 @@ const NoticeBanner: React.FC = () => {
 
   const colors =
     notice.type === "success"
-      ? "bg-teal-600/95 border-teal-400"
+      ? "border-teal-500/60 bg-teal-900/40 text-teal-100"
       : notice.type === "error"
-        ? "bg-red-700/95 border-red-400"
-        : "bg-slate-700/95 border-slate-400";
+        ? "border-rose-500/60 bg-rose-900/40 text-rose-100"
+        : "border-slate-500/60 bg-slate-800/80 text-slate-100";
 
   return (
     <div
       role="status"
-      className={`fixed top-4 right-4 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm text-white shadow-lg ${colors}`}
+      className={`relative z-30 border-b px-4 py-2.5 ${colors}`}
     >
-      <div className="flex items-start gap-3">
+      <div className="container mx-auto flex max-w-5xl items-start gap-3 text-sm">
         <p className="flex-1">{notice.message}</p>
         <button
           type="button"
           aria-label="Dismiss"
-          className="opacity-80 hover:opacity-100"
+          className="shrink-0 opacity-80 hover:opacity-100"
           onClick={() => dispatch({ type: "CLEAR_NOTICE" })}
         >
           ×

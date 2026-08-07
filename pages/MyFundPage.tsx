@@ -15,17 +15,17 @@ const MyFundPage: React.FC = () => {
       <div className="bg-gray-800 p-8 rounded-xl shadow-2xl space-y-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-300">Initial Fund</h2>
-          <p className="text-3xl text-teal-300">₹{INITIAL_FUND_AMOUNT.toFixed(2)}</p>
+          <p className="text-3xl text-teal-300">${INITIAL_FUND_AMOUNT.toFixed(2)}</p>
         </div>
         <hr className="border-gray-700"/>
         <div>
           <h2 className="text-xl font-semibold text-gray-300">Total Stock Investment</h2>
-          <p data-testid="stock-fund" className="text-3xl text-orange-400">₹{totalInvestment.toFixed(2)}</p>
+          <p data-testid="stock-fund" className="text-3xl text-orange-400">${totalInvestment.toFixed(2)}</p>
         </div>
         <hr className="border-gray-700"/>
         <div>
           <h2 className="text-xl font-semibold text-gray-300">Remaining Fund</h2>
-          <p data-testid="fund" className="text-3xl text-green-400">₹{currentFund.toFixed(2)}</p>
+          <p data-testid="fund" className="text-3xl text-green-400">${currentFund.toFixed(2)}</p>
         </div>
       </div>
       
@@ -36,7 +36,7 @@ const MyFundPage: React.FC = () => {
             {portfolio.map(item => (
               <li key={item.stockId} className="flex justify-between items-center p-3 bg-gray-700 rounded-md">
                 <span className="text-gray-200">{item.company} (Qty: {item.quantity})</span> {/* Changed from item.name */}
-                <span className="text-gray-300 font-medium">Invested: ₹{item.totalCost.toFixed(2)}</span>
+                <span className="text-gray-300 font-medium">Invested: ${item.totalCost.toFixed(2)}</span>
               </li>
             ))}
           </ul>

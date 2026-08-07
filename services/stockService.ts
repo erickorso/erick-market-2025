@@ -1,5 +1,5 @@
 import type { ApiStockRow, ChartDataPoint, EnrichedStock } from "../types";
-import { LEGACY_API_URL, QUOTES_API_URL } from "../constants";
+import { QUOTES_API_URL } from "../constants";
 
 export function generateChartData(currentPrice: number): ChartDataPoint[] {
   const data: ChartDataPoint[] = [];
@@ -118,20 +118,10 @@ export async function fetchStocks(): Promise<FetchStocksResult> {
       return { stocks: raw.map(normalizeRow), source: "live" };
     }
   } catch {
-    /* try legacy */
-  }
-
-  // 2) Legacy HackerEarth static JSON
-  try {
-    const data = await fetchJson(LEGACY_API_URL);
-    const raw = parsePayload(data);
-    if (raw.length) {
-      return { stocks: raw.map(normalizeRow), source: "legacy" };
-    }
-  } catch {
     /* mock */
   }
 
+  // 2) Local mock (avoid legacy HE Indian list — looks "stuck" when BFF is down)
   return {
     stocks: MOCK_ROWS.map(normalizeRow),
     source: "mock",

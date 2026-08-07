@@ -23,7 +23,7 @@ const MyStocksPage: React.FC = () => {
       <div className="bg-gray-800 p-6 rounded-xl shadow-2xl mb-8">
         <h2 className="text-2xl font-semibold text-gray-100">Portfolio Summary</h2>
         <p data-testid="totalPrice" className="text-xl text-teal-400 mt-2">
-          Total Net Value: ₹{totalNetValue.toFixed(2)}
+          Total Net Value: ${totalNetValue.toFixed(2)}
         </p>
       </div>
       <div className="space-y-6">

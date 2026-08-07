@@ -34,7 +34,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
         <h3 data-testid={stock.company} className="text-xl font-semibold text-teal-400 mb-2 truncate" title={stock.company}> {/* Changed from stock.name */}
           {stock.company} {/* Changed from stock.name */}
         </h3>
-        <p className="text-2xl font-bold text-gray-100 mb-1">₹{stock.price.toFixed(2)}</p>
+        <p className="text-2xl font-bold text-gray-100 mb-1">${stock.price.toFixed(2)}</p>
         <p className="text-xs text-gray-400 mb-3">Current Price</p>
         <div className="mb-4 h-48"> {/* Fixed height for chart area */}
             <StockChart data={displayData.chartData} lineColor="#2dd4bf" />
@@ -65,7 +65,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
           </div>
         </div>
         <div data-testid="totalPrice" className="text-sm text-gray-300 mb-3">
-          Total: ₹{totalPrice.toFixed(2)}
+          Total: ${totalPrice.toFixed(2)}
         </div>
         <button
           data-testid={`addCart-${stock.company}`} /* Changed from stock.name */

@@ -91,8 +91,8 @@ const SellStockForm: React.FC = () => {
           />
         </div>
         {error && <p className="text-red-500 text-xs italic mb-4">{error}</p>}
-        <p className="text-gray-300 mb-1">Current Price: ₹{currentPrice.toFixed(2)} per share</p>
-        <p className="text-gray-300 mb-6 font-semibold">Total Value: ₹{(currentPrice * quantity).toFixed(2)}</p>
+        <p className="text-gray-300 mb-1">Current Price: ${currentPrice.toFixed(2)} per share</p>
+        <p className="text-gray-300 mb-6 font-semibold">Total Value: ${(currentPrice * quantity).toFixed(2)}</p>
         <div className="flex items-center justify-between">
           <button
             data-testid="sell"

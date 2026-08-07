@@ -28,11 +28,11 @@ const StockListItem: React.FC<StockListItemProps> = ({ item }) => {
       <div className="flex-grow">
         <h4 data-testid={item.company} className="text-lg font-semibold text-teal-400">{item.company}</h4> {/* Changed from item.name */}
         <p className="text-sm text-gray-400">Quantity: <span className="font-medium text-gray-200">{item.quantity}</span></p>
-        <p className="text-sm text-gray-400">Avg. Buy Price: <span className="font-medium text-gray-200">₹{item.purchasePrice.toFixed(2)}</span></p>
-        <p className="text-sm text-gray-400">Current Price: <span className="font-medium text-gray-200">₹{currentPrice.toFixed(2)}</span></p>
-        <p className="text-sm text-gray-400">Current Value: <span className="font-medium text-gray-200">₹{currentValue.toFixed(2)}</span></p>
+        <p className="text-sm text-gray-400">Avg. Buy Price: <span className="font-medium text-gray-200">${item.purchasePrice.toFixed(2)}</span></p>
+        <p className="text-sm text-gray-400">Current Price: <span className="font-medium text-gray-200">${currentPrice.toFixed(2)}</span></p>
+        <p className="text-sm text-gray-400">Current Value: <span className="font-medium text-gray-200">${currentValue.toFixed(2)}</span></p>
         <p className={`text-sm ${profitOrLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-          P/L: ₹{profitOrLoss.toFixed(2)} ({profitOrLossPercent.toFixed(2)}%)
+          P/L: ${profitOrLoss.toFixed(2)} ({profitOrLossPercent.toFixed(2)}%)
         </p>
       </div>
       <button

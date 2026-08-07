@@ -16,7 +16,11 @@ export interface Stock {
 
 export interface EnrichedStock extends Stock {
   chartData: ChartDataPoint[];
+  /** Simulated sparkline on cards — not Finnhub candles. */
+  chartSource?: "simulated" | "live";
+  symbol?: string;
   tags?: StyleTag[];
+  change?: number;
   changePercent?: number;
 }
 
@@ -51,6 +55,7 @@ export interface StockContextState {
   dataSource: "live" | "mock" | null;
   hasMore: boolean;
   total: number;
+  detailSymbol: string | null;
 }
 
 export type StockAction =
@@ -78,6 +83,8 @@ export type StockAction =
     }
   | { type: "SET_SEARCH_TERM"; payload: string }
   | { type: "SET_CATEGORY"; payload: CategoryId }
+  | { type: "OPEN_DETAIL"; payload: string }
+  | { type: "CLOSE_DETAIL" }
   | { type: "SET_NOTICE"; payload: Notice }
   | { type: "CLEAR_NOTICE" }
   | { type: "HYDRATE_PORTFOLIO"; payload: { portfolio: PortfolioItem[]; fund: number } }

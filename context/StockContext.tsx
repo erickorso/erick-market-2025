@@ -40,6 +40,7 @@ const initialState: StockContextState = {
   dataSource: null,
   hasMore: false,
   total: 0,
+  detailSymbol: null,
 };
 
 function readQueryFilters(): { q: string; category: CategoryId } {
@@ -135,6 +136,10 @@ const stockReducer = (
       return { ...state, searchTerm: action.payload };
     case "SET_CATEGORY":
       return { ...state, category: action.payload };
+    case "OPEN_DETAIL":
+      return { ...state, detailSymbol: action.payload.toUpperCase() };
+    case "CLOSE_DETAIL":
+      return { ...state, detailSymbol: null };
     case "SET_NOTICE":
       return { ...state, notice: action.payload };
     case "CLEAR_NOTICE":

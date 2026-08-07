@@ -107,6 +107,30 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.url?.startsWith("/api/detail") && req.method === "GET") {
+    try {
+      const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
+      const symbol = url.searchParams.get("symbol") ?? "";
+      const { getStockDetail } = await import("./detail");
+      const result = await getStockDetail(process.env.FINNHUB_API_KEY, symbol);
+      if ("error" in result) {
+        res.writeHead(result.status, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(result));
+        return;
+      }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(result));
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          error: err instanceof Error ? err.message : "detail failed",
+        }),
+      );
+    }
+    return;
+  }
+
   if (req.url === "/health") {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ok: true, service: "erick-market-api" }));

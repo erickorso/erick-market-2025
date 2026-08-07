@@ -58,6 +58,10 @@ function normalizeRow(row: ApiStockRow, index: number): EnrichedStock {
         : NaN;
   const price = Number.isFinite(priceNum) && priceNum >= 0 ? priceNum : 0;
   const id = (symbol ?? company).replace(/\s+/g, "-").toLowerCase();
+  const change =
+    typeof row.change === "number" && Number.isFinite(row.change)
+      ? row.change
+      : undefined;
   const changePercent =
     typeof row.changePercent === "number" && Number.isFinite(row.changePercent)
       ? row.changePercent
@@ -69,10 +73,13 @@ function normalizeRow(row: ApiStockRow, index: number): EnrichedStock {
       : [];
   return {
     id,
+    symbol,
     company: symbol ? `${company} (${symbol})` : company,
     price,
     chartData: generateChartData(price),
+    chartSource: "simulated",
     tags,
+    change,
     changePercent,
   };
 }
@@ -127,6 +134,10 @@ export function mergeLivePrices(
       ...stock,
       chartData,
       tags: stock.tags?.length ? stock.tags : old.tags,
+      symbol: stock.symbol ?? old.symbol,
+      change: stock.change ?? old.change,
+      changePercent: stock.changePercent ?? old.changePercent,
+      chartSource: old.chartSource ?? "simulated",
     };
   });
 }

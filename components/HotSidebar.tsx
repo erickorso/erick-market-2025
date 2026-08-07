@@ -1,5 +1,6 @@
 import React from "react";
 import { useHotStocks } from "../hooks/useHotStocks";
+import { useStockContext } from "../context/StockContext";
 
 function formatAgo(at: number | null): string {
   if (!at) return "—";
@@ -11,6 +12,7 @@ function formatAgo(at: number | null): string {
 
 const HotSidebar: React.FC = () => {
   const { stocks, mode, updatedAt, error, refreshMs } = useHotStocks();
+  const { dispatch } = useStockContext();
   const [, setTick] = React.useState(0);
 
   React.useEffect(() => {
@@ -50,23 +52,28 @@ const HotSidebar: React.FC = () => {
         )}
         <ol className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-0 lg:overflow-visible lg:pb-0">
           {stocks.map((s, i) => (
-            <li
-              key={s.symbol}
-              className="min-w-[9.5rem] rounded-md border border-gray-700/80 bg-gray-800/60 px-2.5 py-2 lg:min-w-0 lg:rounded-none lg:border-0 lg:border-b lg:border-gray-700/60 lg:bg-transparent lg:px-0 lg:py-2.5"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-gray-500">{i + 1}.</span>
-                <span className="flex-1 truncate text-sm font-semibold text-gray-100">
-                  {s.symbol}
-                </span>
-                <span className="text-xs font-medium text-emerald-400">
-                  +{s.changePercent.toFixed(2)}%
-                </span>
-              </div>
-              <div className="mt-0.5 flex justify-between gap-2 text-[11px] text-gray-500">
-                <span className="truncate">{s.company}</span>
-                <span>${s.price.toFixed(2)}</span>
-              </div>
+            <li key={s.symbol} className="min-w-[9.5rem] lg:min-w-0">
+              <button
+                type="button"
+                onClick={() =>
+                  dispatch({ type: "OPEN_DETAIL", payload: s.symbol })
+                }
+                className="w-full rounded-md border border-gray-700/80 bg-gray-800/60 px-2.5 py-2 text-left transition hover:border-teal-600 hover:bg-gray-800 lg:rounded-none lg:border-0 lg:border-b lg:border-gray-700/60 lg:bg-transparent lg:px-0 lg:py-2.5"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-gray-500">{i + 1}.</span>
+                  <span className="flex-1 truncate text-sm font-semibold text-gray-100">
+                    {s.symbol}
+                  </span>
+                  <span className="text-xs font-medium text-emerald-400">
+                    +{s.changePercent.toFixed(2)}%
+                  </span>
+                </div>
+                <div className="mt-0.5 flex justify-between gap-2 text-[11px] text-gray-500">
+                  <span className="truncate">{s.company}</span>
+                  <span>${s.price.toFixed(2)}</span>
+                </div>
+              </button>
             </li>
           ))}
           {stocks.length === 0 && (

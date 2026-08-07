@@ -7,6 +7,7 @@ import MyFundPage from "./pages/MyFundPage";
 import SellStockForm from "./components/SellStockForm";
 import NoticeBanner from "./components/NoticeBanner";
 import HotSidebar from "./components/HotSidebar";
+import StockDetailModal from "./components/StockDetailModal";
 import { StockProvider } from "./context/StockContext";
 
 const App: React.FC = () => {
@@ -33,6 +34,7 @@ const App: React.FC = () => {
           <footer className="mt-auto bg-gray-800 p-4 text-center text-sm text-gray-500">
             © {year} Erick Stocks Simulator. Portfolio demo — mock trading only.
           </footer>
+          <StockDetailModal />
         </div>
       </HashRouter>
     </StockProvider>

@@ -21,6 +21,8 @@ Browser  →  GET /api/quotes?limit=10&offset=0&q=  →  Finnhub
 
 **Hot sidebar:** left rail shows top day gainers. Local BFF pushes over WebSocket `ws://…/ws/hot` every **5 min** (and on connect). On Vercel (no persistent WS) the client falls back to `GET /api/hot` poll every 5 min.
 
+**Detail modal:** click a card or Hot row → `GET /api/detail?symbol=` (quote + profile2 + daily candles ~90d). Card sparklines are **simulated**; the modal chart uses Finnhub candles when the free tier returns them, otherwise falls back to simulated with a clear label.
+
 Buy/sell is **still simulated** (local state + `localStorage`) — not a real broker.
 
 ## Stack

@@ -1,37 +1,39 @@
 # Stock Market Simulator
 
-Interactive **stock trading simulator** (no real money): browse mock quotes, buy/sell into a virtual portfolio, and track profit/loss — with a **Three.js** animated background.
+Interactive **stock trading simulator** (mock money): browse quotes, buy/sell into a virtual portfolio, track P/L — with simulated live price ticks and a Three.js background.
 
-Personal frontend demo by [Erick Vargas](https://github.com/erickorso) · React · TypeScript · Vite.
+Portfolio demo by [Erick Vargas](https://github.com/erickorso) · React 19 · TypeScript · Vite · Recharts · Three.js
 
 ## Stack
 
-- **React** + **TypeScript** + **Vite**
-- **React Router** (SPA pages)
-- **Context + useReducer** (portfolio / funds / listings)
-- **Three.js** (3D background)
-- Charts for price trends (simulated history)
+- **React** + **TypeScript** + **Vite** (`@vitejs/plugin-react`)
+- **Tailwind CSS** (PostCSS build — not CDN)
+- **React Router** (HashRouter SPA)
+- **Context + useReducer** (portfolio / fund / quotes)
+- **Recharts** + **Three.js**
 
 ## Features
 
-- Dynamic stock listings with simulated price updates
-- Buy / sell flows affecting virtual cash and holdings
-- Portfolio view (avg cost, current value, profit/loss)
-- Fund overview (capital, invested, remaining)
-- Search + responsive layout
+- Fetch market list from public JSON with **`name` → `company` mapping**
+- **Mock fallback** if the remote API fails
+- Simulated **live quotes** (~3s tick) that refresh chart points
+- Buy / sell with inline notices (no `alert()`)
+- Portfolio + fund **persisted in `localStorage`**
+- Search, loading / error + **retry**, responsive grid
 
 ## Run
 
 ```bash
-npm install   # or yarn
+npm install
 npm run dev
 ```
 
 ```bash
+npm run typecheck
 npm run build
 npm run preview
 ```
 
 ## Note
 
-Mock / educational simulation only — not financial advice and not connected to live markets.
+Educational simulation only — not financial advice and not connected to real brokerages.

@@ -182,6 +182,10 @@ const ThreeDBackground: React.FC = () => {
   useEffect(() => {
     if (!mountRef.current) return;
 
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
     const currentMount = mountRef.current;
     if (!textureLoaderRef.current) {
       textureLoaderRef.current = new THREE.TextureLoader();
@@ -194,7 +198,7 @@ const ThreeDBackground: React.FC = () => {
 
     const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true }); // antialias false for sharper pixels
     renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     currentMount.appendChild(renderer.domElement);
 
     const initTexturesAndParticles = async () => {

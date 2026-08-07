@@ -1,22 +1,31 @@
-import React from 'react';
-import StockCard from '../components/StockCard';
-import { useStockContext } from '../context/StockContext';
-import { EnrichedStock } from '../types';
-import ThreeDBackground from '../components/ThreeDBackground'; // Import the new component
+import React, { Suspense, useMemo } from "react";
+import StockCard from "../components/StockCard";
+import { useStockContext } from "../context/StockContext";
+
+const ThreeDBackground = React.lazy(
+  () => import("../components/ThreeDBackground"),
+);
 
 const HomePage: React.FC = () => {
-  const { state } = useStockContext();
-  const { allStocks, isLoading, error, searchTerm } = state;
+  const { state, fetchStocks } = useStockContext();
+  const { allStocks, isLoading, error, searchTerm, dataSource } = state;
 
-  const filteredStocks = allStocks.filter(stock =>
-    stock.company.toLowerCase().includes(searchTerm.toLowerCase()) // Changed from stock.name
+  const filteredStocks = useMemo(
+    () =>
+      allStocks.filter((stock) =>
+        stock.company.toLowerCase().includes(searchTerm.toLowerCase()),
+      ),
+    [allStocks, searchTerm],
   );
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        {/* Optional: Add ThreeDBackground here too if desired for loading state */}
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-teal-500"></div>
+      <div className="flex h-[60vh] items-center justify-center">
+        <div
+          className="h-16 w-16 animate-spin rounded-full border-t-2 border-b-2 border-teal-500"
+          role="status"
+          aria-label="Loading stocks"
+        />
       </div>
     );
   }
@@ -24,25 +33,46 @@ const HomePage: React.FC = () => {
   if (error) {
     return (
       <>
-        <ThreeDBackground />
-        <div className="text-center text-red-500 p-8 text-xl relative z-10">Error loading stocks: {error}</div>
+        <Suspense fallback={null}>
+          <ThreeDBackground />
+        </Suspense>
+        <div className="relative z-10 p-8 text-center">
+          <p className="mb-4 text-xl text-red-400">Error loading stocks: {error}</p>
+          <button
+            type="button"
+            onClick={() => void fetchStocks()}
+            className="rounded-lg bg-teal-500 px-4 py-2 font-semibold text-white hover:bg-teal-600"
+          >
+            Retry
+          </button>
+        </div>
       </>
     );
   }
-  
-  // Log the filtered stocks data before rendering
-  console.log('Filtered Stocks Data (HomePage):', JSON.stringify(filteredStocks, null, 2));
 
   return (
     <>
-      <ThreeDBackground />
-      <div className="container mx-auto p-4 sm:p-6 relative z-10"> {/* Ensure content is above background */}
-        <h1 className="text-3xl sm:text-4xl font-bold text-center text-teal-400 mb-8">Available Stocks</h1>
-        {filteredStocks.length === 0 && !isLoading ? (
-          <div className="text-center text-gray-400 p-8 text-xl">No stocks found matching your criteria.</div>
+      <Suspense fallback={null}>
+        <ThreeDBackground />
+      </Suspense>
+      <div className="relative z-10 container mx-auto p-4 sm:p-6">
+        <div className="mb-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+          <h1 className="text-3xl font-bold text-teal-400 sm:text-4xl">
+            Available Stocks
+          </h1>
+          {dataSource && (
+            <span className="rounded-full bg-teal-500/20 px-3 py-1 text-xs font-medium text-teal-300">
+              {dataSource === "mock" ? "Mock data" : "API"} · live ticks
+            </span>
+          )}
+        </div>
+        {filteredStocks.length === 0 ? (
+          <div className="p-8 text-center text-xl text-gray-400">
+            No stocks found matching your criteria.
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredStocks.map((stock: EnrichedStock) => (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredStocks.map((stock) => (
               <StockCard key={stock.id} stock={stock} />
             ))}
           </div>

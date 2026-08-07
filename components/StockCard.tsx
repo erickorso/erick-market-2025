@@ -13,13 +13,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
   const [quantity, setQuantity] = useState<number>(1);
 
   const handleBuyStock = () => {
-    if (quantity <= 0) {
-      alert("Please enter a valid quantity.");
-      return;
-    }
-    dispatch({ type: 'BUY_STOCK', payload: { stock, quantity } });
-    // Maybe provide feedback here, e.g. using a toast or simple alert
-    // alert(`${quantity} share(s) of ${stock.company} bought!`);
+    dispatch({ type: "BUY_STOCK", payload: { stock, quantity } });
   };
 
   const incrementQuantity = () => setQuantity(prev => prev + 1);
@@ -29,10 +23,10 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
   const canAfford = state.fund >= totalPrice;
 
   const displayData: StockDisplayData = {
-      company: stock.company, // Changed from name
-      price: stock.price,
-      chartData: stock.chartData
-  }
+    company: stock.company,
+    price: stock.price,
+    chartData: stock.chartData,
+  };
 
   return (
     <div data-testid="company-name" className="bg-gray-800 rounded-xl shadow-2xl p-6 hover:shadow-teal-500/30 transition-shadow duration-300 flex flex-col justify-between">

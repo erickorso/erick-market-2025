@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PortfolioItem, EnrichedStock } from '../types';
+import { PortfolioItem } from '../types';
 import { useStockContext } from '../context/StockContext';
 import { UI } from '../constants';
 

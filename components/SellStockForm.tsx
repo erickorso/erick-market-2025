@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStockContext } from '../context/StockContext';
-import { PortfolioItem, EnrichedStock } from '../types';
 import { UI } from '../constants';
 
 const SellStockForm: React.FC = () => {
@@ -53,9 +52,15 @@ const SellStockForm: React.FC = () => {
       return;
     }
     
-    dispatch({ type: 'SELL_STOCK', payload: { stockCompany: decodedStockCompany, quantity, sellPrice: currentPrice } }); // Changed from stockName
-    alert(`${quantity} share(s) of ${decodedStockCompany} sold successfully!`);
-    navigate('/my-stocks');
+    dispatch({
+      type: "SELL_STOCK",
+      payload: {
+        stockCompany: decodedStockCompany,
+        quantity,
+        sellPrice: currentPrice,
+      },
+    });
+    navigate("/my-stocks");
   };
 
   return (

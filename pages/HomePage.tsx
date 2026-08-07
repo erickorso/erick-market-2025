@@ -65,11 +65,6 @@ const HomePage: React.FC = () => {
               Finnhub · live
             </span>
           )}
-          {dataSource === "legacy" && (
-            <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-300">
-              Legacy JSON
-            </span>
-          )}
           {dataSource === "mock" && (
             <span className="rounded-full bg-slate-500/20 px-3 py-1 text-xs font-medium text-slate-300">
               Mock data

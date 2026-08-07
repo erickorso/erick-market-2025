@@ -34,11 +34,11 @@ export interface StockContextState {
   error: string | null;
   searchTerm: string;
   notice: Notice;
-  dataSource: "live" | "legacy" | "mock" | null;
+  dataSource: "live" | "mock" | null;
 }
 
 export type StockAction =
-  | { type: "SET_STOCKS"; payload: EnrichedStock[]; source: "live" | "legacy" | "mock" }
+  | { type: "SET_STOCKS"; payload: EnrichedStock[]; source: "live" | "mock" }
   | { type: "MERGE_STOCKS"; payload: EnrichedStock[] }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null }

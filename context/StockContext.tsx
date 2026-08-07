@@ -253,15 +253,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
           payload: {
             type: "info",
             message:
-              "No Finnhub key / BFF — using mock data. Add FINNHUB_API_KEY for live quotes.",
-          },
-        });
-      } else if (source === "legacy") {
-        dispatch({
-          type: "SET_NOTICE",
-          payload: {
-            type: "info",
-            message: "Finnhub BFF offline — using legacy static JSON.",
+              "Finnhub BFF offline — mock data. Set FINNHUB_API_KEY on Vercel.",
           },
         });
       } else {

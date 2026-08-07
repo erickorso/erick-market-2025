@@ -70,7 +70,7 @@ function parsePayload(data: unknown): ApiStockRow[] {
   throw new Error("Invalid data structure received from API.");
 }
 
-export type DataSource = "live" | "legacy" | "mock";
+export type DataSource = "live" | "mock";
 
 export type FetchStocksResult = {
   stocks: EnrichedStock[];

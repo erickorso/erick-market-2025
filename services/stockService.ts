@@ -1,5 +1,5 @@
 import type { ApiStockRow, ChartDataPoint, EnrichedStock } from "../types";
-import { API_URL } from "../constants";
+import { LEGACY_API_URL, QUOTES_API_URL } from "../constants";
 
 export function generateChartData(currentPrice: number): ChartDataPoint[] {
   const data: ChartDataPoint[] = [];
@@ -37,6 +37,10 @@ function normalizeRow(row: ApiStockRow, index: number): EnrichedStock {
     (typeof row.name === "string" && row.name.trim()) ||
     `Unknown Company ${index}`;
   const company = companyRaw.trim();
+  const symbol =
+    typeof row.symbol === "string" && row.symbol.trim()
+      ? row.symbol.trim().toUpperCase()
+      : undefined;
   const priceNum =
     typeof row.price === "number"
       ? row.price
@@ -44,9 +48,10 @@ function normalizeRow(row: ApiStockRow, index: number): EnrichedStock {
         ? Number.parseFloat(row.price)
         : NaN;
   const price = Number.isFinite(priceNum) && priceNum >= 0 ? priceNum : 0;
+  const idBase = symbol ?? company;
   return {
-    id: `${company.replace(/\s+/g, "-").toLowerCase()}-${index}`,
-    company,
+    id: `${idBase.replace(/\s+/g, "-").toLowerCase()}-${index}`,
+    company: symbol ? `${company} (${symbol})` : company,
     price,
     chartData: generateChartData(price),
   };
@@ -65,41 +70,83 @@ function parsePayload(data: unknown): ApiStockRow[] {
   throw new Error("Invalid data structure received from API.");
 }
 
+export type DataSource = "live" | "legacy" | "mock";
+
 export type FetchStocksResult = {
   stocks: EnrichedStock[];
-  source: "api" | "mock";
+  source: DataSource;
 };
 
-export async function fetchStocks(): Promise<FetchStocksResult> {
+async function fetchJson(url: string, ms = 8000): Promise<unknown> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
-    const response = await fetch(API_URL, { signal: controller.signal });
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } finally {
     clearTimeout(timer);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    const raw = parsePayload(await response.json());
-    if (!raw.length) throw new Error("Empty stock list");
-    return {
-      stocks: raw.map(normalizeRow),
-      source: "api",
-    };
-  } catch {
-    return {
-      stocks: MOCK_ROWS.map(normalizeRow),
-      source: "mock",
-    };
   }
 }
 
-/** Simulate live quotes: ±1.5% drift and refresh chart. */
+/** Merge new prices into existing stocks (keeps chart history). */
+export function mergeLivePrices(
+  previous: EnrichedStock[],
+  next: EnrichedStock[],
+): EnrichedStock[] {
+  const prevById = new Map(previous.map((s) => [s.id, s]));
+  return next.map((stock) => {
+    const old = prevById.get(stock.id);
+    if (!old) return stock;
+    const chartData = [
+      ...old.chartData.slice(-9).map((p, i, arr) => ({
+        ...p,
+        name: `T-${arr.length - i}`,
+      })),
+      { name: "Now", price: stock.price },
+    ];
+    return { ...stock, chartData };
+  });
+}
+
+export async function fetchStocks(): Promise<FetchStocksResult> {
+  // 1) Real quotes via BFF (Finnhub)
+  try {
+    const data = await fetchJson(QUOTES_API_URL);
+    const raw = parsePayload(data);
+    if (raw.length) {
+      return { stocks: raw.map(normalizeRow), source: "live" };
+    }
+  } catch {
+    /* try legacy */
+  }
+
+  // 2) Legacy HackerEarth static JSON
+  try {
+    const data = await fetchJson(LEGACY_API_URL);
+    const raw = parsePayload(data);
+    if (raw.length) {
+      return { stocks: raw.map(normalizeRow), source: "legacy" };
+    }
+  } catch {
+    /* mock */
+  }
+
+  return {
+    stocks: MOCK_ROWS.map(normalizeRow),
+    source: "mock",
+  };
+}
+
+/** Simulate live quotes when not on Finnhub. */
 export function tickStockPrices(stocks: EnrichedStock[]): EnrichedStock[] {
   return stocks.map((stock) => {
     const drift = 1 + (Math.random() - 0.5) * 0.03;
     const next = Math.max(0.01, Number((stock.price * drift).toFixed(2)));
-    const chartData = [...stock.chartData.slice(-9), { name: "Now", price: next }];
-    // relabel earlier points
+    const chartData = [
+      ...stock.chartData.slice(-9),
+      { name: "Now", price: next },
+    ];
     const labeled = chartData.map((p, i, arr) =>
       i === arr.length - 1 ? p : { ...p, name: `T-${arr.length - 1 - i}` },
     );

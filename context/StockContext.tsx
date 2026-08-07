@@ -14,10 +14,15 @@ import {
 } from "../types";
 import {
   INITIAL_FUND_AMOUNT,
+  LIVE_POLL_MS,
   PRICE_TICK_MS,
   STORAGE_KEY,
 } from "../constants";
-import { fetchStocks, tickStockPrices } from "../services/stockService";
+import {
+  fetchStocks,
+  mergeLivePrices,
+  tickStockPrices,
+} from "../services/stockService";
 
 const initialState: StockContextState = {
   allStocks: [],
@@ -67,6 +72,12 @@ const stockReducer = (
         isLoading: false,
         error: null,
         dataSource: action.source,
+      };
+    case "MERGE_STOCKS":
+      return {
+        ...state,
+        allStocks: action.payload,
+        error: null,
       };
     case "SET_LOADING":
       return { ...state, isLoading: action.payload, error: null };
@@ -219,26 +230,56 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [state, dispatch] = useReducer(stockReducer, initialState);
   const hydrated = useRef(false);
+  const stocksRef = useRef(state.allStocks);
+  stocksRef.current = state.allStocks;
 
-  const loadStocks = useCallback(async () => {
-    dispatch({ type: "SET_LOADING", payload: true });
+  const loadStocks = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) {
+      dispatch({ type: "SET_LOADING", payload: true });
+    }
     try {
       const { stocks, source } = await fetchStocks();
+      if (opts?.silent) {
+        dispatch({
+          type: "MERGE_STOCKS",
+          payload: mergeLivePrices(stocksRef.current, stocks),
+        });
+        return;
+      }
       dispatch({ type: "SET_STOCKS", payload: stocks, source });
       if (source === "mock") {
         dispatch({
           type: "SET_NOTICE",
           payload: {
             type: "info",
-            message: "Live API unavailable — showing mock market data.",
+            message:
+              "No Finnhub key / BFF — using mock data. Add FINNHUB_API_KEY for live quotes.",
+          },
+        });
+      } else if (source === "legacy") {
+        dispatch({
+          type: "SET_NOTICE",
+          payload: {
+            type: "info",
+            message: "Finnhub BFF offline — using legacy static JSON.",
+          },
+        });
+      } else {
+        dispatch({
+          type: "SET_NOTICE",
+          payload: {
+            type: "success",
+            message: "Live market quotes (Finnhub).",
           },
         });
       }
     } catch (err) {
-      dispatch({
-        type: "SET_ERROR",
-        payload: err instanceof Error ? err.message : "Failed to fetch stocks",
-      });
+      if (!opts?.silent) {
+        dispatch({
+          type: "SET_ERROR",
+          payload: err instanceof Error ? err.message : "Failed to fetch stocks",
+        });
+      }
     }
   }, []);
 
@@ -257,13 +298,24 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
     persist(state.portfolio, state.fund);
   }, [state.portfolio, state.fund, state.isLoading]);
 
+  // Fake ticks only for mock/legacy
   useEffect(() => {
     if (state.isLoading || state.allStocks.length === 0) return;
+    if (state.dataSource === "live") return;
     const id = window.setInterval(() => {
       dispatch({ type: "TICK_PRICES" });
     }, PRICE_TICK_MS);
     return () => window.clearInterval(id);
-  }, [state.isLoading, state.allStocks.length]);
+  }, [state.isLoading, state.allStocks.length, state.dataSource]);
+
+  // Real poll when live
+  useEffect(() => {
+    if (state.isLoading || state.dataSource !== "live") return;
+    const id = window.setInterval(() => {
+      void loadStocks({ silent: true });
+    }, LIVE_POLL_MS);
+    return () => window.clearInterval(id);
+  }, [state.isLoading, state.dataSource, loadStocks]);
 
   useEffect(() => {
     if (!state.notice) return;
@@ -274,7 +326,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [state.notice]);
 
   const value = useMemo(
-    () => ({ state, dispatch, fetchStocks: loadStocks }),
+    () => ({ state, dispatch, fetchStocks: () => loadStocks() }),
     [state, loadStocks],
   );
 

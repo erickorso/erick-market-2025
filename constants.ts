@@ -1,9 +1,19 @@
 export const INITIAL_FUND_AMOUNT = 10000;
-export const API_URL =
+
+/** Legacy HackerEarth JSON (fallback chain only). */
+export const LEGACY_API_URL =
   "https://s3-ap-southeast-1.amazonaws.com/he-public-data/db12a41f8.json";
 
-export const STORAGE_KEY = "erick-market.v1";
+/** BFF quotes — same origin on Vercel; proxied in Vite dev. */
+export const QUOTES_API_URL = "/api/quotes";
+
+export const STORAGE_KEY = "erick-market.v2";
+
+/** Fake drift only when using mock/legacy data. */
 export const PRICE_TICK_MS = 3000;
+
+/** Poll Finnhub via BFF when live. */
+export const LIVE_POLL_MS = 15_000;
 
 export const UI = {
   NAV_TITLE: "Erick Stocks",
@@ -15,4 +25,5 @@ export const UI = {
   SELL_BUTTON: "Sell",
   INCREMENT_ARIA: "Increase quantity",
   DECREMENT_ARIA: "Decrease quantity",
+  CURRENCY: "$",
 };

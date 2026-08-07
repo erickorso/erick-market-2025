@@ -60,9 +60,19 @@ const HomePage: React.FC = () => {
           <h1 className="text-3xl font-bold text-teal-400 sm:text-4xl">
             Available Stocks
           </h1>
-          {dataSource && (
+          {dataSource === "live" && (
             <span className="rounded-full bg-teal-500/20 px-3 py-1 text-xs font-medium text-teal-300">
-              {dataSource === "mock" ? "Mock data" : "API"} · live ticks
+              Finnhub · live
+            </span>
+          )}
+          {dataSource === "legacy" && (
+            <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-300">
+              Legacy JSON
+            </span>
+          )}
+          {dataSource === "mock" && (
+            <span className="rounded-full bg-slate-500/20 px-3 py-1 text-xs font-medium text-slate-300">
+              Mock data
             </span>
           )}
         </div>

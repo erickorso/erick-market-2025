@@ -34,11 +34,12 @@ export interface StockContextState {
   error: string | null;
   searchTerm: string;
   notice: Notice;
-  dataSource: "api" | "mock" | null;
+  dataSource: "live" | "legacy" | "mock" | null;
 }
 
 export type StockAction =
-  | { type: "SET_STOCKS"; payload: EnrichedStock[]; source: "api" | "mock" }
+  | { type: "SET_STOCKS"; payload: EnrichedStock[]; source: "live" | "legacy" | "mock" }
+  | { type: "MERGE_STOCKS"; payload: EnrichedStock[] }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "BUY_STOCK"; payload: { stock: EnrichedStock; quantity: number } }
@@ -58,9 +59,12 @@ export interface StockDisplayData {
   chartData: ChartDataPoint[];
 }
 
-/** Raw row from HackerEarth S3 JSON (uses `name`, not `company`). */
+/** Raw row from BFF / legacy JSON. */
 export type ApiStockRow = {
   name?: string;
   company?: string;
+  symbol?: string;
   price?: number | string;
+  change?: number;
+  changePercent?: number;
 };

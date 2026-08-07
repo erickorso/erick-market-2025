@@ -1,4 +1,12 @@
-import { PAGE_SIZE, WATCHLIST } from "./watchlist";
+import {
+  CATEGORIES,
+  PAGE_SIZE,
+  filterWatchlist,
+  parseCategory,
+  tagsForSymbol,
+  type CategoryId,
+  type StyleTag,
+} from "./watchlist";
 
 export type QuoteRow = {
   symbol: string;
@@ -6,6 +14,7 @@ export type QuoteRow = {
   price: number;
   change: number;
   changePercent: number;
+  tags: StyleTag[];
 };
 
 const quoteCache = new Map<string, { at: number; quote: QuoteRow }>();
@@ -34,37 +43,68 @@ async function fetchOne(
     price,
     change: typeof data.d === "number" ? data.d : 0,
     changePercent: typeof data.dp === "number" ? data.dp : 0,
+    tags: tagsForSymbol(symbol),
   };
   quoteCache.set(symbol, { at: Date.now(), quote });
   return quote;
 }
 
+function isDayMovers(category: CategoryId) {
+  return category === "gainers" || category === "losers";
+}
+
 export async function getMarketQuotesPage(
   apiKey: string | undefined,
-  opts: { q?: string; offset?: number; limit?: number } = {},
+  opts: {
+    q?: string;
+    offset?: number;
+    limit?: number;
+    category?: string;
+  } = {},
 ) {
+  const category = parseCategory(opts.category);
+  const q = (opts.q ?? "").trim().toLowerCase();
+  const limit = Math.min(Math.max(1, opts.limit ?? PAGE_SIZE), 25);
+  const offset = Math.max(0, opts.offset ?? 0);
+
   if (!apiKey) {
     return {
       quotes: [] as QuoteRow[],
       source: "unavailable" as const,
       total: 0,
-      offset: 0,
-      limit: PAGE_SIZE,
+      offset,
+      limit,
       hasMore: false,
+      category,
+      categories: CATEGORIES,
     };
   }
 
-  const q = (opts.q ?? "").trim().toLowerCase();
-  const limit = Math.min(Math.max(1, opts.limit ?? PAGE_SIZE), 25);
-  const offset = Math.max(0, opts.offset ?? 0);
+  const filtered = filterWatchlist(q, category);
 
-  const filtered = !q
-    ? WATCHLIST
-    : WATCHLIST.filter(
-        (w) =>
-          w.symbol.toLowerCase().includes(q) ||
-          w.company.toLowerCase().includes(q),
-      );
+  if (isDayMovers(category)) {
+    const settled = await Promise.all(
+      filtered.map((w) => fetchOne(w.symbol, w.company, apiKey)),
+    );
+    let quotes = settled.filter((x): x is QuoteRow => x !== null);
+    quotes = quotes.sort((a, b) =>
+      category === "gainers"
+        ? b.changePercent - a.changePercent
+        : a.changePercent - b.changePercent,
+    );
+    const total = quotes.length;
+    const page = quotes.slice(offset, offset + limit);
+    return {
+      quotes: page,
+      source: page.length ? ("live" as const) : ("unavailable" as const),
+      total,
+      offset,
+      limit,
+      hasMore: offset + limit < total,
+      category,
+      categories: CATEGORIES,
+    };
+  }
 
   const total = filtered.length;
   const page = filtered.slice(offset, offset + limit);
@@ -80,10 +120,15 @@ export async function getMarketQuotesPage(
     offset,
     limit,
     hasMore: offset + limit < total,
+    category,
+    categories: CATEGORIES,
   };
 }
 
 /** @deprecated use getMarketQuotesPage */
 export async function getMarketQuotes(apiKey: string | undefined) {
-  return getMarketQuotesPage(apiKey, { offset: 0, limit: WATCHLIST.length });
+  return getMarketQuotesPage(apiKey, {
+    offset: 0,
+    limit: 40,
+  });
 }

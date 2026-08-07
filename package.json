@@ -21,13 +21,15 @@
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.2",
     "recharts": "^2.15.3",
-    "three": "^0.167.0"
+    "three": "^0.167.0",
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@types/three": "^0.167.0",
+    "@types/ws": "^8.18.1",
     "@vercel/node": "^5.3.0",
     "@vitejs/plugin-react": "^4.4.1",
     "autoprefixer": "^10.4.21",

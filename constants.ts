@@ -2,6 +2,13 @@ export const INITIAL_FUND_AMOUNT = 10000;
 
 /** BFF quotes — same origin on Vercel; proxied in Vite dev. */
 export const QUOTES_API_URL = "/api/quotes";
+export const HOT_API_URL = "/api/hot";
+
+/** Local BFF WS path (proxied in Vite). Vercel falls back to HTTP poll. */
+export const HOT_WS_PATH = "/ws/hot";
+
+/** Hot sidebar refresh — 5 minutes. */
+export const HOT_REFRESH_MS = 5 * 60 * 1000;
 
 export const STORAGE_KEY = "erick-market.v2";
 

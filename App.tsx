@@ -6,6 +6,7 @@ import MyStocksPage from "./pages/MyStocksPage";
 import MyFundPage from "./pages/MyFundPage";
 import SellStockForm from "./components/SellStockForm";
 import NoticeBanner from "./components/NoticeBanner";
+import HotSidebar from "./components/HotSidebar";
 import { StockProvider } from "./context/StockContext";
 
 const App: React.FC = () => {
@@ -17,15 +18,18 @@ const App: React.FC = () => {
         <div className="flex min-h-screen flex-col bg-gray-900 text-gray-100">
           <Navbar />
           <NoticeBanner />
-          <main className="container mx-auto flex-grow px-2 py-8 sm:px-4">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/my-stocks" element={<MyStocksPage />} />
-              <Route path="/my-fund" element={<MyFundPage />} />
-              <Route path="/sell/:stockCompany" element={<SellStockForm />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
+          <div className="flex flex-grow flex-col lg:flex-row">
+            <HotSidebar />
+            <main className="container mx-auto min-w-0 flex-grow px-2 py-8 sm:px-4">
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/my-stocks" element={<MyStocksPage />} />
+                <Route path="/my-fund" element={<MyFundPage />} />
+                <Route path="/sell/:stockCompany" element={<SellStockForm />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
+          </div>
           <footer className="mt-auto bg-gray-800 p-4 text-center text-sm text-gray-500">
             © {year} Erick Stocks Simulator. Portfolio demo — mock trading only.
           </footer>

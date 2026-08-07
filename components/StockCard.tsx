@@ -31,10 +31,32 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
   return (
     <div data-testid="company-name" className="bg-gray-800 rounded-xl shadow-2xl p-6 hover:shadow-teal-500/30 transition-shadow duration-300 flex flex-col justify-between">
       <div>
-        <h3 data-testid={stock.company} className="text-xl font-semibold text-teal-400 mb-2 truncate" title={stock.company}> {/* Changed from stock.name */}
-          {stock.company} {/* Changed from stock.name */}
+        <h3 data-testid={stock.company} className="text-xl font-semibold text-teal-400 mb-2 truncate" title={stock.company}>
+          {stock.company}
         </h3>
         <p className="text-2xl font-bold text-gray-100 mb-1">${stock.price.toFixed(2)}</p>
+        {typeof stock.changePercent === "number" && (
+          <p
+            className={`mb-1 text-sm font-medium ${
+              stock.changePercent >= 0 ? "text-emerald-400" : "text-rose-400"
+            }`}
+          >
+            {stock.changePercent >= 0 ? "+" : ""}
+            {stock.changePercent.toFixed(2)}% today
+          </p>
+        )}
+        {stock.tags && stock.tags.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-1">
+            {stock.tags.slice(0, 3).map((tag) => (
+              <span
+                key={tag}
+                className="rounded border border-gray-600 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-400"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
         <p className="text-xs text-gray-400 mb-3">Current Price</p>
         <div className="mb-4 h-48"> {/* Fixed height for chart area */}
             <StockChart data={displayData.chartData} lineColor="#2dd4bf" />

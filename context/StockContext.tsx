@@ -8,6 +8,7 @@ import React, {
   useRef,
 } from "react";
 import {
+  CategoryId,
   PortfolioItem,
   StockAction,
   StockContextState,
@@ -22,6 +23,7 @@ import {
   fetchStocks,
   mergeLivePrices,
   PAGE_SIZE,
+  parseCategory,
   tickStockPrices,
 } from "../services/stockService";
 
@@ -33,25 +35,32 @@ const initialState: StockContextState = {
   isLoadingMore: false,
   error: null,
   searchTerm: "",
+  category: "all",
   notice: null,
   dataSource: null,
   hasMore: false,
   total: 0,
 };
 
-function readQueryQ(): string {
+function readQueryFilters(): { q: string; category: CategoryId } {
   try {
-    return new URLSearchParams(window.location.search).get("q")?.trim() ?? "";
+    const sp = new URLSearchParams(window.location.search);
+    return {
+      q: sp.get("q")?.trim() ?? "",
+      category: parseCategory(sp.get("category")),
+    };
   } catch {
-    return "";
+    return { q: "", category: "all" };
   }
 }
 
-function writeQueryQ(q: string) {
+function writeQueryFilters(q: string, category: CategoryId) {
   try {
     const url = new URL(window.location.href);
     if (q.trim()) url.searchParams.set("q", q.trim());
     else url.searchParams.delete("q");
+    if (category && category !== "all") url.searchParams.set("category", category);
+    else url.searchParams.delete("category");
     window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
   } catch {
     /* ignore */
@@ -124,6 +133,8 @@ const stockReducer = (
       return { ...state, error: action.payload, isLoading: false, isLoadingMore: false };
     case "SET_SEARCH_TERM":
       return { ...state, searchTerm: action.payload };
+    case "SET_CATEGORY":
+      return { ...state, category: action.payload };
     case "SET_NOTICE":
       return { ...state, notice: action.payload };
     case "CLEAR_NOTICE":
@@ -268,19 +279,22 @@ const StockContext = createContext<StockContextValue | null>(null);
 export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [state, dispatch] = useReducer(stockReducer, null, () => ({
-    ...initialState,
-    searchTerm: readQueryQ(),
-  }));
+  const [state, dispatch] = useReducer(stockReducer, null, () => {
+    const { q, category } = readQueryFilters();
+    return { ...initialState, searchTerm: q, category };
+  });
   const hydrated = useRef(false);
   const stocksRef = useRef(state.allStocks);
   const searchRef = useRef(state.searchTerm);
+  const categoryRef = useRef(state.category);
   stocksRef.current = state.allStocks;
   searchRef.current = state.searchTerm;
+  categoryRef.current = state.category;
 
   const loadStocks = useCallback(
-    async (opts?: { silent?: boolean; q?: string }) => {
+    async (opts?: { silent?: boolean; q?: string; category?: CategoryId }) => {
       const q = opts?.q ?? searchRef.current;
+      const category = opts?.category ?? categoryRef.current;
       if (!opts?.silent) {
         dispatch({ type: "SET_LOADING", payload: true });
       }
@@ -288,7 +302,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
         const limit = opts?.silent
           ? Math.max(PAGE_SIZE, stocksRef.current.length)
           : PAGE_SIZE;
-        const result = await fetchStocks({ q, offset: 0, limit });
+        const result = await fetchStocks({ q, offset: 0, limit, category });
         if (opts?.silent) {
           dispatch({
             type: "MERGE_STOCKS",
@@ -341,6 +355,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const result = await fetchStocks({
         q: searchRef.current,
+        category: categoryRef.current,
         offset: loaded,
         limit: PAGE_SIZE,
       });
@@ -362,22 +377,42 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
     if (saved) {
       dispatch({ type: "HYDRATE_PORTFOLIO", payload: saved });
     }
-    void loadStocks({ q: searchRef.current });
+    void loadStocks({
+      q: searchRef.current,
+      category: categoryRef.current,
+    });
   }, [loadStocks]);
 
-  // Debounced server search when searchTerm changes (skip first paint)
+  useEffect(() => {
+    writeQueryFilters(state.searchTerm, state.category);
+  }, [state.searchTerm, state.category]);
+
   const searchBoot = useRef(true);
   useEffect(() => {
-    writeQueryQ(state.searchTerm);
     if (searchBoot.current) {
       searchBoot.current = false;
       return;
     }
     const id = window.setTimeout(() => {
-      void loadStocks({ q: state.searchTerm });
+      void loadStocks({
+        q: state.searchTerm,
+        category: categoryRef.current,
+      });
     }, 350);
     return () => window.clearTimeout(id);
   }, [state.searchTerm, loadStocks]);
+
+  const categoryBoot = useRef(true);
+  useEffect(() => {
+    if (categoryBoot.current) {
+      categoryBoot.current = false;
+      return;
+    }
+    void loadStocks({
+      q: searchRef.current,
+      category: state.category,
+    });
+  }, [state.category, loadStocks]);
 
   useEffect(() => {
     if (state.isLoading) return;
@@ -433,4 +468,3 @@ export const useStockContext = () => {
 };
 
 export type { EnrichedStock } from "../types";
-

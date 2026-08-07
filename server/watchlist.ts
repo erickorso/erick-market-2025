@@ -1,45 +1,145 @@
-/** Curated US liquid names — paginated 10-at-a-time via /api/quotes */
-export const WATCHLIST: { symbol: string; company: string }[] = [
-  { symbol: "AAPL", company: "Apple" },
-  { symbol: "MSFT", company: "Microsoft" },
-  { symbol: "GOOGL", company: "Alphabet" },
-  { symbol: "AMZN", company: "Amazon" },
-  { symbol: "NVDA", company: "NVIDIA" },
-  { symbol: "META", company: "Meta" },
-  { symbol: "TSLA", company: "Tesla" },
-  { symbol: "JPM", company: "JPMorgan" },
-  { symbol: "V", company: "Visa" },
-  { symbol: "MA", company: "Mastercard" },
-  { symbol: "JNJ", company: "Johnson & Johnson" },
-  { symbol: "WMT", company: "Walmart" },
-  { symbol: "PG", company: "Procter & Gamble" },
-  { symbol: "XOM", company: "Exxon Mobil" },
-  { symbol: "CVX", company: "Chevron" },
-  { symbol: "HD", company: "Home Depot" },
-  { symbol: "BAC", company: "Bank of America" },
-  { symbol: "KO", company: "Coca-Cola" },
-  { symbol: "PEP", company: "PepsiCo" },
-  { symbol: "COST", company: "Costco" },
-  { symbol: "AVGO", company: "Broadcom" },
-  { symbol: "CRM", company: "Salesforce" },
-  { symbol: "NFLX", company: "Netflix" },
-  { symbol: "AMD", company: "AMD" },
-  { symbol: "INTC", company: "Intel" },
-  { symbol: "ORCL", company: "Oracle" },
-  { symbol: "CSCO", company: "Cisco" },
-  { symbol: "DIS", company: "Disney" },
-  { symbol: "NKE", company: "Nike" },
-  { symbol: "MCD", company: "McDonald's" },
-  { symbol: "ADBE", company: "Adobe" },
-  { symbol: "IBM", company: "IBM" },
-  { symbol: "QCOM", company: "Qualcomm" },
-  { symbol: "TXN", company: "Texas Instruments" },
-  { symbol: "UBER", company: "Uber" },
-  { symbol: "ABNB", company: "Airbnb" },
-  { symbol: "PYPL", company: "PayPal" },
-  { symbol: "SQ", company: "Block" },
-  { symbol: "SHOP", company: "Shopify" },
-  { symbol: "SPOT", company: "Spotify" },
+/** Curated US names + educational tags (not financial advice). */
+
+export type StyleTag =
+  | "long-term"
+  | "short-term"
+  | "growth"
+  | "dividend"
+  | "blue-chip"
+  | "volatile";
+
+export type CategoryId = "all" | StyleTag | "gainers" | "losers";
+
+export type WatchItem = {
+  symbol: string;
+  company: string;
+  tags: StyleTag[];
+};
+
+export const CATEGORIES: {
+  id: CategoryId;
+  label: string;
+  hint: string;
+}[] = [
+  { id: "all", label: "All", hint: "Full watchlist" },
+  {
+    id: "long-term",
+    label: "Long-term",
+    hint: "Compounders / quality holds (curated)",
+  },
+  {
+    id: "short-term",
+    label: "Short-term",
+    hint: "Higher beta / tactical names (curated)",
+  },
+  { id: "growth", label: "Growth", hint: "Growth-oriented names (curated)" },
+  {
+    id: "dividend",
+    label: "Dividend",
+    hint: "Income / staples tilt (curated)",
+  },
+  {
+    id: "blue-chip",
+    label: "Blue chip",
+    hint: "Large, established names (curated)",
+  },
+  {
+    id: "volatile",
+    label: "Volatile",
+    hint: "Higher swing names (curated)",
+  },
+  {
+    id: "gainers",
+    label: "Day gainers",
+    hint: "Best % change today (live)",
+  },
+  {
+    id: "losers",
+    label: "Day losers",
+    hint: "Worst % change today (live)",
+  },
+];
+
+export const WATCHLIST: WatchItem[] = [
+  { symbol: "AAPL", company: "Apple", tags: ["long-term", "blue-chip", "growth"] },
+  { symbol: "MSFT", company: "Microsoft", tags: ["long-term", "blue-chip", "growth"] },
+  { symbol: "GOOGL", company: "Alphabet", tags: ["long-term", "blue-chip", "growth"] },
+  { symbol: "AMZN", company: "Amazon", tags: ["long-term", "growth", "volatile"] },
+  { symbol: "NVDA", company: "NVIDIA", tags: ["growth", "short-term", "volatile"] },
+  { symbol: "META", company: "Meta", tags: ["growth", "volatile", "short-term"] },
+  { symbol: "TSLA", company: "Tesla", tags: ["short-term", "volatile", "growth"] },
+  { symbol: "JPM", company: "JPMorgan", tags: ["blue-chip", "dividend", "long-term"] },
+  { symbol: "V", company: "Visa", tags: ["long-term", "blue-chip", "growth"] },
+  { symbol: "MA", company: "Mastercard", tags: ["long-term", "blue-chip", "growth"] },
+  { symbol: "JNJ", company: "Johnson & Johnson", tags: ["dividend", "blue-chip", "long-term"] },
+  { symbol: "WMT", company: "Walmart", tags: ["dividend", "blue-chip", "long-term"] },
+  { symbol: "PG", company: "Procter & Gamble", tags: ["dividend", "blue-chip", "long-term"] },
+  { symbol: "XOM", company: "Exxon Mobil", tags: ["dividend", "blue-chip"] },
+  { symbol: "CVX", company: "Chevron", tags: ["dividend", "blue-chip"] },
+  { symbol: "HD", company: "Home Depot", tags: ["blue-chip", "dividend", "long-term"] },
+  { symbol: "BAC", company: "Bank of America", tags: ["dividend", "short-term"] },
+  { symbol: "KO", company: "Coca-Cola", tags: ["dividend", "blue-chip", "long-term"] },
+  { symbol: "PEP", company: "PepsiCo", tags: ["dividend", "blue-chip", "long-term"] },
+  { symbol: "COST", company: "Costco", tags: ["long-term", "blue-chip", "growth"] },
+  { symbol: "AVGO", company: "Broadcom", tags: ["growth", "dividend", "volatile"] },
+  { symbol: "CRM", company: "Salesforce", tags: ["growth", "short-term"] },
+  { symbol: "NFLX", company: "Netflix", tags: ["growth", "volatile", "short-term"] },
+  { symbol: "AMD", company: "AMD", tags: ["growth", "volatile", "short-term"] },
+  { symbol: "INTC", company: "Intel", tags: ["volatile", "short-term", "dividend"] },
+  { symbol: "ORCL", company: "Oracle", tags: ["blue-chip", "growth", "dividend"] },
+  { symbol: "CSCO", company: "Cisco", tags: ["dividend", "blue-chip"] },
+  { symbol: "DIS", company: "Disney", tags: ["blue-chip", "volatile"] },
+  { symbol: "NKE", company: "Nike", tags: ["blue-chip", "growth"] },
+  { symbol: "MCD", company: "McDonald's", tags: ["dividend", "blue-chip", "long-term"] },
+  { symbol: "ADBE", company: "Adobe", tags: ["growth", "volatile"] },
+  { symbol: "IBM", company: "IBM", tags: ["dividend", "blue-chip"] },
+  { symbol: "QCOM", company: "Qualcomm", tags: ["growth", "dividend", "volatile"] },
+  { symbol: "TXN", company: "Texas Instruments", tags: ["dividend", "blue-chip", "long-term"] },
+  { symbol: "UBER", company: "Uber", tags: ["growth", "short-term", "volatile"] },
+  { symbol: "ABNB", company: "Airbnb", tags: ["growth", "short-term", "volatile"] },
+  { symbol: "PYPL", company: "PayPal", tags: ["volatile", "short-term"] },
+  { symbol: "SQ", company: "Block", tags: ["volatile", "short-term", "growth"] },
+  { symbol: "SHOP", company: "Shopify", tags: ["growth", "volatile", "short-term"] },
+  { symbol: "SPOT", company: "Spotify", tags: ["growth", "volatile", "short-term"] },
 ];
 
 export const PAGE_SIZE = 10;
+
+const STYLE_TAGS = new Set<string>([
+  "long-term",
+  "short-term",
+  "growth",
+  "dividend",
+  "blue-chip",
+  "volatile",
+]);
+
+export function parseCategory(raw: unknown): CategoryId {
+  const v = String(raw ?? "all").trim().toLowerCase();
+  if (v === "all" || v === "") return "all";
+  if (v === "gainers" || v === "losers") return v;
+  if (STYLE_TAGS.has(v)) return v as StyleTag;
+  return "all";
+}
+
+export function filterWatchlist(
+  q: string,
+  category: CategoryId,
+): WatchItem[] {
+  const query = q.trim().toLowerCase();
+  return WATCHLIST.filter((w) => {
+    const textOk =
+      !query ||
+      w.symbol.toLowerCase().includes(query) ||
+      w.company.toLowerCase().includes(query);
+    if (!textOk) return false;
+    if (category === "all" || category === "gainers" || category === "losers") {
+      return true;
+    }
+    return w.tags.includes(category);
+  });
+}
+
+export function tagsForSymbol(symbol: string): StyleTag[] {
+  return WATCHLIST.find((w) => w.symbol === symbol)?.tags ?? [];
+}

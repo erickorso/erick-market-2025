@@ -1,6 +1,8 @@
 import React, { Suspense } from "react";
 import StockCard from "../components/StockCard";
+import CategoryFilter from "../components/CategoryFilter";
 import { useStockContext } from "../context/StockContext";
+import { CATEGORIES } from "../services/stockService";
 
 const ThreeDBackground = React.lazy(
   () => import("../components/ThreeDBackground"),
@@ -14,10 +16,14 @@ const HomePage: React.FC = () => {
     isLoadingMore,
     error,
     searchTerm,
+    category,
     dataSource,
     hasMore,
     total,
   } = state;
+
+  const categoryLabel =
+    CATEGORIES.find((c) => c.id === category)?.label ?? "All";
 
   if (isLoading) {
     return (
@@ -65,6 +71,7 @@ const HomePage: React.FC = () => {
             <p className="mt-1 text-sm text-gray-400">
               Showing {allStocks.length}
               {total > 0 ? ` of ${total}` : ""}
+              {category !== "all" ? ` · ${categoryLabel}` : ""}
               {searchTerm ? ` · “${searchTerm}”` : ""}
             </p>
           </div>
@@ -79,6 +86,9 @@ const HomePage: React.FC = () => {
             </span>
           )}
         </div>
+
+        <CategoryFilter />
+
         {allStocks.length === 0 ? (
           <div className="p-8 text-center text-xl text-gray-400">
             No stocks found matching your criteria.
@@ -111,4 +121,3 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
-

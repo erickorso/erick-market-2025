@@ -17,7 +17,9 @@ Browser  →  GET /api/quotes?limit=10&offset=0&q=  →  Finnhub
 | **live** | `FINNHUB_API_KEY` set on BFF | Poll every 15s (loaded window) |
 | **mock** | BFF fails / no key | Simulated tick 3s |
 
-**Paging / search:** first page is 10 symbols (`PAGE_SIZE`). UI “Load more” appends `offset+=10`. Navbar search debounces → `?q=` on the page URL and on `/api/quotes?q=`.
+**Paging / search / categories:** first page is 10 symbols (`PAGE_SIZE`). UI “Load more” appends `offset+=10`. Navbar search → `?q=`. Category chips → `?category=` (`long-term`, `short-term`, `growth`, `dividend`, `blue-chip`, `volatile`, plus live `gainers` / `losers`). Curated tags are educational, not advice.
+
+**Hot sidebar:** left rail shows top day gainers. Local BFF pushes over WebSocket `ws://…/ws/hot` every **5 min** (and on connect). On Vercel (no persistent WS) the client falls back to `GET /api/hot` poll every 5 min.
 
 Buy/sell is **still simulated** (local state + `localStorage`) — not a real broker.
 

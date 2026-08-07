@@ -1,6 +1,14 @@
 import type { ApiStockRow, ChartDataPoint, EnrichedStock } from "../types";
 import { QUOTES_API_URL } from "../constants";
-import { PAGE_SIZE, WATCHLIST } from "../server/watchlist";
+import {
+  CATEGORIES,
+  PAGE_SIZE,
+  WATCHLIST,
+  filterWatchlist,
+  parseCategory,
+  type CategoryId,
+  type StyleTag,
+} from "../server/watchlist";
 
 export function generateChartData(currentPrice: number): ChartDataPoint[] {
   const data: ChartDataPoint[] = [];
@@ -18,12 +26,18 @@ export function generateChartData(currentPrice: number): ChartDataPoint[] {
 }
 
 function mockRows(): ApiStockRow[] {
-  return WATCHLIST.map((w, i) => ({
-    symbol: w.symbol,
-    company: w.company,
-    name: w.company,
-    price: 50 + ((i * 37) % 400) + Math.random() * 10,
-  }));
+  return WATCHLIST.map((w, i) => {
+    const changePercent = ((i * 17) % 21) - 10 + (i % 3) * 0.3;
+    return {
+      symbol: w.symbol,
+      company: w.company,
+      name: w.company,
+      price: 50 + ((i * 37) % 400) + Math.random() * 10,
+      change: changePercent,
+      changePercent,
+      tags: w.tags,
+    };
+  });
 }
 
 function normalizeRow(row: ApiStockRow, index: number): EnrichedStock {
@@ -44,11 +58,22 @@ function normalizeRow(row: ApiStockRow, index: number): EnrichedStock {
         : NaN;
   const price = Number.isFinite(priceNum) && priceNum >= 0 ? priceNum : 0;
   const id = (symbol ?? company).replace(/\s+/g, "-").toLowerCase();
+  const changePercent =
+    typeof row.changePercent === "number" && Number.isFinite(row.changePercent)
+      ? row.changePercent
+      : undefined;
+  const tags = Array.isArray(row.tags)
+    ? (row.tags.filter(Boolean) as StyleTag[])
+    : symbol
+      ? (WATCHLIST.find((w) => w.symbol === symbol)?.tags ?? [])
+      : [];
   return {
     id,
     company: symbol ? `${company} (${symbol})` : company,
     price,
     chartData: generateChartData(price),
+    tags,
+    changePercent,
   };
 }
 
@@ -61,12 +86,14 @@ export type FetchStocksResult = {
   offset: number;
   limit: number;
   hasMore: boolean;
+  category: CategoryId;
 };
 
 export type FetchStocksParams = {
   q?: string;
   offset?: number;
   limit?: number;
+  category?: CategoryId | string;
 };
 
 async function fetchJson(url: string, ms = 12000): Promise<unknown> {
@@ -96,24 +123,50 @@ export function mergeLivePrices(
       })),
       { name: "Now", price: stock.price },
     ];
-    return { ...stock, chartData };
+    return {
+      ...stock,
+      chartData,
+      tags: stock.tags?.length ? stock.tags : old.tags,
+    };
   });
 }
 
-function paginateMock(
-  params: FetchStocksParams,
-): FetchStocksResult {
+function paginateMock(params: FetchStocksParams): FetchStocksResult {
+  const category = parseCategory(params.category);
   const q = (params.q ?? "").trim().toLowerCase();
   const limit = params.limit ?? PAGE_SIZE;
   const offset = params.offset ?? 0;
-  const all = mockRows().filter((row) => {
-    if (!q) return true;
-    return (
+
+  let all = mockRows().filter((row) => {
+    const textOk =
+      !q ||
       (row.symbol ?? "").toLowerCase().includes(q) ||
       (row.company ?? "").toLowerCase().includes(q) ||
-      (row.name ?? "").toLowerCase().includes(q)
-    );
+      (row.name ?? "").toLowerCase().includes(q);
+    if (!textOk) return false;
+    if (category === "all" || category === "gainers" || category === "losers") {
+      return true;
+    }
+    return (row.tags ?? []).includes(category);
   });
+
+  if (category === "gainers" || category === "losers") {
+    all = [...all].sort((a, b) => {
+      const ap = Number(a.changePercent ?? 0);
+      const bp = Number(b.changePercent ?? 0);
+      return category === "gainers" ? bp - ap : ap - bp;
+    });
+  } else {
+    // keep watchlist order via filterWatchlist for consistency
+    const order = new Map(
+      filterWatchlist(q, category).map((w, i) => [w.symbol, i]),
+    );
+    all = [...all].sort(
+      (a, b) =>
+        (order.get(a.symbol ?? "") ?? 0) - (order.get(b.symbol ?? "") ?? 0),
+    );
+  }
+
   const slice = all.slice(offset, offset + limit);
   return {
     stocks: slice.map(normalizeRow),
@@ -122,6 +175,7 @@ function paginateMock(
     offset,
     limit,
     hasMore: offset + limit < all.length,
+    category,
   };
 }
 
@@ -131,8 +185,10 @@ export async function fetchStocks(
   const q = params.q?.trim() ?? "";
   const offset = params.offset ?? 0;
   const limit = params.limit ?? PAGE_SIZE;
+  const category = parseCategory(params.category);
   const sp = new URLSearchParams();
   if (q) sp.set("q", q);
+  if (category !== "all") sp.set("category", category);
   sp.set("offset", String(offset));
   sp.set("limit", String(limit));
   const url = `${QUOTES_API_URL}?${sp.toString()}`;
@@ -145,6 +201,7 @@ export async function fetchStocks(
       offset?: number;
       limit?: number;
       hasMore?: boolean;
+      category?: string;
     };
     const raw = Array.isArray(data.stocks) ? data.stocks : [];
     if (raw.length || data.source === "live") {
@@ -155,6 +212,7 @@ export async function fetchStocks(
         offset: data.offset ?? offset,
         limit: data.limit ?? limit,
         hasMore: Boolean(data.hasMore),
+        category: parseCategory(data.category ?? category),
       };
     }
   } catch {
@@ -179,4 +237,5 @@ export function tickStockPrices(stocks: EnrichedStock[]): EnrichedStock[] {
   });
 }
 
-export { PAGE_SIZE };
+export { PAGE_SIZE, CATEGORIES, parseCategory };
+export type { CategoryId };

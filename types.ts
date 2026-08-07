@@ -1,3 +1,13 @@
+export type StyleTag =
+  | "long-term"
+  | "short-term"
+  | "growth"
+  | "dividend"
+  | "blue-chip"
+  | "volatile";
+
+export type CategoryId = "all" | StyleTag | "gainers" | "losers";
+
 export interface Stock {
   id: string;
   company: string;
@@ -6,6 +16,8 @@ export interface Stock {
 
 export interface EnrichedStock extends Stock {
   chartData: ChartDataPoint[];
+  tags?: StyleTag[];
+  changePercent?: number;
 }
 
 export interface ChartDataPoint {
@@ -34,6 +46,7 @@ export interface StockContextState {
   isLoadingMore: boolean;
   error: string | null;
   searchTerm: string;
+  category: CategoryId;
   notice: Notice;
   dataSource: "live" | "mock" | null;
   hasMore: boolean;
@@ -64,6 +77,7 @@ export type StockAction =
       payload: { stockCompany: string; quantity: number; sellPrice: number };
     }
   | { type: "SET_SEARCH_TERM"; payload: string }
+  | { type: "SET_CATEGORY"; payload: CategoryId }
   | { type: "SET_NOTICE"; payload: Notice }
   | { type: "CLEAR_NOTICE" }
   | { type: "HYDRATE_PORTFOLIO"; payload: { portfolio: PortfolioItem[]; fund: number } }
@@ -83,5 +97,5 @@ export type ApiStockRow = {
   price?: number | string;
   change?: number;
   changePercent?: number;
+  tags?: StyleTag[];
 };
-

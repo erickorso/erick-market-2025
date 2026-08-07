@@ -1,6 +1,7 @@
 import React from "react";
 import { useHotStocks } from "../hooks/useHotStocks";
 import { useStockContext } from "../context/StockContext";
+import { UI } from "../constants";
 
 function formatAgo(at: number | null): string {
   if (!at) return "—";
@@ -80,6 +81,12 @@ const HotSidebar: React.FC = () => {
             <li className="py-4 text-xs text-gray-500">Loading movers…</li>
           )}
         </ol>
+        <p
+          className="mt-4 hidden border-t border-gray-800 pt-3 text-[10px] leading-relaxed text-gray-500 lg:block"
+          role="note"
+        >
+          {UI.MARKET_DISCLAIMER}
+        </p>
       </div>
     </aside>
   );

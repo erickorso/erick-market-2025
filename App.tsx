@@ -9,6 +9,7 @@ import NoticeBanner from "./components/NoticeBanner";
 import HotSidebar from "./components/HotSidebar";
 import StockDetailModal from "./components/StockDetailModal";
 import { StockProvider } from "./context/StockContext";
+import { UI } from "./constants";
 
 const App: React.FC = () => {
   const year = new Date().getFullYear();
@@ -31,8 +32,14 @@ const App: React.FC = () => {
               </Routes>
             </main>
           </div>
-          <footer className="mt-auto bg-gray-800 p-4 text-center text-sm text-gray-500">
-            © {year} Erick Stocks Simulator. Portfolio demo — mock trading only.
+          <footer className="relative z-10 mt-auto border-t border-gray-700 bg-gray-800 px-4 py-5 text-center text-sm text-gray-500">
+            <p className="mx-auto mb-3 max-w-3xl text-left text-xs leading-relaxed text-gray-400 sm:text-center">
+              {UI.MARKET_DISCLAIMER}
+            </p>
+            <p>
+              © {year} Erick Stocks Simulator. Portfolio demo — mock trading
+              only. Not financial advice.
+            </p>
           </footer>
           <StockDetailModal />
         </div>

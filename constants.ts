@@ -30,4 +30,6 @@ export const UI = {
   INCREMENT_ARIA: "Increase quantity",
   DECREMENT_ARIA: "Decrease quantity",
   CURRENCY: "$",
+  MARKET_DISCLAIMER:
+    "Si no sabés de mercado: tratá el demo como visualización, no como señal. Para invertir “de verdad” hace falta tesis (negocio, valuación, riesgo), horizonte y diversificación — no un número verde del sidebar.",
 };

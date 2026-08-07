@@ -23,7 +23,7 @@ const HotSidebar: React.FC = () => {
 
   return (
     <aside
-      className="w-full shrink-0 border-b border-gray-700 bg-gray-900/95 lg:w-56 lg:border-b-0 lg:border-r lg:border-gray-700"
+      className="relative z-20 w-full shrink-0 border-b border-gray-700 bg-gray-900 lg:w-56 lg:border-b-0 lg:border-r lg:border-gray-700"
       aria-label="Hottest stocks today"
     >
       <div className="sticky top-16 p-3 sm:p-4">

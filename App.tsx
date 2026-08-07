@@ -18,9 +18,9 @@ const App: React.FC = () => {
         <div className="flex min-h-screen flex-col bg-gray-900 text-gray-100">
           <Navbar />
           <NoticeBanner />
-          <div className="flex flex-grow flex-col lg:flex-row">
+          <div className="flex flex-grow flex-col lg:flex-row relative z-10">
             <HotSidebar />
-            <main className="container mx-auto min-w-0 flex-grow px-2 py-8 sm:px-4">
+            <main className="container relative z-10 mx-auto min-w-0 flex-grow px-2 py-8 sm:px-4">
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/my-stocks" element={<MyStocksPage />} />

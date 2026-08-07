@@ -73,7 +73,9 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
         )}
 
         <p className="mb-1 text-xs text-gray-500">
-          Sparkline · simulated (open detail for Finnhub candles)
+          {stock.chartSource === "yahoo" || stock.chartSource === "finnhub"
+            ? "Daily closes · live history"
+            : "Sparkline · simulated"}
         </p>
         <button
           type="button"

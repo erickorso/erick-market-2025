@@ -120,12 +120,65 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const quote = (await quoteRes.json()) as Quote;
     const profile = (await profileRes.json()) as Profile;
-    let candle: Candle = {};
-    let chartSource: "live" | "unavailable" = "unavailable";
+    let chart: { name: string; price: number }[] = [];
+    let chartSource: "finnhub" | "yahoo" | "unavailable" = "unavailable";
+
     if (candleRes.ok) {
-      candle = (await candleRes.json()) as Candle;
+      const candle = (await candleRes.json()) as Candle;
       if (candle.s === "ok" && Array.isArray(candle.c) && candle.c.length > 0) {
-        chartSource = "live";
+        chartSource = "finnhub";
+        const closes = candle.c;
+        const times = candle.t ?? [];
+        chart = closes.map((close, i) => {
+          const ts = times[i] ? new Date(times[i] * 1000) : null;
+          const name = ts
+            ? `${ts.getUTCMonth() + 1}/${ts.getUTCDate()}`
+            : `D-${closes.length - i}`;
+          return { name, price: close };
+        });
+      }
+    }
+
+    if (!chart.length) {
+      try {
+        const yUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=3mo`;
+        const yRes = await fetch(yUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (compatible; ErickMarket/1.0)",
+            Accept: "application/json",
+          },
+        });
+        if (yRes.ok) {
+          const yData = (await yRes.json()) as {
+            chart?: {
+              result?: Array<{
+                timestamp?: number[];
+                indicators?: {
+                  quote?: Array<{ close?: Array<number | null> }>;
+                };
+              }>;
+            };
+          };
+          const result = yData.chart?.result?.[0];
+          const times = result?.timestamp ?? [];
+          const closes = result?.indicators?.quote?.[0]?.close ?? [];
+          const points: { name: string; price: number }[] = [];
+          for (let i = 0; i < times.length; i++) {
+            const close = closes[i];
+            if (typeof close !== "number" || !Number.isFinite(close)) continue;
+            const d = new Date(times[i] * 1000);
+            points.push({
+              name: `${d.getUTCMonth() + 1}/${d.getUTCDate()}`,
+              price: Number(close.toFixed(2)),
+            });
+          }
+          if (points.length) {
+            chart = points;
+            chartSource = "yahoo";
+          }
+        }
+      } catch {
+        /* keep unavailable */
       }
     }
 
@@ -134,16 +187,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(404).json({ error: "quote not found", symbol });
       return;
     }
-
-    const closes = candle.c ?? [];
-    const times = candle.t ?? [];
-    const chart = closes.map((close, i) => {
-      const ts = times[i] ? new Date(times[i] * 1000) : null;
-      const name = ts
-        ? `${ts.getUTCMonth() + 1}/${ts.getUTCDate()}`
-        : `D-${closes.length - i}`;
-      return { name, price: close };
-    });
 
     res.status(200).json({
       source: "live",

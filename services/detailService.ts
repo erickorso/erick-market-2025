@@ -5,7 +5,7 @@ import { WATCHLIST } from "../server/watchlist";
 
 export type StockDetail = {
   source: "live" | "mock";
-  chartSource: "live" | "simulated";
+  chartSource: "finnhub" | "yahoo" | "simulated";
   symbol: string;
   company: string;
   tags: StyleTag[];
@@ -87,12 +87,22 @@ export async function fetchStockDetail(
     };
     const price = data.quote?.price ?? 0;
     const liveChart =
-      data.chartSource === "live" && Array.isArray(data.chart) && data.chart.length > 0
+      (data.chartSource === "yahoo" ||
+        data.chartSource === "finnhub" ||
+        data.chartSource === "live") &&
+      Array.isArray(data.chart) &&
+      data.chart.length > 0
         ? data.chart
         : null;
+    const chartSource: StockDetail["chartSource"] =
+      data.chartSource === "finnhub"
+        ? "finnhub"
+        : liveChart
+          ? "yahoo"
+          : "simulated";
     return {
       source: "live",
-      chartSource: liveChart ? "live" : "simulated",
+      chartSource,
       symbol: data.symbol ?? sym,
       company: data.company ?? sym,
       tags: data.tags ?? [],

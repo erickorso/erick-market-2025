@@ -7,6 +7,7 @@ import {
   type CategoryId,
   type StyleTag,
 } from "./watchlist";
+import { attachYahooCharts } from "./yahooChart";
 
 export type QuoteRow = {
   symbol: string;
@@ -15,6 +16,8 @@ export type QuoteRow = {
   change: number;
   changePercent: number;
   tags: StyleTag[];
+  chart?: { name: string; price: number }[];
+  chartSource?: "yahoo" | "simulated";
 };
 
 const quoteCache = new Map<string, { at: number; quote: QuoteRow }>();
@@ -93,7 +96,11 @@ export async function getMarketQuotesPage(
         : a.changePercent - b.changePercent,
     );
     const total = quotes.length;
-    const page = quotes.slice(offset, offset + limit);
+    const page = await attachYahooCharts(
+      quotes.slice(offset, offset + limit),
+      "1mo",
+      20,
+    );
     return {
       quotes: page,
       source: page.length ? ("live" as const) : ("unavailable" as const),
@@ -112,10 +119,11 @@ export async function getMarketQuotesPage(
     page.map((w) => fetchOne(w.symbol, w.company, apiKey)),
   );
   const quotes = settled.filter((x): x is QuoteRow => x !== null);
+  const withCharts = await attachYahooCharts(quotes, "1mo", 20);
 
   return {
-    quotes,
-    source: quotes.length ? ("live" as const) : ("unavailable" as const),
+    quotes: withCharts,
+    source: withCharts.length ? ("live" as const) : ("unavailable" as const),
     total,
     offset,
     limit,

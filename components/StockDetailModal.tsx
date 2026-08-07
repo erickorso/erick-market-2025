@@ -164,20 +164,24 @@ const StockDetailModal: React.FC = () => {
                   </h3>
                   <span
                     className={`text-[11px] ${
-                      detail.chartSource === "live"
-                        ? "text-emerald-400"
-                        : "text-amber-400"
+                      detail.chartSource === "simulated"
+                        ? "text-amber-400"
+                        : "text-emerald-400"
                     }`}
                   >
-                    {detail.chartSource === "live"
-                      ? "Finnhub daily candles (~90d)"
-                      : "Simulated sparkline (candles unavailable)"}
+                    {detail.chartSource === "finnhub"
+                      ? "Finnhub daily candles"
+                      : detail.chartSource === "yahoo"
+                        ? "Yahoo Finance daily closes (~3mo)"
+                        : "Simulated (history unavailable)"}
                   </span>
                 </div>
                 <div className="h-56">
                   <StockChart
                     data={detail.chart}
-                    lineColor={detail.chartSource === "live" ? "#34d399" : "#2dd4bf"}
+                    lineColor={
+                      detail.chartSource === "simulated" ? "#2dd4bf" : "#34d399"
+                    }
                     height={220}
                   />
                 </div>

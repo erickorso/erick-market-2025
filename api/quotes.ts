@@ -21,9 +21,16 @@ type QuoteRow = {
   change: number;
   changePercent: number;
   tags: StyleTag[];
+  chart?: { name: string; price: number }[];
+  chartSource?: "yahoo" | "simulated";
 };
 
 const PAGE_SIZE = 10;
+const yahooCache = new Map<
+  string,
+  { at: number; chart: { name: string; price: number }[] }
+>();
+const YAHOO_TTL_MS = 30 * 60 * 1000;
 
 const CATEGORIES: { id: CategoryId; label: string; hint: string }[] = [
   { id: "all", label: "All", hint: "Full watchlist" },
@@ -155,6 +162,69 @@ async function fetchMany(items: WatchItem[], token: string, concurrency = 5) {
   return out;
 }
 
+type YahooPayload = {
+  chart?: {
+    result?: Array<{
+      timestamp?: number[];
+      indicators?: { quote?: Array<{ close?: Array<number | null> }> };
+    }>;
+  };
+};
+
+async function fetchYahooSparkline(symbol: string) {
+  const cached = yahooCache.get(symbol);
+  if (cached && Date.now() - cached.at < YAHOO_TTL_MS) return cached.chart;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1mo`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; ErickMarket/1.0)",
+        Accept: "application/json",
+      },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as YahooPayload;
+    const result = data.chart?.result?.[0];
+    const times = result?.timestamp ?? [];
+    const closes = result?.indicators?.quote?.[0]?.close ?? [];
+    const points: { name: string; price: number }[] = [];
+    for (let i = 0; i < times.length; i++) {
+      const close = closes[i];
+      if (typeof close !== "number" || !Number.isFinite(close)) continue;
+      const d = new Date(times[i] * 1000);
+      points.push({
+        name: `${d.getUTCMonth() + 1}/${d.getUTCDate()}`,
+        price: Number(close.toFixed(2)),
+      });
+    }
+    if (!points.length) return null;
+    const chart = points.slice(-20);
+    yahooCache.set(symbol, { at: Date.now(), chart });
+    return chart;
+  } catch {
+    return null;
+  }
+}
+
+async function withCharts(rows: QuoteRow[]): Promise<QuoteRow[]> {
+  const out: QuoteRow[] = [];
+  for (let i = 0; i < rows.length; i += 4) {
+    const chunk = rows.slice(i, i + 4);
+    const charts = await Promise.all(
+      chunk.map((r) => fetchYahooSparkline(r.symbol)),
+    );
+    chunk.forEach((row, idx) => {
+      const chart = charts[idx];
+      out.push({
+        ...row,
+        chart: chart ?? undefined,
+        chartSource: chart ? "yahoo" : "simulated",
+      });
+    });
+  }
+  return out;
+}
+
 function mapStock(row: QuoteRow) {
   return {
     symbol: row.symbol,
@@ -164,6 +234,8 @@ function mapStock(row: QuoteRow) {
     change: row.change,
     changePercent: row.changePercent,
     tags: row.tags,
+    chart: row.chart,
+    chartSource: row.chartSource,
   };
 }
 
@@ -220,7 +292,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           : a.changePercent - b.changePercent,
       );
       const total = quotes.length;
-      const page = quotes.slice(offset, offset + limit);
+      const page = await withCharts(quotes.slice(offset, offset + limit));
       res.status(200).json({
         stocks: page.map(mapStock),
         source: "live",
@@ -237,7 +309,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const total = filtered.length;
     const pageItems = filtered.slice(offset, offset + limit);
-    const quotes = await fetchMany(pageItems, apiKey);
+    const quotes = await withCharts(await fetchMany(pageItems, apiKey));
     res.status(200).json({
       stocks: quotes.map(mapStock),
       source: "live",

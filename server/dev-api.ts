@@ -60,15 +60,17 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(status, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
-          stocks: result.quotes.map((row) => ({
-            symbol: row.symbol,
-            company: row.company,
-            name: row.company,
-            price: row.price,
-            change: row.change,
-            changePercent: row.changePercent,
-            tags: row.tags,
-          })),
+                  stocks: result.quotes.map((row) => ({
+                    symbol: row.symbol,
+                    company: row.company,
+                    name: row.company,
+                    price: row.price,
+                    change: row.change,
+                    changePercent: row.changePercent,
+                    tags: row.tags,
+                    chart: row.chart,
+                    chartSource: row.chartSource,
+                  })),
           source: result.source,
           total: result.total,
           offset: result.offset,

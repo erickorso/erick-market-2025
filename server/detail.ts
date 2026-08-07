@@ -1,8 +1,9 @@
 import { WATCHLIST } from "./watchlist";
+import { fetchYahooDaily } from "./yahooChart";
 
 export type StockDetailPayload = {
   source: "live" | "unavailable";
-  chartSource: "live" | "unavailable";
+  chartSource: "finnhub" | "yahoo" | "unavailable";
   symbol: string;
   company: string;
   tags: string[];
@@ -29,7 +30,15 @@ export type StockDetailPayload = {
   chart: { name: string; price: number }[];
 };
 
-type Quote = { c?: number; d?: number; dp?: number; h?: number; l?: number; o?: number; pc?: number };
+type Quote = {
+  c?: number;
+  d?: number;
+  dp?: number;
+  h?: number;
+  l?: number;
+  o?: number;
+  pc?: number;
+};
 type Profile = {
   name?: string;
   exchange?: string;
@@ -71,15 +80,30 @@ export async function getStockDetail(
 
   const quote = (await quoteRes.json()) as Quote;
   const profile = (await profileRes.json()) as Profile;
-  let chartSource: "live" | "unavailable" = "unavailable";
-  let closes: number[] = [];
-  let times: number[] = [];
+  let chartSource: "finnhub" | "yahoo" | "unavailable" = "unavailable";
+  let chart: { name: string; price: number }[] = [];
+
   if (candleRes.ok) {
     const candle = (await candleRes.json()) as Candle;
     if (candle.s === "ok" && Array.isArray(candle.c) && candle.c.length) {
-      chartSource = "live";
-      closes = candle.c;
-      times = candle.t ?? [];
+      chartSource = "finnhub";
+      const closes = candle.c;
+      const times = candle.t ?? [];
+      chart = closes.map((close, i) => {
+        const ts = times[i] ? new Date(times[i] * 1000) : null;
+        const name = ts
+          ? `${ts.getUTCMonth() + 1}/${ts.getUTCDate()}`
+          : `D-${closes.length - i}`;
+        return { name, price: close };
+      });
+    }
+  }
+
+  if (!chart.length) {
+    const yahoo = await fetchYahooDaily(symbol, "3mo", 90);
+    if (yahoo) {
+      chart = yahoo.chart;
+      chartSource = "yahoo";
     }
   }
 
@@ -114,12 +138,6 @@ export async function getStockDetail(
       country: profile.country ?? null,
       currency: profile.currency ?? "USD",
     },
-    chart: closes.map((close, i) => {
-      const ts = times[i] ? new Date(times[i] * 1000) : null;
-      const name = ts
-        ? `${ts.getUTCMonth() + 1}/${ts.getUTCDate()}`
-        : `D-${closes.length - i}`;
-      return { name, price: close };
-    }),
+    chart,
   };
 }

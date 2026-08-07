@@ -71,13 +71,23 @@ function normalizeRow(row: ApiStockRow, index: number): EnrichedStock {
     : symbol
       ? (WATCHLIST.find((w) => w.symbol === symbol)?.tags ?? [])
       : [];
+  const liveChart =
+    Array.isArray(row.chart) && row.chart.length > 1
+      ? row.chart.map((p) => ({ name: p.name, price: Number(p.price) }))
+      : null;
+  const chartSource =
+    liveChart && (row.chartSource === "yahoo" || row.chartSource === "finnhub" || row.chartSource === "live")
+      ? row.chartSource === "live"
+        ? "yahoo"
+        : row.chartSource
+      : "simulated";
   return {
     id,
     symbol,
     company: symbol ? `${company} (${symbol})` : company,
     price,
-    chartData: generateChartData(price),
-    chartSource: "simulated",
+    chartData: liveChart ?? generateChartData(price),
+    chartSource,
     tags,
     change,
     changePercent,
@@ -132,12 +142,22 @@ export function mergeLivePrices(
     ];
     return {
       ...stock,
-      chartData,
+      chartData:
+        stock.chartSource === "yahoo" || stock.chartSource === "finnhub"
+          ? stock.chartData
+          : old.chartSource === "yahoo" || old.chartSource === "finnhub"
+            ? old.chartData
+            : chartData,
       tags: stock.tags?.length ? stock.tags : old.tags,
       symbol: stock.symbol ?? old.symbol,
       change: stock.change ?? old.change,
       changePercent: stock.changePercent ?? old.changePercent,
-      chartSource: old.chartSource ?? "simulated",
+      chartSource:
+        stock.chartSource === "yahoo" || stock.chartSource === "finnhub"
+          ? stock.chartSource
+          : old.chartSource === "yahoo" || old.chartSource === "finnhub"
+            ? old.chartSource
+            : "simulated",
     };
   });
 }

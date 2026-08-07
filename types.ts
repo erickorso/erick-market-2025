@@ -16,8 +16,8 @@ export interface Stock {
 
 export interface EnrichedStock extends Stock {
   chartData: ChartDataPoint[];
-  /** Simulated sparkline on cards — not Finnhub candles. */
-  chartSource?: "simulated" | "live";
+  /** Real daily closes when BFF attaches Yahoo/Finnhub history. */
+  chartSource?: "simulated" | "live" | "yahoo" | "finnhub";
   symbol?: string;
   tags?: StyleTag[];
   change?: number;
@@ -105,4 +105,6 @@ export type ApiStockRow = {
   change?: number;
   changePercent?: number;
   tags?: StyleTag[];
+  chart?: ChartDataPoint[];
+  chartSource?: "simulated" | "yahoo" | "finnhub" | "live";
 };

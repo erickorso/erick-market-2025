@@ -9,6 +9,7 @@ import SellStockForm from "./components/SellStockForm";
 import NoticeBanner from "./components/NoticeBanner";
 import HotSidebar from "./components/HotSidebar";
 import StockDetailModal from "./components/StockDetailModal";
+import RequirePlayer from "./components/RequirePlayer";
 import { StockProvider } from "./context/StockContext";
 import { LeagueProvider } from "./context/LeagueContext";
 import { UI } from "./constants";
@@ -28,10 +29,31 @@ const App: React.FC = () => {
               <main className="container relative z-10 mx-auto min-w-0 flex-grow px-2 py-8 sm:px-4">
                 <Routes>
                   <Route path="/" element={<HomePage />} />
-                  <Route path="/my-stocks" element={<MyStocksPage />} />
-                  <Route path="/my-fund" element={<MyFundPage />} />
                   <Route path="/league" element={<LeaguePage />} />
-                  <Route path="/sell/:stockCompany" element={<SellStockForm />} />
+                  <Route
+                    path="/my-stocks"
+                    element={
+                      <RequirePlayer>
+                        <MyStocksPage />
+                      </RequirePlayer>
+                    }
+                  />
+                  <Route
+                    path="/my-fund"
+                    element={
+                      <RequirePlayer>
+                        <MyFundPage />
+                      </RequirePlayer>
+                    }
+                  />
+                  <Route
+                    path="/sell/:stockCompany"
+                    element={
+                      <RequirePlayer>
+                        <SellStockForm />
+                      </RequirePlayer>
+                    }
+                  />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>

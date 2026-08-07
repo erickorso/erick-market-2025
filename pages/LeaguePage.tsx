@@ -40,12 +40,14 @@ const LeaguePage: React.FC = () => {
   return (
     <div className="relative z-10 mx-auto max-w-3xl p-4 sm:p-6">
       <h1 className="mb-2 text-3xl font-bold text-teal-400 sm:text-4xl">
-        Monthly training league
+        Play · monthly training
       </h1>
       <p className="mb-6 text-sm text-gray-400">
-        Month <span className="text-gray-200">{month}</span> · everyone starts with $
-        {INITIAL_FUND_AMOUNT.toLocaleString()}. Buy/sell with live quotes. Highest
-        equity at month end wins — then a fresh month begins. Demo / training only.
+        Private games seat for month{" "}
+        <span className="text-gray-200">{month}</span>. Market data stays public;
+        trading & ranking need nickname + PIN. Everyone starts with $
+        {INITIAL_FUND_AMOUNT.toLocaleString()}. Highest equity wins the month —
+        then a fresh start. Demo only.
       </p>
 
       {previousWinner && (

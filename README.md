@@ -23,7 +23,7 @@ Browser  →  GET /api/quotes?limit=10&offset=0&q=  →  Finnhub
 
 **Detail modal:** click a card or Hot row → `GET /api/detail?symbol=` (quote + profile2 + history). Charts prefer Finnhub daily candles; if blocked on free tier, fall back to **Yahoo Finance** daily closes (cards: ~1mo sparkline, detail: ~3mo).
 
-**Monthly training league:** `/#/league` — nickname + PIN, $10k start each calendar month, leaderboard by mark-to-market equity. `GET/POST /api/league` is shared when `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` are set; otherwise local/ephemeral. Month change archives a winner and resets the portfolio.
+**Monthly training league (private play):** `/#/league` — nickname + PIN unlocks trading, portfolio and ranking. Market browse (home / Hot / detail) stays public. Scores sync to `GET/POST /api/league` (shared with Upstash env vars; otherwise local/ephemeral). Month change archives a winner and resets the portfolio.
 
 Buy/sell is **still simulated** (local state + `localStorage`) — not a real broker.
 

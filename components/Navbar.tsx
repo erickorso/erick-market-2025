@@ -1,10 +1,11 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { useStockContext } from "../context/StockContext";
+import { useLeague } from "../context/LeagueContext";
 import { UI } from "../constants";
 
 const Navbar: React.FC = () => {
   const { state, dispatch } = useStockContext();
+  const { player } = useLeague();
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     dispatch({ type: "SET_SEARCH_TERM", payload: event.target.value });
@@ -45,10 +46,15 @@ const Navbar: React.FC = () => {
             <Link
               data-testid="League"
               to="/league"
-              className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 transition duration-300 hover:text-white"
+              className="rounded-md px-3 py-2 text-sm font-medium text-teal-300 transition duration-300 hover:text-teal-200"
             >
               {UI.LEAGUE_LINK}
             </Link>
+            {player && (
+              <span className="hidden text-xs text-gray-500 sm:inline">
+                {player.name}
+              </span>
+            )}
           </div>
           <input
             type="search"

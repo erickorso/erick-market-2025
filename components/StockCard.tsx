@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { EnrichedStock } from "../types";
 import { useStockContext } from "../context/StockContext";
+import { useLeague } from "../context/LeagueContext";
 import StockChart from "./Chart";
 import { UI } from "../constants";
 
@@ -10,6 +12,7 @@ interface StockCardProps {
 
 const StockCard: React.FC<StockCardProps> = ({ stock }) => {
   const { dispatch, state } = useStockContext();
+  const { player } = useLeague();
   const [quantity, setQuantity] = useState<number>(1);
 
   const symbol =
@@ -21,6 +24,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
   };
 
   const handleBuyStock = () => {
+    if (!player) return;
     dispatch({ type: "BUY_STOCK", payload: { stock, quantity } });
   };
 
@@ -95,51 +99,67 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
       </div>
 
       <div className="mt-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm text-gray-400">Quantity:</span>
-          <div className="flex items-center">
-            <button
-              data-testid="decrement"
-              type="button"
-              onClick={() => setQuantity((p) => Math.max(1, p - 1))}
-              aria-label={UI.DECREMENT_ARIA}
-              className="rounded-l bg-red-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-red-700"
+        {!player ? (
+          <div className="rounded-lg border border-gray-600 bg-gray-900/50 p-3 text-center">
+            <p className="mb-2 text-xs text-gray-400">
+              Public view — join Play to trade in the monthly game.
+            </p>
+            <Link
+              to="/league"
+              className="inline-block rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600"
             >
-              -
-            </button>
-            <span
-              data-testid="quantity"
-              className="bg-gray-700 px-4 py-1 text-gray-100"
-            >
-              {quantity}
-            </span>
-            <button
-              data-testid="increment"
-              type="button"
-              onClick={() => setQuantity((p) => p + 1)}
-              aria-label={UI.INCREMENT_ARIA}
-              className="rounded-r bg-green-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-green-700"
-            >
-              +
-            </button>
+              Join to play
+            </Link>
           </div>
-        </div>
-        <div data-testid="totalPrice" className="mb-3 text-sm text-gray-300">
-          Total: ${totalPrice.toFixed(2)}
-        </div>
-        <button
-          data-testid={`addCart-${stock.company}`}
-          type="button"
-          onClick={handleBuyStock}
-          disabled={!canAfford || quantity <= 0}
-          className={`w-full rounded-lg px-4 py-2 text-sm font-semibold transition duration-300 ${
-            canAfford && quantity > 0
-              ? "bg-teal-500 text-white hover:bg-teal-600"
-              : "cursor-not-allowed bg-gray-600 text-gray-400"
-          }`}
-        >
-          {UI.BUY_BUTTON} {canAfford ? "" : "(Insufficient Funds)"}
-        </button>
+        ) : (
+          <>
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm text-gray-400">Quantity:</span>
+              <div className="flex items-center">
+                <button
+                  data-testid="decrement"
+                  type="button"
+                  onClick={() => setQuantity((p) => Math.max(1, p - 1))}
+                  aria-label={UI.DECREMENT_ARIA}
+                  className="rounded-l bg-red-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-red-700"
+                >
+                  -
+                </button>
+                <span
+                  data-testid="quantity"
+                  className="bg-gray-700 px-4 py-1 text-gray-100"
+                >
+                  {quantity}
+                </span>
+                <button
+                  data-testid="increment"
+                  type="button"
+                  onClick={() => setQuantity((p) => p + 1)}
+                  aria-label={UI.INCREMENT_ARIA}
+                  className="rounded-r bg-green-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-green-700"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <div data-testid="totalPrice" className="mb-3 text-sm text-gray-300">
+              Total: ${totalPrice.toFixed(2)}
+            </div>
+            <button
+              data-testid={`addCart-${stock.company}`}
+              type="button"
+              onClick={handleBuyStock}
+              disabled={!canAfford || quantity <= 0}
+              className={`w-full rounded-lg px-4 py-2 text-sm font-semibold transition duration-300 ${
+                canAfford && quantity > 0
+                  ? "bg-teal-500 text-white hover:bg-teal-600"
+                  : "cursor-not-allowed bg-gray-600 text-gray-400"
+              }`}
+            >
+              {UI.BUY_BUTTON} {canAfford ? "" : "(Insufficient Funds)"}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -27,7 +27,7 @@ export const UI = {
   HOME_LINK: "Home",
   MY_STOCKS_LINK: "My Stocks",
   MY_FUND_LINK: "My Fund",
-  LEAGUE_LINK: "League",
+  LEAGUE_LINK: "Play",
   SEARCH_PLACEHOLDER: "Search stocks...",
   BUY_BUTTON: "Buy",
   SELL_BUTTON: "Sell",

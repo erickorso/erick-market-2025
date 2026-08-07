@@ -31,16 +31,32 @@ export interface StockContextState {
   portfolio: PortfolioItem[];
   fund: number;
   isLoading: boolean;
+  isLoadingMore: boolean;
   error: string | null;
   searchTerm: string;
   notice: Notice;
   dataSource: "live" | "mock" | null;
+  hasMore: boolean;
+  total: number;
 }
 
 export type StockAction =
-  | { type: "SET_STOCKS"; payload: EnrichedStock[]; source: "live" | "mock" }
+  | {
+      type: "SET_STOCKS";
+      payload: EnrichedStock[];
+      source: "live" | "mock";
+      hasMore: boolean;
+      total: number;
+    }
+  | {
+      type: "APPEND_STOCKS";
+      payload: EnrichedStock[];
+      hasMore: boolean;
+      total: number;
+    }
   | { type: "MERGE_STOCKS"; payload: EnrichedStock[] }
   | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_LOADING_MORE"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "BUY_STOCK"; payload: { stock: EnrichedStock; quantity: number } }
   | {
@@ -68,3 +84,4 @@ export type ApiStockRow = {
   change?: number;
   changePercent?: number;
 };
+

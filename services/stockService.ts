@@ -1,35 +1,30 @@
 import type { ApiStockRow, ChartDataPoint, EnrichedStock } from "../types";
 import { QUOTES_API_URL } from "../constants";
+import { PAGE_SIZE, WATCHLIST } from "../server/watchlist";
 
 export function generateChartData(currentPrice: number): ChartDataPoint[] {
   const data: ChartDataPoint[] = [];
   const points = 10;
+  const base = Math.max(0.01, currentPrice);
   for (let i = 0; i < points; i++) {
-    const fluctuation = (Math.random() - 0.5) * currentPrice * 0.1;
+    const fluctuation = (Math.random() - 0.5) * base * 0.04;
     data.push({
       name: `T-${points - 1 - i}`,
-      price: Math.max(
-        0.01,
-        currentPrice -
-          fluctuation * (points - 1 - i) * 0.2 +
-          Math.random() * currentPrice * 0.05,
-      ),
+      price: Math.max(0.01, base + fluctuation * (i / points)),
     });
   }
-  data.push({ name: "Now", price: currentPrice });
+  data.push({ name: "Now", price: base });
   return data;
 }
 
-const MOCK_ROWS: ApiStockRow[] = [
-  { name: "NovaTech", price: 142.5 },
-  { name: "GreenGrid Energy", price: 68.2 },
-  { name: "Pulse Media", price: 31.75 },
-  { name: "Aether Cloud", price: 210.0 },
-  { name: "Horizon Bio", price: 55.4 },
-  { name: "Summit Retail", price: 88.9 },
-  { name: "Orbit Mobility", price: 24.15 },
-  { name: "Lumen Finance", price: 176.3 },
-];
+function mockRows(): ApiStockRow[] {
+  return WATCHLIST.map((w, i) => ({
+    symbol: w.symbol,
+    company: w.company,
+    name: w.company,
+    price: 50 + ((i * 37) % 400) + Math.random() * 10,
+  }));
+}
 
 function normalizeRow(row: ApiStockRow, index: number): EnrichedStock {
   const companyRaw =
@@ -48,26 +43,13 @@ function normalizeRow(row: ApiStockRow, index: number): EnrichedStock {
         ? Number.parseFloat(row.price)
         : NaN;
   const price = Number.isFinite(priceNum) && priceNum >= 0 ? priceNum : 0;
-  const idBase = symbol ?? company;
+  const id = (symbol ?? company).replace(/\s+/g, "-").toLowerCase();
   return {
-    id: `${idBase.replace(/\s+/g, "-").toLowerCase()}-${index}`,
+    id,
     company: symbol ? `${company} (${symbol})` : company,
     price,
     chartData: generateChartData(price),
   };
-}
-
-function parsePayload(data: unknown): ApiStockRow[] {
-  if (Array.isArray(data)) return data as ApiStockRow[];
-  if (
-    data &&
-    typeof data === "object" &&
-    "stocks" in data &&
-    Array.isArray((data as { stocks: unknown }).stocks)
-  ) {
-    return (data as { stocks: ApiStockRow[] }).stocks;
-  }
-  throw new Error("Invalid data structure received from API.");
 }
 
 export type DataSource = "live" | "mock";
@@ -75,9 +57,19 @@ export type DataSource = "live" | "mock";
 export type FetchStocksResult = {
   stocks: EnrichedStock[];
   source: DataSource;
+  total: number;
+  offset: number;
+  limit: number;
+  hasMore: boolean;
 };
 
-async function fetchJson(url: string, ms = 8000): Promise<unknown> {
+export type FetchStocksParams = {
+  q?: string;
+  offset?: number;
+  limit?: number;
+};
+
+async function fetchJson(url: string, ms = 12000): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   try {
@@ -89,7 +81,6 @@ async function fetchJson(url: string, ms = 8000): Promise<unknown> {
   }
 }
 
-/** Merge new prices into existing stocks (keeps chart history). */
 export function mergeLivePrices(
   previous: EnrichedStock[],
   next: EnrichedStock[],
@@ -109,26 +100,70 @@ export function mergeLivePrices(
   });
 }
 
-export async function fetchStocks(): Promise<FetchStocksResult> {
-  // 1) Real quotes via BFF (Finnhub)
+function paginateMock(
+  params: FetchStocksParams,
+): FetchStocksResult {
+  const q = (params.q ?? "").trim().toLowerCase();
+  const limit = params.limit ?? PAGE_SIZE;
+  const offset = params.offset ?? 0;
+  const all = mockRows().filter((row) => {
+    if (!q) return true;
+    return (
+      (row.symbol ?? "").toLowerCase().includes(q) ||
+      (row.company ?? "").toLowerCase().includes(q) ||
+      (row.name ?? "").toLowerCase().includes(q)
+    );
+  });
+  const slice = all.slice(offset, offset + limit);
+  return {
+    stocks: slice.map(normalizeRow),
+    source: "mock",
+    total: all.length,
+    offset,
+    limit,
+    hasMore: offset + limit < all.length,
+  };
+}
+
+export async function fetchStocks(
+  params: FetchStocksParams = {},
+): Promise<FetchStocksResult> {
+  const q = params.q?.trim() ?? "";
+  const offset = params.offset ?? 0;
+  const limit = params.limit ?? PAGE_SIZE;
+  const sp = new URLSearchParams();
+  if (q) sp.set("q", q);
+  sp.set("offset", String(offset));
+  sp.set("limit", String(limit));
+  const url = `${QUOTES_API_URL}?${sp.toString()}`;
+
   try {
-    const data = await fetchJson(QUOTES_API_URL);
-    const raw = parsePayload(data);
-    if (raw.length) {
-      return { stocks: raw.map(normalizeRow), source: "live" };
+    const data = (await fetchJson(url)) as {
+      stocks?: ApiStockRow[];
+      source?: string;
+      total?: number;
+      offset?: number;
+      limit?: number;
+      hasMore?: boolean;
+    };
+    const raw = Array.isArray(data.stocks) ? data.stocks : [];
+    if (raw.length || data.source === "live") {
+      return {
+        stocks: raw.map(normalizeRow),
+        source: "live",
+        total: data.total ?? raw.length,
+        offset: data.offset ?? offset,
+        limit: data.limit ?? limit,
+        hasMore: Boolean(data.hasMore),
+      };
     }
   } catch {
     /* mock */
   }
 
-  // 2) Local mock (avoid legacy HE Indian list — looks "stuck" when BFF is down)
-  return {
-    stocks: MOCK_ROWS.map(normalizeRow),
-    source: "mock",
-  };
+  return paginateMock(params);
 }
 
-/** Simulate live quotes when not on Finnhub. */
 export function tickStockPrices(stocks: EnrichedStock[]): EnrichedStock[] {
   return stocks.map((stock) => {
     const drift = 1 + (Math.random() - 0.5) * 0.03;
@@ -143,3 +178,5 @@ export function tickStockPrices(stocks: EnrichedStock[]): EnrichedStock[] {
     return { ...stock, price: next, chartData: labeled };
   });
 }
+
+export { PAGE_SIZE };

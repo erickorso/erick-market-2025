@@ -21,6 +21,7 @@ import {
 import {
   fetchStocks,
   mergeLivePrices,
+  PAGE_SIZE,
   tickStockPrices,
 } from "../services/stockService";
 
@@ -29,11 +30,33 @@ const initialState: StockContextState = {
   portfolio: [],
   fund: INITIAL_FUND_AMOUNT,
   isLoading: true,
+  isLoadingMore: false,
   error: null,
   searchTerm: "",
   notice: null,
   dataSource: null,
+  hasMore: false,
+  total: 0,
 };
+
+function readQueryQ(): string {
+  try {
+    return new URLSearchParams(window.location.search).get("q")?.trim() ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeQueryQ(q: string) {
+  try {
+    const url = new URL(window.location.href);
+    if (q.trim()) url.searchParams.set("q", q.trim());
+    else url.searchParams.delete("q");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  } catch {
+    /* ignore */
+  }
+}
 
 function loadPersisted(): { portfolio: PortfolioItem[]; fund: number } | null {
   try {
@@ -70,9 +93,23 @@ const stockReducer = (
         ...state,
         allStocks: action.payload,
         isLoading: false,
+        isLoadingMore: false,
         error: null,
         dataSource: action.source,
+        hasMore: action.hasMore,
+        total: action.total,
       };
+    case "APPEND_STOCKS": {
+      const seen = new Set(state.allStocks.map((s) => s.id));
+      const extra = action.payload.filter((s) => !seen.has(s.id));
+      return {
+        ...state,
+        allStocks: [...state.allStocks, ...extra],
+        isLoadingMore: false,
+        hasMore: action.hasMore,
+        total: action.total,
+      };
+    }
     case "MERGE_STOCKS":
       return {
         ...state,
@@ -81,8 +118,10 @@ const stockReducer = (
       };
     case "SET_LOADING":
       return { ...state, isLoading: action.payload, error: null };
+    case "SET_LOADING_MORE":
+      return { ...state, isLoadingMore: action.payload };
     case "SET_ERROR":
-      return { ...state, error: action.payload, isLoading: false };
+      return { ...state, error: action.payload, isLoading: false, isLoadingMore: false };
     case "SET_SEARCH_TERM":
       return { ...state, searchTerm: action.payload };
     case "SET_NOTICE":
@@ -221,6 +260,7 @@ type StockContextValue = {
   state: StockContextState;
   dispatch: React.Dispatch<StockAction>;
   fetchStocks: () => Promise<void>;
+  loadMore: () => Promise<void>;
 };
 
 const StockContext = createContext<StockContextValue | null>(null);
@@ -228,50 +268,90 @@ const StockContext = createContext<StockContextValue | null>(null);
 export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [state, dispatch] = useReducer(stockReducer, initialState);
+  const [state, dispatch] = useReducer(stockReducer, null, () => ({
+    ...initialState,
+    searchTerm: readQueryQ(),
+  }));
   const hydrated = useRef(false);
   const stocksRef = useRef(state.allStocks);
+  const searchRef = useRef(state.searchTerm);
   stocksRef.current = state.allStocks;
+  searchRef.current = state.searchTerm;
 
-  const loadStocks = useCallback(async (opts?: { silent?: boolean }) => {
-    if (!opts?.silent) {
-      dispatch({ type: "SET_LOADING", payload: true });
-    }
-    try {
-      const { stocks, source } = await fetchStocks();
-      if (opts?.silent) {
-        dispatch({
-          type: "MERGE_STOCKS",
-          payload: mergeLivePrices(stocksRef.current, stocks),
-        });
-        return;
-      }
-      dispatch({ type: "SET_STOCKS", payload: stocks, source });
-      if (source === "mock") {
-        dispatch({
-          type: "SET_NOTICE",
-          payload: {
-            type: "info",
-            message:
-              "Finnhub BFF offline — mock data. Set FINNHUB_API_KEY on Vercel.",
-          },
-        });
-      } else {
-        dispatch({
-          type: "SET_NOTICE",
-          payload: {
-            type: "success",
-            message: "Live market quotes (Finnhub).",
-          },
-        });
-      }
-    } catch (err) {
+  const loadStocks = useCallback(
+    async (opts?: { silent?: boolean; q?: string }) => {
+      const q = opts?.q ?? searchRef.current;
       if (!opts?.silent) {
-        dispatch({
-          type: "SET_ERROR",
-          payload: err instanceof Error ? err.message : "Failed to fetch stocks",
-        });
+        dispatch({ type: "SET_LOADING", payload: true });
       }
+      try {
+        const limit = opts?.silent
+          ? Math.max(PAGE_SIZE, stocksRef.current.length)
+          : PAGE_SIZE;
+        const result = await fetchStocks({ q, offset: 0, limit });
+        if (opts?.silent) {
+          dispatch({
+            type: "MERGE_STOCKS",
+            payload: mergeLivePrices(stocksRef.current, result.stocks),
+          });
+          return;
+        }
+        dispatch({
+          type: "SET_STOCKS",
+          payload: result.stocks,
+          source: result.source,
+          hasMore: result.hasMore,
+          total: result.total,
+        });
+        if (result.source === "mock") {
+          dispatch({
+            type: "SET_NOTICE",
+            payload: {
+              type: "info",
+              message:
+                "Finnhub BFF offline — mock data. Set FINNHUB_API_KEY on Vercel.",
+            },
+          });
+        } else {
+          dispatch({
+            type: "SET_NOTICE",
+            payload: {
+              type: "success",
+              message: "Live market quotes (Finnhub).",
+            },
+          });
+        }
+      } catch (err) {
+        if (!opts?.silent) {
+          dispatch({
+            type: "SET_ERROR",
+            payload:
+              err instanceof Error ? err.message : "Failed to fetch stocks",
+          });
+        }
+      }
+    },
+    [],
+  );
+
+  const loadMore = useCallback(async () => {
+    const loaded = stocksRef.current.length;
+    if (!loaded) return;
+    dispatch({ type: "SET_LOADING_MORE", payload: true });
+    try {
+      const result = await fetchStocks({
+        q: searchRef.current,
+        offset: loaded,
+        limit: PAGE_SIZE,
+      });
+      dispatch({
+        type: "APPEND_STOCKS",
+        payload: result.stocks,
+        hasMore: result.hasMore,
+        total: result.total,
+      });
+    } catch {
+      dispatch({ type: "SET_LOADING_MORE", payload: false });
     }
   }, []);
 
@@ -282,15 +362,28 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
     if (saved) {
       dispatch({ type: "HYDRATE_PORTFOLIO", payload: saved });
     }
-    void loadStocks();
+    void loadStocks({ q: searchRef.current });
   }, [loadStocks]);
+
+  // Debounced server search when searchTerm changes (skip first paint)
+  const searchBoot = useRef(true);
+  useEffect(() => {
+    writeQueryQ(state.searchTerm);
+    if (searchBoot.current) {
+      searchBoot.current = false;
+      return;
+    }
+    const id = window.setTimeout(() => {
+      void loadStocks({ q: state.searchTerm });
+    }, 350);
+    return () => window.clearTimeout(id);
+  }, [state.searchTerm, loadStocks]);
 
   useEffect(() => {
     if (state.isLoading) return;
     persist(state.portfolio, state.fund);
   }, [state.portfolio, state.fund, state.isLoading]);
 
-  // Fake ticks only for mock/legacy
   useEffect(() => {
     if (state.isLoading || state.allStocks.length === 0) return;
     if (state.dataSource === "live") return;
@@ -300,7 +393,6 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => window.clearInterval(id);
   }, [state.isLoading, state.allStocks.length, state.dataSource]);
 
-  // Real poll when live
   useEffect(() => {
     if (state.isLoading || state.dataSource !== "live") return;
     const id = window.setInterval(() => {
@@ -318,8 +410,13 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [state.notice]);
 
   const value = useMemo(
-    () => ({ state, dispatch, fetchStocks: () => loadStocks() }),
-    [state, loadStocks],
+    () => ({
+      state,
+      dispatch,
+      fetchStocks: () => loadStocks(),
+      loadMore,
+    }),
+    [state, loadStocks, loadMore],
   );
 
   return (
@@ -336,3 +433,4 @@ export const useStockContext = () => {
 };
 
 export type { EnrichedStock } from "../types";
+

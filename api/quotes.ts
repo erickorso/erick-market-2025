@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { PAGE_SIZE, WATCHLIST } from "../server/watchlist";
 
 type QuoteRow = {
   symbol: string;
@@ -8,19 +9,9 @@ type QuoteRow = {
   changePercent: number;
 };
 
-const WATCHLIST: { symbol: string; company: string }[] = [
-  { symbol: "AAPL", company: "Apple" },
-  { symbol: "MSFT", company: "Microsoft" },
-  { symbol: "GOOGL", company: "Alphabet" },
-  { symbol: "AMZN", company: "Amazon" },
-  { symbol: "NVDA", company: "NVIDIA" },
-  { symbol: "META", company: "Meta" },
-  { symbol: "TSLA", company: "Tesla" },
-  { symbol: "JPM", company: "JPMorgan" },
-];
-
-const CACHE_MS = 20_000;
-let cache: { at: number; quotes: QuoteRow[] } | null = null;
+/** Per-symbol quote cache (Finnhub rate limits). */
+const quoteCache = new Map<string, { at: number; quote: QuoteRow }>();
+const QUOTE_TTL_MS = 20_000;
 
 type FinnhubQuote = { c?: number; d?: number; dp?: number };
 
@@ -29,38 +20,38 @@ async function fetchOne(
   company: string,
   token: string,
 ): Promise<QuoteRow | null> {
+  const cached = quoteCache.get(symbol);
+  if (cached && Date.now() - cached.at < QUOTE_TTL_MS) {
+    return cached.quote;
+  }
   const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(token)}`;
   const res = await fetch(url);
   if (!res.ok) return null;
   const data = (await res.json()) as FinnhubQuote;
   const price = typeof data.c === "number" ? data.c : 0;
   if (!price || price <= 0) return null;
-  return {
+  const quote: QuoteRow = {
     symbol,
     company,
     price,
     change: typeof data.d === "number" ? data.d : 0,
     changePercent: typeof data.dp === "number" ? data.dp : 0,
   };
+  quoteCache.set(symbol, { at: Date.now(), quote });
+  return quote;
 }
 
-async function getQuotes(apiKey: string | undefined) {
-  if (!apiKey) {
-    return { quotes: [] as QuoteRow[], source: "unavailable" as const, cached: false };
-  }
-  const now = Date.now();
-  if (cache && now - cache.at < CACHE_MS) {
-    return { quotes: cache.quotes, source: "live" as const, cached: true };
-  }
-  const settled = await Promise.all(
-    WATCHLIST.map((w) => fetchOne(w.symbol, w.company, apiKey)),
-  );
-  const quotes = settled.filter((q): q is QuoteRow => q !== null);
-  if (!quotes.length) {
-    return { quotes: [], source: "unavailable" as const, cached: false };
-  }
-  cache = { at: now, quotes };
-  return { quotes, source: "live" as const, cached: false };
+function parsePaging(req: VercelRequest) {
+  const q = String(req.query.q ?? "").trim().toLowerCase();
+  const limitRaw = Number(req.query.limit ?? PAGE_SIZE);
+  const offsetRaw = Number(req.query.offset ?? 0);
+  const limit = Number.isFinite(limitRaw)
+    ? Math.min(Math.max(1, Math.floor(limitRaw)), 25)
+    : PAGE_SIZE;
+  const offset = Number.isFinite(offsetRaw)
+    ? Math.max(0, Math.floor(offsetRaw))
+    : 0;
+  return { q, limit, offset };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -74,27 +65,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    const result = await getQuotes(process.env.FINNHUB_API_KEY);
-    if (result.source !== "live") {
+    const apiKey = process.env.FINNHUB_API_KEY;
+    if (!apiKey) {
       res.status(503).json({
         stocks: [],
         source: "unavailable",
         error: "FINNHUB_API_KEY missing or Finnhub returned no quotes",
+        total: 0,
+        offset: 0,
+        limit: PAGE_SIZE,
+        hasMore: false,
       });
       return;
     }
 
+    const { q, limit, offset } = parsePaging(req);
+    const filtered = !q
+      ? WATCHLIST
+      : WATCHLIST.filter(
+          (w) =>
+            w.symbol.toLowerCase().includes(q) ||
+            w.company.toLowerCase().includes(q),
+        );
+
+    const total = filtered.length;
+    const page = filtered.slice(offset, offset + limit);
+
+    const settled = await Promise.all(
+      page.map((w) => fetchOne(w.symbol, w.company, apiKey)),
+    );
+    const quotes = settled.filter((x): x is QuoteRow => x !== null);
+
     res.status(200).json({
-      stocks: result.quotes.map((q) => ({
-        symbol: q.symbol,
-        company: q.company,
-        name: q.company,
-        price: q.price,
-        change: q.change,
-        changePercent: q.changePercent,
+      stocks: quotes.map((row) => ({
+        symbol: row.symbol,
+        company: row.company,
+        name: row.company,
+        price: row.price,
+        change: row.change,
+        changePercent: row.changePercent,
       })),
-      source: result.source,
-      cached: result.cached,
+      source: "live",
+      total,
+      offset,
+      limit,
+      hasMore: offset + limit < total,
+      q: q || undefined,
     });
   } catch (err) {
     res.status(500).json({

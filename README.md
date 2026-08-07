@@ -7,16 +7,17 @@ By [Erick Vargas](https://github.com/erickorso) · Live: [erick-market-2025.verc
 ## How data works
 
 ```text
-Browser  →  GET /api/quotes  →  Finnhub (server-side key)
-                ↓ fail
-         legacy HackerEarth JSON → mock list
+Browser  →  GET /api/quotes?limit=10&offset=0&q=  →  Finnhub
+                ↓ fail / no key
+              client mock watchlist (same paging)
 ```
 
 | Source | When | Updates |
 |--------|------|---------|
-| **live** | `FINNHUB_API_KEY` set on BFF | Poll every 15s |
-| **legacy** | BFF down, S3 JSON ok | Simulated tick 3s |
-| **mock** | everything fails | Simulated tick 3s |
+| **live** | `FINNHUB_API_KEY` set on BFF | Poll every 15s (loaded window) |
+| **mock** | BFF fails / no key | Simulated tick 3s |
+
+**Paging / search:** first page is 10 symbols (`PAGE_SIZE`). UI “Load more” appends `offset+=10`. Navbar search debounces → `?q=` on the page URL and on `/api/quotes?q=`.
 
 Buy/sell is **still simulated** (local state + `localStorage`) — not a real broker.
 

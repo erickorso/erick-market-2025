@@ -1,8 +1,8 @@
 import http from "node:http";
 import { existsSync, readFileSync } from "node:fs";
-import { getMarketQuotes } from "./quotes";
+import { getMarketQuotesPage } from "./quotes";
+import { PAGE_SIZE } from "./watchlist";
 
-/** Minimal .env loader (no dependency) when --env-file is unavailable. */
 function loadDotEnv() {
   if (!existsSync(".env")) return;
   for (const line of readFileSync(".env", "utf8").split(/\r?\n/)) {
@@ -39,21 +39,33 @@ const server = http.createServer(async (req, res) => {
 
   if (req.url?.startsWith("/api/quotes") && req.method === "GET") {
     try {
-      const result = await getMarketQuotes(process.env.FINNHUB_API_KEY);
+      const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
+      const q = url.searchParams.get("q") ?? undefined;
+      const offset = Number(url.searchParams.get("offset") ?? 0);
+      const limit = Number(url.searchParams.get("limit") ?? PAGE_SIZE);
+      const result = await getMarketQuotesPage(process.env.FINNHUB_API_KEY, {
+        q,
+        offset,
+        limit,
+      });
       const status = result.source === "live" ? 200 : 503;
       res.writeHead(status, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
-          stocks: result.quotes.map((q) => ({
-            symbol: q.symbol,
-            company: q.company,
-            name: q.company,
-            price: q.price,
-            change: q.change,
-            changePercent: q.changePercent,
+          stocks: result.quotes.map((row) => ({
+            symbol: row.symbol,
+            company: row.company,
+            name: row.company,
+            price: row.price,
+            change: row.change,
+            changePercent: row.changePercent,
           })),
           source: result.source,
-          cached: result.cached,
+          total: result.total,
+          offset: result.offset,
+          limit: result.limit,
+          hasMore: result.hasMore,
+          q: q || undefined,
         }),
       );
     } catch (err) {
@@ -78,7 +90,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, "127.0.0.1", () => {
-  console.log(`[market-api] http://127.0.0.1:${PORT}/api/quotes`);
+  console.log(`[market-api] http://127.0.0.1:${PORT}/api/quotes?limit=10`);
   if (!process.env.FINNHUB_API_KEY) {
     console.warn("[market-api] FINNHUB_API_KEY missing — /api/quotes will 503");
   }

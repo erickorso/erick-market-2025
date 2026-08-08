@@ -4,11 +4,14 @@ type Variant = "outline" | "warning" | "live" | "muted";
 type Size = "xs" | "sm";
 
 const variants: Record<Variant, string> = {
-  outline: "rounded border border-gray-600 text-gray-400",
+  outline: "rounded border border-gray-600 text-slate-600 dark:text-gray-400",
   warning:
-    "rounded border border-amber-500/40 bg-amber-500/10 font-semibold text-amber-300",
-  live: "rounded-full bg-teal-500/20 font-medium text-teal-300",
-  muted: "rounded-full bg-slate-500/20 font-medium text-slate-300",
+    "rounded border border-amber-500/40 bg-amber-500/10 font-semibold text-amber-700 dark:text-amber-300",
+  // The tinted pills need a dark foreground on a light background: teal-300 on
+  // a light teal tint measures 1.14:1.
+  live: "rounded-full bg-teal-700/15 font-medium text-teal-800 dark:bg-teal-500/20 dark:text-teal-300",
+  muted:
+    "rounded-full bg-slate-500/20 font-medium text-slate-700 dark:text-slate-300",
 };
 
 const sizes: Record<Size, string> = {

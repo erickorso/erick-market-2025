@@ -18,7 +18,7 @@ const Navbar: React.FC = () => {
           <ThemeToggle />
           <Link
             to="/"
-            className="text-2xl font-bold text-teal-600 transition duration-300 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300"
+            className="text-2xl font-bold text-teal-700 transition duration-300 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300"
           >
             Erick Stocks
           </Link>
@@ -53,12 +53,12 @@ const Navbar: React.FC = () => {
             <Link
               data-testid="League"
               to="/league"
-              className="rounded-md px-3 py-2 text-sm font-medium text-teal-600 transition duration-300 hover:text-teal-500 dark:text-teal-300 dark:hover:text-teal-200"
+              className="rounded-md px-3 py-2 text-sm font-medium text-teal-700 transition duration-300 hover:text-teal-500 dark:text-teal-300 dark:hover:text-teal-200"
             >
               {t("navPlay")}
             </Link>
             {!isLoading && isAuthenticated && (
-              <span className="hidden max-w-[8rem] truncate text-xs text-slate-500 dark:text-gray-500 sm:inline">
+              <span className="hidden max-w-[8rem] truncate text-xs text-slate-600 dark:text-gray-400 sm:inline">
                 {displayName || auth?.email}
               </span>
             )}
@@ -66,7 +66,7 @@ const Navbar: React.FC = () => {
               <button
                 type="button"
                 onClick={isAuthenticated ? logout : login}
-                className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-teal-500 hover:text-teal-600 dark:border-gray-600 dark:text-gray-300 dark:hover:border-teal-500 dark:hover:text-teal-300"
+                className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-teal-500 hover:text-teal-700 dark:border-gray-600 dark:text-gray-300 dark:hover:border-teal-500 dark:hover:text-teal-300"
               >
                 {isAuthenticated ? t("logout") : t("login")}
               </button>
@@ -74,7 +74,7 @@ const Navbar: React.FC = () => {
             <button
               type="button"
               onClick={toggleLang}
-              className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700 hover:border-teal-500 hover:text-teal-600 dark:border-gray-600 dark:text-gray-300 dark:hover:border-teal-500 dark:hover:text-teal-300"
+              className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700 hover:border-teal-500 hover:text-teal-700 dark:border-gray-600 dark:text-gray-300 dark:hover:border-teal-500 dark:hover:text-teal-300"
               aria-label={t("langAria")}
               title={lang === "en" ? "Español" : "English"}
             >

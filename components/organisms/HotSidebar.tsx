@@ -38,19 +38,19 @@ const HotSidebar: React.FC = () => {
     >
       <div className="p-3 sm:p-4">
         <div className="mb-3 flex items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-teal-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-400">
             {t("hotNow")}
           </h2>
           <span
             className={`text-[10px] font-medium ${
-              mode === "socket" ? "text-emerald-400" : "text-gray-500"
+              mode === "socket" ? "text-emerald-700 dark:text-emerald-400" : "text-slate-600 dark:text-gray-400"
             }`}
             title={`${Math.round(refreshMs / 60000)}m`}
           >
             {modeLabel}
           </span>
         </div>
-        <p className="mb-3 text-[11px] text-gray-500">
+        <p className="mb-3 text-[11px] text-slate-600 dark:text-gray-400">
           {t("hotSub")} {formatAgo(updatedAt)}
         </p>
         {error && (
@@ -74,7 +74,7 @@ const HotSidebar: React.FC = () => {
             </li>
           ))}
           {stocks.length === 0 && (
-            <li className="py-4 text-xs text-gray-500">{t("hotLoading")}</li>
+            <li className="py-4 text-xs text-slate-600 dark:text-gray-400">{t("hotLoading")}</li>
           )}
         </ol>
         <DisclaimerNote />

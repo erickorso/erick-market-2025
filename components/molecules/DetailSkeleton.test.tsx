@@ -12,7 +12,7 @@ describe("DetailSkeleton", () => {
 
   it("animates so it reads as a placeholder, not as content", () => {
     renderWithProviders(<DetailSkeleton label="Loading" />);
-    expect(screen.getByRole("status")).toHaveClass("animate-pulse");
+    expect(screen.getByRole("status")).toHaveClass("motion-safe:animate-pulse");
   });
 
   // It exists to hold the modal's height steady between loading and loaded,

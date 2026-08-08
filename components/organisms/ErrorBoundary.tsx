@@ -36,6 +36,14 @@ class ErrorBoundary extends React.Component<Props, State> {
     });
   }
 
+  componentDidUpdate(prev: Props) {
+    // A route change should give the subtree another chance rather than
+    // leaving the fallback up until a manual reload.
+    if (this.state.error && prev.children !== this.props.children) {
+      this.setState({ error: null });
+    }
+  }
+
   render() {
     const { error } = this.state;
     if (!error) return this.props.children;
@@ -56,19 +64,19 @@ class ErrorBoundary extends React.Component<Props, State> {
         <h2 className="mb-2 text-lg font-semibold text-rose-300">
           {labels.title}
         </h2>
-        <p className="mb-4 text-sm text-gray-400">{labels.body}</p>
+        <p className="mb-4 text-sm text-slate-600 dark:text-gray-400">{labels.body}</p>
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600"
+          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
         >
           {labels.reload}
         </button>
         <details className="mt-4 text-left">
-          <summary className="cursor-pointer text-xs text-gray-500">
+          <summary className="cursor-pointer text-xs text-slate-600 dark:text-gray-400">
             {labels.details}
           </summary>
-          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words text-[11px] text-gray-500">
+          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words text-[11px] text-slate-600 dark:text-gray-400">
             {error.message}
           </pre>
         </details>

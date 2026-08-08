@@ -105,9 +105,45 @@ directly testable function.
 `ErrorBoundary` is mounted at three depths so one failure degrades rather than
 blanking the page: the root, the routed centre column, and inline around the
 Three.js background (falls back to nothing) and the recharts panels (fall back
-to a label). Caught errors, plus `unhandledrejection` and `window.error`, go
-through [`services/reporter.ts`](services/reporter.ts), whose sink is swappable
-in one line if you want to plug in Sentry.
+to a label). A route change clears the fallback, so a transient failure does
+not strand the user until they reload.
+
+### Accessibility
+
+Held to **WCAG 2.1 AA**, and enforced rather than asserted: axe runs over
+components in the unit suite and over the assembled pages in
+[`e2e/a11y.spec.ts`](e2e/a11y.spec.ts) — dark and light, desktop and mobile,
+with the detail modal open. The scan is what surfaced most of what follows.
+
+| Concern | How |
+|---|---|
+| **Contrast** | Every muted, semantic and CTA colour has a light-mode counterpart. The app was built dark-first and reused dark-only colours on white: `text-gray-500` on the dark panels measured 4.0:1, and white on `bg-teal-500` — the Buy button — measured **2.48:1**. |
+| **Modal** | Focus is trapped, returned to whatever opened it, and the rest of the page is marked `inert` + `aria-hidden`. `aria-modal` alone does not stop virtual-cursor browsing behind a dialog. |
+| **Keyboard** | A skip link is the first tab stop, jumping the nav and both sidebars straight to `<main>`. |
+| **Motion** | `prefers-reduced-motion` skips the Three.js scene entirely — which also spares that visitor the ~475 kB chunk — stops the chart replaying its draw animation, and gates the pulse and spinner behind `motion-safe:`. |
+
+### Observability
+
+Client and server emit the same thing: one structured JSON line per event on
+stdout, which is where Vercel's log drains pick them up. That makes production
+failures greppable without signing up for anything, and pointing the stream at
+Sentry later is a drain setting rather than a code change.
+
+- **Server** — [`logger.ts`](api/_lib/logger.ts) logs route, status, duration,
+  request id and a hashed client per request. No raw IP is ever written.
+- **Client** — [`reporter.ts`](services/reporter.ts) batches errors and vitals
+  and ships them to [`/api/log`](api/log.ts) with `sendBeacon`, which survives
+  the tab closing. Identical events fold into one with a `count`, and a session
+  is capped at 50, so a render loop throwing every frame cannot flood the
+  drain. A session id correlates every event from one page load.
+- **Field performance** — [`vitals.ts`](services/vitals.ts) reports TTFB, FCP,
+  LCP, CLS and INP from real visitors, batched with everything else.
+- **The endpoint treats the browser as untrusted**: shape and size validation,
+  a 20-event cap per batch, 4 kB stacks, and a tighter 30 req/min limit than
+  the read routes.
+
+Swapping in a third party is one line in `index.tsx`:
+`setErrorSink(e => Sentry.captureException(e))`.
 
 ### Auth layers
 
@@ -353,10 +389,11 @@ Every push and pull request to `main` runs
 [the CI workflow](.github/workflows/ci.yml): typecheck, unit tests with
 coverage, build, and the Playwright suite on Chromium.
 
-**705 unit tests in 62 files — one test file per source file**, at **98.6% line
-coverage**. Vitest runs everything under `jsdom` with Testing Library;
-components render against the real i18n and theme providers, so tests assert on
-the strings users actually see.
+**770 unit tests in 68 files — one test file per source file** — plus 29
+Playwright specs, of which 9 are a full WCAG 2.1 AA axe scan. Vitest runs
+everything under `jsdom` with Testing Library; components render against the
+real i18n and theme providers, so tests assert on the strings users actually
+see.
 
 | Layer | Coverage | Notable cases |
 |-------|---------:|---------------|

@@ -18,7 +18,7 @@ const RankListItem: React.FC<{
     }`}
   >
     <div className="flex items-center justify-between gap-2">
-      <span className="text-xs text-slate-400 dark:text-gray-500">{rank}.</span>
+      <span className="text-xs text-slate-600 dark:text-gray-400">{rank}.</span>
       <span className="flex-1 truncate text-sm font-semibold text-slate-800 dark:text-gray-100">
         {name}
       </span>
@@ -28,7 +28,7 @@ const RankListItem: React.FC<{
         className="text-xs font-medium"
       />
     </div>
-    <div className="mt-0.5 text-right text-[11px] text-gray-500">
+    <div className="mt-0.5 text-right text-[11px] text-slate-600 dark:text-gray-400">
       <Price value={equity} digits={0} />
     </div>
   </div>

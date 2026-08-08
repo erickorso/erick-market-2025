@@ -5,17 +5,17 @@ import ChangePercent from "./ChangePercent";
 describe("ChangePercent", () => {
   it("prefixes gains with a plus and colours them green", () => {
     render(<ChangePercent value={1.25} />);
-    expect(screen.getByText("+1.25%")).toHaveClass("text-emerald-400");
+    expect(screen.getByText("+1.25%")).toHaveClass("text-emerald-700", "dark:text-emerald-400");
   });
 
   it("colours losses red and keeps the minus sign", () => {
     render(<ChangePercent value={-3.5} />);
-    expect(screen.getByText("-3.50%")).toHaveClass("text-rose-400");
+    expect(screen.getByText("-3.50%")).toHaveClass("text-rose-600", "dark:text-rose-400");
   });
 
   it("treats zero as a gain, matching market convention", () => {
     render(<ChangePercent value={0} />);
-    expect(screen.getByText("+0.00%")).toHaveClass("text-emerald-400");
+    expect(screen.getByText("+0.00%")).toHaveClass("text-emerald-700", "dark:text-emerald-400");
   });
 
   it("accepts a custom precision", () => {

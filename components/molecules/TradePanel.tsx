@@ -28,14 +28,14 @@ const styles: Record<
   md: {
     root: "w-full",
     row: "mb-3 flex items-center justify-between",
-    label: "text-sm text-gray-400",
+    label: "text-sm text-slate-600 dark:text-gray-400",
     total: "mb-3 text-sm text-gray-300",
     button: "w-full rounded-lg px-4 py-2 text-sm font-semibold",
   },
   sm: {
     root: "flex w-fit max-w-[14rem] flex-col items-stretch gap-2",
     row: "flex items-center justify-end gap-2",
-    label: "text-xs text-gray-400",
+    label: "text-xs text-slate-600 dark:text-gray-400",
     total: "text-right text-xs text-gray-300",
     button: "w-full rounded-lg px-3 py-2 text-sm font-semibold",
   },
@@ -93,10 +93,10 @@ const TradePanel: React.FC<TradePanelProps> = ({
           aria-describedby={tipId}
           className={`transition duration-300 ${s.button} ${
             !locked && !disabled
-              ? "bg-teal-500 text-white hover:bg-teal-600"
+              ? "bg-teal-700 text-white hover:bg-teal-800"
               : locked
                 ? "cursor-pointer bg-gray-600 text-gray-200 hover:bg-gray-500"
-                : "cursor-not-allowed bg-gray-600 text-gray-400"
+                : "cursor-not-allowed bg-gray-600 text-slate-600 dark:text-gray-400"
           }`}
         >
           {t("buy")} {!locked && !canAfford ? t("insufficientFunds") : ""}

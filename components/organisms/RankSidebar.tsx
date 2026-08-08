@@ -43,7 +43,7 @@ const RankSidebar: React.FC = () => {
         <button
           type="button"
           onClick={() => setCollapsed(false)}
-          className="rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-400 hover:bg-gray-800 hover:text-amber-300 lg:[writing-mode:vertical-rl] lg:rotate-180"
+          className="rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400 hover:bg-gray-800 hover:text-amber-700 dark:text-amber-300 lg:[writing-mode:vertical-rl] lg:rotate-180"
           aria-expanded={false}
           title={t("expandTop10")}
         >
@@ -52,7 +52,7 @@ const RankSidebar: React.FC = () => {
         <button
           type="button"
           onClick={() => setCollapsed(false)}
-          className="rounded p-1 text-gray-400 hover:text-teal-300"
+          className="rounded p-1 text-slate-600 dark:text-gray-400 hover:text-teal-300"
           aria-label={t("expandTop10")}
         >
           «
@@ -68,20 +68,20 @@ const RankSidebar: React.FC = () => {
     >
       <div className="p-3 sm:p-4">
         <div className="mb-3 flex items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
             {t("top10")}
           </h2>
           <button
             type="button"
             onClick={() => setCollapsed(true)}
-            className="rounded px-1.5 py-0.5 text-xs text-gray-500 hover:bg-gray-800 hover:text-gray-300"
+            className="rounded px-1.5 py-0.5 text-xs text-slate-600 dark:text-gray-400 hover:bg-gray-800 hover:text-gray-300"
             aria-expanded={true}
             aria-label={t("collapse")}
           >
             {t("collapse")}
           </button>
         </div>
-        <p className="mb-3 text-[11px] text-gray-500">
+        <p className="mb-3 text-[11px] text-slate-600 dark:text-gray-400">
           {t("monthEquity", { month })}
         </p>
 
@@ -105,9 +105,9 @@ const RankSidebar: React.FC = () => {
             </li>
           ))}
           {top10.length === 0 && (
-            <li className="py-3 text-xs text-gray-500">
+            <li className="py-3 text-xs text-slate-600 dark:text-gray-400">
               {t("noScoresYet")}{" "}
-              <Link to="/league" className="text-teal-400 hover:text-teal-300">
+              <Link to="/league" className="text-teal-700 dark:text-teal-400 hover:text-teal-300">
                 {t("joinPlay")}
               </Link>
             </li>
@@ -116,7 +116,7 @@ const RankSidebar: React.FC = () => {
 
         <Link
           to="/league"
-          className="mt-4 inline-block text-[11px] font-medium text-teal-400 hover:text-teal-300"
+          className="mt-4 inline-block text-[11px] font-medium text-teal-700 dark:text-teal-400 hover:text-teal-300"
         >
           {t("fullLeague")}
         </Link>

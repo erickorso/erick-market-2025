@@ -12,7 +12,7 @@ const ChangePercent: React.FC<{
   className?: string;
 }> = ({ value, digits = 2, suffix = "%", className = "" }) => (
   <span
-    className={`${value >= 0 ? "text-emerald-400" : "text-rose-400"} ${className}`}
+    className={`${value >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"} ${className}`}
   >
     {value >= 0 ? "+" : ""}
     {value.toFixed(digits)}

@@ -30,7 +30,7 @@ const DisclaimerNote: React.FC = () => {
           <path d="M12 16v-4" />
           <path d="M12 8h.01" />
         </svg>
-        <span className="text-[10px] font-medium uppercase tracking-wide text-gray-500">
+        <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-gray-400">
           Info
         </span>
       </button>
@@ -38,7 +38,7 @@ const DisclaimerNote: React.FC = () => {
         <p
           id="hot-disclaimer"
           role="note"
-          className="mt-2 text-[10px] leading-relaxed text-gray-500"
+          className="mt-2 text-[10px] leading-relaxed text-slate-600 dark:text-gray-400"
         >
           {t("disclaimer")}
         </p>

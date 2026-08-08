@@ -22,7 +22,7 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center text-gray-400" role="status">
+      <div className="p-8 text-center text-slate-600 dark:text-gray-400" role="status">
         {t("loading")}
       </div>
     );
@@ -31,20 +31,20 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({
   if (!isAuthenticated) {
     return (
       <div className="mx-auto max-w-lg p-6 text-center">
-        <h1 className="mb-2 text-2xl font-bold text-teal-400">
+        <h1 className="mb-2 text-2xl font-bold text-teal-700 dark:text-teal-400">
           {t("loginRequiredTitle")}
         </h1>
-        <p className="mb-4 text-sm text-gray-400">
+        <p className="mb-4 text-sm text-slate-600 dark:text-gray-400">
           {configured ? t("loginRequiredBody") : t("authNotConfigured")}
         </p>
         <button
           type="button"
           onClick={login}
-          className="inline-block rounded-lg bg-teal-500 px-4 py-2 font-semibold text-white hover:bg-teal-600"
+          className="inline-block rounded-lg bg-teal-700 px-4 py-2 font-semibold text-white hover:bg-teal-800"
         >
           {t("login")}
         </button>
-        <p className="mt-3 text-[11px] text-gray-600">
+        <p className="mt-3 text-[11px] text-slate-600 dark:text-gray-400">
           {location.pathname}
         </p>
       </div>
@@ -54,12 +54,12 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({
   if (profileError) {
     return (
       <div className="mx-auto max-w-lg p-6 text-center">
-        <h1 className="mb-2 text-xl font-bold text-rose-400">{t("error")}</h1>
-        <p className="mb-4 text-sm text-gray-400">{profileError}</p>
+        <h1 className="mb-2 text-xl font-bold text-rose-600 dark:text-rose-400">{t("error")}</h1>
+        <p className="mb-4 text-sm text-slate-600 dark:text-gray-400">{profileError}</p>
         <button
           type="button"
           onClick={login}
-          className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600"
+          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
         >
           {t("login")}
         </button>

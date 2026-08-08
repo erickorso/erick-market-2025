@@ -16,7 +16,7 @@ const MyStocksPage: React.FC = () => {
 
   if (portfolio.length === 0) {
     return (
-      <div className="p-8 text-center text-xl text-gray-400">
+      <div className="p-8 text-center text-xl text-slate-600 dark:text-gray-400">
         {t("noStocksOwned")}
       </div>
     );
@@ -24,14 +24,14 @@ const MyStocksPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 sm:p-6">
-      <h1 className="mb-8 text-center text-3xl font-bold text-teal-400 sm:text-4xl">
+      <h1 className="mb-8 text-center text-3xl font-bold text-teal-700 dark:text-teal-400 sm:text-4xl">
         {t("myPortfolio")}
       </h1>
       <div className="mb-8 rounded-xl bg-gray-800 p-6 shadow-2xl">
         <h2 className="text-2xl font-semibold text-gray-100">
           {t("portfolioSummary")}
         </h2>
-        <p data-testid="totalPrice" className="mt-2 text-xl text-teal-400">
+        <p data-testid="totalPrice" className="mt-2 text-xl text-teal-700 dark:text-teal-400">
           {t("totalNet")} ${totalNetValue.toFixed(2)}
         </p>
       </div>

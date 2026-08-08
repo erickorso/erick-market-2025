@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ErrorBoundary from "./ErrorBoundary";
-import { setErrorSink } from "../../services/reporter";
+import { consoleErrorSink, setErrorSink } from "../../services/reporter";
 
 function Boom({ message = "kaboom" }: { message?: string }): React.ReactElement {
   throw new Error(message);
@@ -13,7 +13,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  setErrorSink((report) => console.error("[client-error]", report));
+  // Console only: a unit test must never beacon to /api/log.
+  setErrorSink(consoleErrorSink);
 });
 
 describe("ErrorBoundary", () => {
@@ -92,8 +93,9 @@ describe("ErrorBoundary", () => {
 
     expect(sink).toHaveBeenCalledTimes(1);
     expect(sink.mock.calls[0][0]).toMatchObject({
+      kind: "error",
       message: "recharts exploded",
-      source: "boundary:chart",
+      name: "boundary:chart",
     });
     expect(sink.mock.calls[0][0].componentStack).toBeTruthy();
   });

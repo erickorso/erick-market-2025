@@ -172,6 +172,7 @@ const en = {
   crashDetails: "Technical details",
   chartUnavailable: "Chart unavailable",
   backgroundUnavailable: "3D background unavailable",
+  skipToContent: "Skip to main content",
 } as const;
 
 type Dict = { [K in keyof typeof en]: string };
@@ -347,6 +348,7 @@ const es: Dict = {
   crashDetails: "Detalles técnicos",
   chartUnavailable: "Gráfica no disponible",
   backgroundUnavailable: "Fondo 3D no disponible",
+  skipToContent: "Saltar al contenido principal",
 };
 
 export type MsgKey = keyof typeof en;

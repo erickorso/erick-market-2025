@@ -48,7 +48,7 @@ const CategoryFilter: React.FC = () => {
           );
         })}
       </div>
-      <p className="mt-2 text-xs text-gray-500">
+      <p className="mt-2 text-xs text-slate-600 dark:text-gray-400">
         {t(hintKey(active))}. {t("eduLabels")}
       </p>
     </div>

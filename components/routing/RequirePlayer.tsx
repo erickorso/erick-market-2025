@@ -13,14 +13,14 @@ const RequirePlayer: React.FC<{ children: React.ReactNode }> = ({
   if (!player) {
     return (
       <div className="mx-auto max-w-lg p-6 text-center">
-        <h1 className="mb-2 text-2xl font-bold text-teal-400">
+        <h1 className="mb-2 text-2xl font-bold text-teal-700 dark:text-teal-400">
           {t("privateGames")}
         </h1>
-        <p className="mb-4 text-sm text-gray-400">{t("privateGamesBody")}</p>
+        <p className="mb-4 text-sm text-slate-600 dark:text-gray-400">{t("privateGamesBody")}</p>
         <Link
           to="/league"
           state={{ from: location.pathname }}
-          className="inline-block rounded-lg bg-teal-500 px-4 py-2 font-semibold text-white hover:bg-teal-600"
+          className="inline-block rounded-lg bg-teal-700 px-4 py-2 font-semibold text-white hover:bg-teal-800"
         >
           {t("joinToPlay")} →
         </Link>

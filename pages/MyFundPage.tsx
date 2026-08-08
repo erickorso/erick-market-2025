@@ -16,7 +16,7 @@ const MyFundPage: React.FC = () => {
 
   return (
     <div className="container mx-auto max-w-2xl p-4 sm:p-6">
-      <h1 className="mb-8 text-center text-3xl font-bold text-teal-400 sm:text-4xl">
+      <h1 className="mb-8 text-center text-3xl font-bold text-teal-700 dark:text-teal-400 sm:text-4xl">
         {t("fundStatus")}
       </h1>
       <div className="space-y-6 rounded-xl bg-gray-800 p-8 shadow-2xl">
@@ -46,7 +46,7 @@ const MyFundPage: React.FC = () => {
 
       {portfolio.length > 0 && (
         <div className="mt-8 rounded-xl bg-gray-800 p-6 shadow-xl">
-          <h3 className="mb-4 text-2xl font-semibold text-teal-400">
+          <h3 className="mb-4 text-2xl font-semibold text-teal-700 dark:text-teal-400">
             {t("investedStocks")}
           </h3>
           <ul className="space-y-3">

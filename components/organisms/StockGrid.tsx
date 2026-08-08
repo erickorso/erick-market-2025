@@ -14,7 +14,7 @@ const StockGrid: React.FC<{
 
   if (stocks.length === 0) {
     return (
-      <div className="p-8 text-center text-xl text-gray-400">
+      <div className="p-8 text-center text-xl text-slate-600 dark:text-gray-400">
         {t("noStocks")}
       </div>
     );
@@ -33,7 +33,7 @@ const StockGrid: React.FC<{
             type="button"
             onClick={onLoadMore}
             disabled={isLoadingMore}
-            className="rounded-lg bg-teal-500 px-6 py-2.5 font-semibold text-white hover:bg-teal-600 disabled:cursor-wait disabled:opacity-60"
+            className="rounded-lg bg-teal-700 px-6 py-2.5 font-semibold text-white hover:bg-teal-800 disabled:cursor-wait disabled:opacity-60"
             aria-busy={isLoadingMore}
           >
             {isLoadingMore ? t("loading") : t("loadMore")}

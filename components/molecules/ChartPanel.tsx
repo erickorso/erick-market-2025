@@ -18,7 +18,7 @@ const ChartPanel: React.FC<{
       <h3 className="text-sm font-semibold text-gray-200">{title}</h3>
       <span
         className={`text-[11px] ${
-          simulated ? "text-amber-400" : "text-emerald-400"
+          simulated ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400"
         }`}
       >
         {sourceLabel}
@@ -28,7 +28,7 @@ const ChartPanel: React.FC<{
       <ErrorBoundary
         source="chart"
         fallback={
-          <div className="flex h-full items-center justify-center rounded-lg bg-gray-800/80 text-sm text-gray-500">
+          <div className="flex h-full items-center justify-center rounded-lg bg-gray-800/80 text-sm text-slate-600 dark:text-gray-400">
             {errorLabel}
           </div>
         }

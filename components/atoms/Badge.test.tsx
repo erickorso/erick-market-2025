@@ -15,17 +15,17 @@ describe("Badge", () => {
 
   it("warns in amber for a simulated quote", () => {
     render(<Badge variant="warning">mock quote</Badge>);
-    expect(screen.getByText("mock quote")).toHaveClass("text-amber-300");
+    expect(screen.getByText("mock quote")).toHaveClass("text-amber-700", "dark:text-amber-300");
   });
 
   it("marks a live data source in teal", () => {
     render(<Badge variant="live">live</Badge>);
-    expect(screen.getByText("live")).toHaveClass("text-teal-300");
+    expect(screen.getByText("live")).toHaveClass("text-teal-800", "dark:text-teal-300");
   });
 
   it("mutes a mocked data source", () => {
     render(<Badge variant="muted">mock</Badge>);
-    expect(screen.getByText("mock")).toHaveClass("text-slate-300");
+    expect(screen.getByText("mock")).toHaveClass("text-slate-700", "dark:text-slate-300");
   });
 
   it("uses tighter padding at the xs size for the card grid", () => {

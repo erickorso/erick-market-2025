@@ -73,7 +73,7 @@ describe("StockCard", () => {
     render(<StockCard stock={stock({ changePercent: -2.5 })} />);
 
     const change = screen.getByText(/-2\.50/);
-    expect(change).toHaveClass("text-rose-400");
+    expect(change).toHaveClass("text-rose-600", "dark:text-rose-400");
   });
 
   it("caps the tag list at three", () => {

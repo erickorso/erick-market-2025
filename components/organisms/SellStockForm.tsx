@@ -16,7 +16,7 @@ const SellStockForm: React.FC = () => {
         <p className="text-gray-300">{t("stockNotFound")}</p>
         <button
           onClick={() => navigate("/my-stocks")}
-          className="mt-4 rounded-md bg-teal-500 px-4 py-2 font-semibold text-white transition duration-300 hover:bg-teal-600"
+          className="mt-4 rounded-md bg-teal-700 px-4 py-2 font-semibold text-white transition duration-300 hover:bg-teal-800"
         >
           {t("backToMyStocks")}
         </button>
@@ -31,11 +31,11 @@ const SellStockForm: React.FC = () => {
   return (
     <div className="container mx-auto max-w-lg p-6">
       <div data-testid="form" className="rounded-xl bg-gray-800 p-8 shadow-2xl">
-        <h2 className="mb-6 text-center text-3xl font-bold text-teal-400">
+        <h2 className="mb-6 text-center text-3xl font-bold text-teal-700 dark:text-teal-400">
           {t("sellStocks")}
         </h2>
         <div className="mb-4">
-          <label className="mb-2 block text-sm font-bold text-gray-400">
+          <label className="mb-2 block text-sm font-bold text-slate-600 dark:text-gray-400">
             {t("company")}
           </label>
           <input
@@ -47,7 +47,7 @@ const SellStockForm: React.FC = () => {
         </div>
         <div className="mb-4">
           <label
-            className="mb-2 block text-sm font-bold text-gray-400"
+            className="mb-2 block text-sm font-bold text-slate-600 dark:text-gray-400"
             htmlFor="quantity"
           >
             {t("qtyToSell", { max: form.maxQuantity })}

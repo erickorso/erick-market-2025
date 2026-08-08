@@ -34,6 +34,13 @@ const AppShell: React.FC = () => {
   return (
     <HashRouter>
       <div className="flex h-dvh flex-col overflow-hidden bg-slate-100 text-slate-900 dark:bg-gray-900 dark:text-gray-100">
+        {/* First tab stop: lets keyboard users jump the nav and both sidebars. */}
+        <a
+          href="#main"
+          className="sr-only z-[70] rounded-md bg-teal-700 px-4 py-2 font-semibold text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4"
+        >
+          {t("skipToContent")}
+        </a>
         <header className="relative z-50 shrink-0">
           <Navbar />
           <NoticeBanner />
@@ -43,7 +50,11 @@ const AppShell: React.FC = () => {
           <HotSidebar />
 
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
-            <main className="container relative z-10 mx-auto w-full flex-1 px-2 py-8 sm:px-4">
+            <main
+              id="main"
+              tabIndex={-1}
+              className="container relative z-10 mx-auto w-full flex-1 px-2 py-8 outline-none sm:px-4"
+            >
               <ErrorBoundary source="route" labels={crashLabels}>
                 <Routes>
                   <Route path="/" element={<HomePage />} />
@@ -67,7 +78,7 @@ const AppShell: React.FC = () => {
                 </Routes>
               </ErrorBoundary>
             </main>
-            <footer className="mt-auto border-t border-slate-200 bg-white px-4 py-5 text-center text-sm text-slate-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
+            <footer className="mt-auto border-t border-slate-200 bg-white px-4 py-5 text-center text-sm text-slate-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
               <p>
                 © {year} Erick Stocks Simulator. {t("footerDemo")}
               </p>

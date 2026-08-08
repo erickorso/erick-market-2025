@@ -39,7 +39,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
         >
           <h3
             data-testid={stock.company}
-            className="truncate text-xl font-semibold text-teal-600 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300"
+            className="truncate text-xl font-semibold text-teal-700 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300"
             title={stock.company}
           >
             {stock.company}
@@ -66,7 +66,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
           />
         )}
 
-        <p className="mb-1 text-xs text-gray-500">
+        <p className="mb-1 text-xs text-slate-600 dark:text-gray-400">
           {stock.chartSource === "yahoo" || stock.chartSource === "finnhub"
             ? t("chartLive")
             : t("chartSim")}
@@ -85,7 +85,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
           <ErrorBoundary
             source="chart"
             fallback={
-              <div className="flex h-full items-center justify-center rounded-lg bg-gray-800/80 text-xs text-gray-500">
+              <div className="flex h-full items-center justify-center rounded-lg bg-gray-800/80 text-xs text-slate-600 dark:text-gray-400">
                 {t("chartUnavailable")}
               </div>
             }
@@ -100,7 +100,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
         <button
           type="button"
           onClick={openDetailModal}
-          className="mb-4 text-xs font-medium text-teal-400 hover:text-teal-300"
+          className="mb-4 text-xs font-medium text-teal-700 dark:text-teal-400 hover:text-teal-300"
         >
           {t("viewDetails")}
         </button>

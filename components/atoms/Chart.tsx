@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useReducedMotion } from "../../hooks/useReducedMotion";
 import {
   LineChart,
   Line,
@@ -27,10 +28,11 @@ const StockChart: React.FC<StockChartProps> = ({
     () => (data ?? []).map((d) => ({ ...d, price: Number(d.price) })),
     [data],
   );
+  const reducedMotion = useReducedMotion();
 
   if (formattedData.length === 0) {
     return (
-      <div className="p-4 text-center text-gray-500">No chart data available.</div>
+      <div className="p-4 text-center text-slate-600 dark:text-gray-400">No chart data available.</div>
     );
   }
 
@@ -69,6 +71,7 @@ const StockChart: React.FC<StockChartProps> = ({
             dot={false}
             activeDot={{ r: 4 }}
             name="Price"
+            isAnimationActive={!reducedMotion}
           />
         </LineChart>
       </ResponsiveContainer>

@@ -34,27 +34,27 @@ const StockListItem: React.FC<StockListItemProps> = ({ item }) => {
       <div className="flex-grow">
         <h4
           data-testid={item.company}
-          className="text-lg font-semibold text-teal-400"
+          className="text-lg font-semibold text-teal-700 dark:text-teal-400"
         >
           {item.company}
         </h4>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-slate-600 dark:text-gray-400">
           {t("quantity")}{" "}
           <span className="font-medium text-gray-200">{item.quantity}</span>
         </p>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-slate-600 dark:text-gray-400">
           {t("avgBuyPrice")}{" "}
           <span className="font-medium text-gray-200">
             ${item.purchasePrice.toFixed(2)}
           </span>
         </p>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-slate-600 dark:text-gray-400">
           {t("currentPrice")}{" "}
           <span className="font-medium text-gray-200">
             ${currentPrice.toFixed(2)}
           </span>
         </p>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-slate-600 dark:text-gray-400">
           {t("currentValue")}{" "}
           <span className="font-medium text-gray-200">
             ${currentValue.toFixed(2)}

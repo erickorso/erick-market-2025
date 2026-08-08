@@ -6,7 +6,7 @@ const StatCard: React.FC<{ label: string; value: number | null }> = ({
   value,
 }) => (
   <div className="rounded-md border border-gray-700 bg-gray-800/50 p-2.5">
-    <dt className="text-[11px] uppercase tracking-wide text-gray-500">
+    <dt className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-gray-400">
       {label}
     </dt>
     <dd className="text-sm font-semibold text-gray-100">

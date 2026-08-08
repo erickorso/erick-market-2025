@@ -1,7 +1,7 @@
 import { DETAIL_API_URL } from "../constants";
 import type { ChartDataPoint, StyleTag } from "../types";
 import { generateChartData } from "./stockService";
-import { WATCHLIST } from "../server/watchlist";
+import { COMPANY_SITES, WATCHLIST } from "../server/watchlist";
 
 export type StockDetail = {
   source: "live" | "mock";
@@ -54,7 +54,7 @@ function mockDetail(symbol: string, seed?: Partial<StockDetail>): StockDetail {
       exchange: "NASDAQ",
       industry: "Technology",
       logo: null,
-      weburl: null,
+      weburl: COMPANY_SITES[symbol.toUpperCase()] ?? null,
       marketCap: 500_000,
       sharesOutstanding: 1000,
       ipo: null,
@@ -115,16 +115,16 @@ export async function fetchStockDetail(
         open: null,
         previousClose: null,
       },
-      profile: data.profile ?? {
-        exchange: null,
-        industry: null,
-        logo: null,
-        weburl: null,
-        marketCap: null,
-        sharesOutstanding: null,
-        ipo: null,
-        country: null,
-        currency: "USD",
+      profile: {
+        exchange: data.profile?.exchange ?? null,
+        industry: data.profile?.industry ?? null,
+        logo: data.profile?.logo ?? null,
+        weburl: data.profile?.weburl ?? COMPANY_SITES[sym] ?? null,
+        marketCap: data.profile?.marketCap ?? null,
+        sharesOutstanding: data.profile?.sharesOutstanding ?? null,
+        ipo: data.profile?.ipo ?? null,
+        country: data.profile?.country ?? null,
+        currency: data.profile?.currency ?? "USD",
       },
       chart: liveChart ?? generateChartData(price || 100),
     };

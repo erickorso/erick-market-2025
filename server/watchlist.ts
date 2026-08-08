@@ -60,6 +60,53 @@ export const CATEGORIES: {
   },
 ];
 
+/**
+ * Official investor/corporate sites, used when the provider profile has no
+ * `weburl` (offline or missing API key).
+ */
+export const COMPANY_SITES: Record<string, string> = {
+  AAPL: "https://www.apple.com",
+  MSFT: "https://www.microsoft.com",
+  GOOGL: "https://abc.xyz",
+  AMZN: "https://www.amazon.com",
+  NVDA: "https://www.nvidia.com",
+  META: "https://about.meta.com",
+  TSLA: "https://www.tesla.com",
+  JPM: "https://www.jpmorganchase.com",
+  V: "https://www.visa.com",
+  MA: "https://www.mastercard.com",
+  JNJ: "https://www.jnj.com",
+  WMT: "https://www.walmart.com",
+  PG: "https://www.pg.com",
+  XOM: "https://corporate.exxonmobil.com",
+  CVX: "https://www.chevron.com",
+  HD: "https://www.homedepot.com",
+  BAC: "https://www.bankofamerica.com",
+  KO: "https://www.coca-colacompany.com",
+  PEP: "https://www.pepsico.com",
+  COST: "https://www.costco.com",
+  AVGO: "https://www.broadcom.com",
+  CRM: "https://www.salesforce.com",
+  NFLX: "https://www.netflix.com",
+  AMD: "https://www.amd.com",
+  INTC: "https://www.intel.com",
+  ORCL: "https://www.oracle.com",
+  CSCO: "https://www.cisco.com",
+  DIS: "https://thewaltdisneycompany.com",
+  NKE: "https://www.nike.com",
+  MCD: "https://www.mcdonalds.com",
+  ADBE: "https://www.adobe.com",
+  IBM: "https://www.ibm.com",
+  QCOM: "https://www.qualcomm.com",
+  TXN: "https://www.ti.com",
+  UBER: "https://www.uber.com",
+  ABNB: "https://www.airbnb.com",
+  PYPL: "https://www.paypal.com",
+  SQ: "https://block.xyz",
+  SHOP: "https://www.shopify.com",
+  SPOT: "https://www.spotify.com",
+};
+
 export const WATCHLIST: WatchItem[] = [
   { symbol: "AAPL", company: "Apple", tags: ["long-term", "blue-chip", "growth"] },
   { symbol: "MSFT", company: "Microsoft", tags: ["long-term", "blue-chip", "growth"] },

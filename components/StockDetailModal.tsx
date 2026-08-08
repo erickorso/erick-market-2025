@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useId, useMemo, useState } from "react";
+﻿import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useStockContext } from "../context/StockContext";
 import { useUser } from "../context/UserContext";
 import { useI18n } from "../context/I18nContext";
@@ -53,7 +53,7 @@ const DetailBuyPanel: React.FC<DetailBuyPanelProps> = ({
   const { t } = useI18n();
   return (
     <div
-      className={`flex w-full max-w-[14rem] flex-col items-stretch gap-2 ${className}`}
+      className={`flex w-fit max-w-[14rem] flex-col items-stretch gap-2 ${className}`}
     >
       <div className="flex items-center justify-end gap-2">
         <span className="text-xs text-gray-400">{t("quantity")}</span>
@@ -106,7 +106,7 @@ const DetailBuyPanel: React.FC<DetailBuyPanelProps> = ({
         >
           {t("buy")} {!locked && !canAfford ? t("insufficientFunds") : ""}
         </button>
-        <ComicTooltip id={tipId}>
+        <ComicTooltip id={tipId} align="right">
           {locked
             ? t("buyTooltipGuest")
             : !canAfford
@@ -114,20 +114,52 @@ const DetailBuyPanel: React.FC<DetailBuyPanelProps> = ({
               : t("buyTooltipOk")}
         </ComicTooltip>
       </div>
-      {locked && (
-        <p className="text-right text-[10px] text-amber-300/90">
-          <button
-            type="button"
-            onClick={onLogin}
-            className="font-semibold text-teal-400 underline hover:text-teal-300"
-          >
-            {t("login")}
-          </button>
-        </p>
-      )}
     </div>
   );
 };
+
+/**
+ * Mirrors the loaded layout block by block (price, stat cards, chart, company
+ * rows, trade row) so the modal barely changes height when the data lands.
+ */
+const DetailSkeleton: React.FC<{ label: string }> = ({ label }) => (
+  <div className="animate-pulse space-y-5" role="status" aria-label={label}>
+    <div className="space-y-1">
+      <div className="h-9 w-40 rounded bg-gray-800" />
+      <div className="h-5 w-32 rounded bg-gray-800" />
+    </div>
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {[1, 2, 3, 4].map((item) => (
+        <div
+          key={item}
+          className="h-[3.625rem] rounded-md border border-gray-700 bg-gray-800/60"
+        />
+      ))}
+    </div>
+    <div>
+      <div className="mb-2 h-5 w-28 rounded bg-gray-800" />
+      <div className="h-56 rounded-lg border border-gray-700 bg-gray-800/60" />
+    </div>
+    <div>
+      <div className="mb-2 h-5 w-24 rounded bg-gray-800" />
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {[1, 2, 3, 4, 5, 6].map((item) => (
+          <div
+            key={item}
+            className="h-[2.0625rem] border-b border-gray-800 bg-gray-800/40"
+          />
+        ))}
+      </div>
+      <div className="mt-4 flex items-end justify-between gap-4">
+        <div className="space-y-2">
+          <div className="h-5 w-32 rounded bg-gray-800" />
+          <div className="h-[1.3125rem] w-40 rounded bg-gray-800" />
+        </div>
+        <div className="h-[5.875rem] w-[13rem] rounded bg-gray-800/60" />
+      </div>
+    </div>
+  </div>
+);
 
 const StockDetailModal: React.FC = () => {
   const { state, dispatch, buyStock } = useStockContext();
@@ -142,6 +174,14 @@ const StockDetailModal: React.FC = () => {
 
   const open = Boolean(state.detailSymbol);
 
+  // Live polling swaps `allStocks` on every tick. Read it through a ref so the
+  // fetch below only re-runs when the user opens a different symbol — otherwise
+  // each poll would blank the modal and replay the skeleton.
+  const stocksRef = useRef(state.allStocks);
+  stocksRef.current = state.allStocks;
+  const tRef = useRef(t);
+  tRef.current = t;
+
   useEffect(() => {
     setQuantity(1);
   }, [state.detailSymbol]);
@@ -152,12 +192,14 @@ const StockDetailModal: React.FC = () => {
       setErr(null);
       return;
     }
-    const symbol = extractSymbol(state.detailSymbol, state.allStocks);
-    const seedStock = state.allStocks.find(
+    const stocks = stocksRef.current;
+    const symbol = extractSymbol(state.detailSymbol, stocks);
+    const seedStock = stocks.find(
       (s) => s.symbol === symbol || s.company.includes(`(${symbol})`),
     );
     let cancelled = false;
     setLoading(true);
+    setDetail(null);
     setErr(null);
     void fetchStockDetail(symbol, {
       company: seedStock?.company.replace(/\s*\([^)]+\)\s*$/, "") ?? undefined,
@@ -181,13 +223,13 @@ const StockDetailModal: React.FC = () => {
       })
       .catch((e) => {
         if (cancelled) return;
-        setErr(e instanceof Error ? e.message : t("detailLoadFailed"));
+        setErr(e instanceof Error ? e.message : tRef.current("detailLoadFailed"));
         setLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [state.detailSymbol, state.allStocks, t]);
+  }, [state.detailSymbol]);
 
   useEffect(() => {
     if (!open) return;
@@ -198,20 +240,36 @@ const StockDetailModal: React.FC = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, dispatch]);
 
-  const tradeStock = useMemo((): EnrichedStock | null => {
-    if (!detail) return null;
-    const fromList = state.allStocks.find(
+  const listedStock = useMemo(() => {
+    if (!detail) return undefined;
+    return state.allStocks.find(
       (s) =>
-        s.symbol === detail.symbol ||
-        s.company.includes(`(${detail.symbol})`),
+        s.symbol === detail.symbol || s.company.includes(`(${detail.symbol})`),
     );
-    if (fromList) {
-      return { ...fromList, price: detail.quote.price };
+  }, [detail, state.allStocks]);
+
+  // Keep the headline quote fresh from the polled list instead of refetching the
+  // whole detail payload — a refetch would blank the modal and remount the chart.
+  const liveQuote = useMemo(() => {
+    if (!detail) return null;
+    if (!listedStock) return detail.quote;
+    return {
+      ...detail.quote,
+      price: listedStock.price,
+      change: listedStock.change ?? detail.quote.change,
+      changePercent: listedStock.changePercent ?? detail.quote.changePercent,
+    };
+  }, [detail, listedStock]);
+
+  const tradeStock = useMemo((): EnrichedStock | null => {
+    if (!detail || !liveQuote) return null;
+    if (listedStock) {
+      return { ...listedStock, price: liveQuote.price };
     }
     return {
       id: detail.symbol.toLowerCase(),
       company: `${detail.company} (${detail.symbol})`,
-      price: detail.quote.price,
+      price: liveQuote.price,
       symbol: detail.symbol,
       chartData: detail.chart,
       chartSource:
@@ -219,14 +277,14 @@ const StockDetailModal: React.FC = () => {
           ? detail.chartSource
           : "simulated",
       tags: detail.tags,
-      change: detail.quote.change,
-      changePercent: detail.quote.changePercent,
+      change: liveQuote.change,
+      changePercent: liveQuote.changePercent,
     };
-  }, [detail, state.allStocks]);
+  }, [detail, listedStock, liveQuote]);
 
   if (!open) return null;
 
-  const q = detail?.quote;
+  const q = liveQuote;
   const up = (q?.changePercent ?? 0) >= 0;
   const chartLabel =
     detail?.chartSource === "finnhub"
@@ -272,7 +330,7 @@ const StockDetailModal: React.FC = () => {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-[61] grid max-h-[92vh] w-full max-w-2xl grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl sm:rounded-2xl"
+        className="relative z-[61] grid max-h-[94vh] w-full max-w-4xl grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 border-b border-gray-700 bg-gray-900 px-4 py-3">
@@ -297,24 +355,16 @@ const StockDetailModal: React.FC = () => {
           </button>
         </div>
 
-        <div className="min-h-0 overflow-y-auto p-4 sm:p-6">
-          <div className="space-y-5">
-            {loading && (
-              <div
-                className="flex justify-center py-12"
-                role="status"
-                aria-label={t("loadingDetail")}
-              >
-                <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-teal-500" />
-              </div>
-            )}
+        <div className="min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
+          <div className="min-w-0 space-y-5">
+            {loading && !detail && <DetailSkeleton label={t("loadingDetail")} />}
             {err && <p className="text-sm text-rose-400">{err}</p>}
-            {!loading && detail && (
+            {detail && q && (
               <>
                 <div className="flex flex-wrap items-end gap-4">
                   <div>
                     <p className="text-3xl font-bold text-gray-50">
-                      ${detail.quote.price.toFixed(2)}
+                      ${q.price.toFixed(2)}
                     </p>
                     <p
                       className={`text-sm font-medium ${
@@ -322,8 +372,8 @@ const StockDetailModal: React.FC = () => {
                       }`}
                     >
                       {up ? "+" : ""}
-                      {detail.quote.change.toFixed(2)} ({up ? "+" : ""}
-                      {detail.quote.changePercent.toFixed(2)}%)
+                      {q.change.toFixed(2)} ({up ? "+" : ""}
+                      {q.changePercent.toFixed(2)}%)
                     </p>
                   </div>
                   <span className="rounded-md bg-gray-800 px-2 py-1 text-[11px] text-gray-400">
@@ -333,10 +383,10 @@ const StockDetailModal: React.FC = () => {
 
                 <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {[
-                    [t("open"), detail.quote.open],
-                    [t("high"), detail.quote.high],
-                    [t("low"), detail.quote.low],
-                    [t("prevClose"), detail.quote.previousClose],
+                    [t("open"), q.open],
+                    [t("high"), q.high],
+                    [t("low"), q.low],
+                    [t("prevClose"), q.previousClose],
                   ].map(([label, val]) => (
                     <div
                       key={String(label)}
@@ -423,36 +473,36 @@ const StockDetailModal: React.FC = () => {
                           </dd>
                         </div>
                     </dl>
-                    <div className="mt-4 flex flex-col items-center gap-3">
-                      {detail.profile.weburl ? (
-                        <a
-                          href={detail.profile.weburl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-center text-sm text-teal-400 hover:text-teal-300"
-                        >
-                          {t("companyWebsite")}
-                        </a>
-                      ) : (
-                        <span />
-                      )}
-                      {detail.tags.length > 0 && (
-                        <div className="flex flex-wrap justify-center gap-1.5">
-                          {detail.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="rounded border border-gray-600 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-400"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                    <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 flex-col items-start gap-2">
+                        {detail.profile.weburl && (
+                          <a
+                            href={detail.profile.weburl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm text-teal-400 hover:text-teal-300"
+                          >
+                            {t("companyWebsite")}
+                          </a>
+                        )}
+                        {detail.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {detail.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded border border-gray-600 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-400"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       {tradeStock && (
                         <DetailBuyPanel
                           {...buyProps}
                           tipId={`buy-tip-detail-${symbol}`}
-                          className="items-center"
+                          className="ml-auto shrink-0"
                         />
                       )}
                     </div>

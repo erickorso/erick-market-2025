@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -21,13 +21,18 @@ const StockChart: React.FC<StockChartProps> = ({
   lineColor = "#2dd4bf",
   height = 200,
 }) => {
-  if (!data || data.length === 0) {
+  // Recharts replays its draw animation whenever the data array identity
+  // changes, so keep it stable across unrelated re-renders (price polling).
+  const formattedData = useMemo(
+    () => (data ?? []).map((d) => ({ ...d, price: Number(d.price) })),
+    [data],
+  );
+
+  if (formattedData.length === 0) {
     return (
       <div className="p-4 text-center text-gray-500">No chart data available.</div>
     );
   }
-
-  const formattedData = data.map((d) => ({ ...d, price: Number(d.price) }));
 
   return (
     <div
@@ -71,4 +76,4 @@ const StockChart: React.FC<StockChartProps> = ({
   );
 };
 
-export default StockChart;
+export default React.memo(StockChart);

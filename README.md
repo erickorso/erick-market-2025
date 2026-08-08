@@ -346,22 +346,26 @@ No `psql`: Neon → **SQL Editor** → paste [`db/schema.sql`](db/schema.sql) �
 | `AUTH0_AUDIENCE` / `VITE_AUTH0_AUDIENCE` | API Identifier                                |
 | `ALLOWED_ORIGINS`                        | Optional. Extra CORS origins, comma separated |
 
-### Session renewal — and a known limitation
+### Session renewal
 
-**As deployed today**, the audience equals the Client ID. The app therefore
-sends the **ID token** as its bearer, and renews through **silent
-authentication**: a hidden iframe that carries the Auth0 session cookie.
+The audience points at a registered API (`https://erick-market-api`), so the
+bearer is a real **access token** and renewal runs on **refresh tokens** with
+rotation — no cookie involved.
 
-That works in Chrome and Edge. It does **not** work in Safari or Firefox on
-strict mode, which block third-party cookies — so a session Auth0 still
-considers valid can die in the browser. When it does, the user gets a plain
-"your session ended" dialog rather than an error, and
-[`useTrading`](hooks/useTrading.ts) forces one token renewal and retries before
-concluding anything is wrong. It is handled, not hidden.
+That distinction matters. The earlier setup used the Client ID as its own
+audience, which meant sending the **ID token** as a bearer and renewing through
+**silent authentication**: a hidden iframe carrying the Auth0 session cookie.
+That works in Chrome and Edge and fails in Safari or Firefox on strict mode,
+which block third-party cookies — a session Auth0 still considered valid could
+die in the browser.
 
-The fix is refresh tokens, which need no cookie. The code is already written
-and gated on `auth0UsesCustomApi`, so it turns itself on the moment the
-audience points at a real API:
+The iframe is still the fallback (`useRefreshTokensFallback`), and the failure
+path is unchanged: the user gets a plain "your session ended" dialog rather than
+an error, and [`useTrading`](hooks/useTrading.ts) forces one token renewal and
+retries before concluding anything is wrong.
+
+Both modes are gated on one derived flag, so the app degrades on its own if the
+audience is ever pointed back at the Client ID:
 
 ```tsx
 useRefreshTokens={auth0UsesCustomApi}
@@ -371,20 +375,24 @@ scope: auth0UsesCustomApi ? "openid profile email offline_access" : …
 
 The gate is deliberate: `offline_access` only exists against a registered API,
 so requesting it without one is rejected outright — worse than the iframe it
-replaces. Enabling it needs all of the following in the Auth0 dashboard, and
+replaces. Reproducing this on another tenant needs all of the following, and
 **a SPA fails at `/authorize` if any is missing**:
 
-| Where                                | Setting                                                                                                                |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| API → **Application Access**         | The SPA **authorized** — without this `/authorize` fails with _"Client … is not authorized to access resource server"_ |
-| API → Settings → Access Settings     | **Allow Offline Access** on                                                                                            |
-| Application → Advanced → Grant Types | **Refresh Token** checked                                                                                              |
-| Application → Refresh Token Rotation | **On** — Auth0 requires it for SPAs, and a non-rotating refresh token in a browser is a standing risk                  |
+| Where                                | Setting                                                                                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| API → **Application Access**         | The SPA authorized for **User-delegated Access** — without this `/authorize` fails with _"Client … is not authorized to access resource server"_ |
+| API → Settings → Access Settings     | **Allow Offline Access** on                                                                                                                      |
+| Application → Advanced → Grant Types | **Refresh Token** checked                                                                                                                        |
+| Application → Refresh Token Rotation | **On** — Auth0 requires it for SPAs, and a non-rotating refresh token in a browser is a standing risk                                            |
 
 The first row is easy to skip: plenty of guidance says the Application Access
 tab is only for machine-to-machine clients. On this tenant it is not — the
 audience is rejected until the SPA is authorized there, and the failure only
-shows up at `/authorize`, after a redirect, as `error=invalid_request`.
+shows up at `/authorize`, after a redirect, as `error=invalid_request`. The
+column matters too: **User-delegated Access** is the one a SPA needs (it calls
+the API on behalf of a user). _Client Access_ next to it is machine-to-machine
+and grants nothing here. The API's _Application Access Policy_ defaults to
+**Per-app authorization**, which is what makes the explicit grant necessary.
 
 Auth0 also auto-creates a `<api-name> (Test Application)` M2M client when you
 create an API. That one is unrelated and can be ignored.
@@ -402,10 +410,16 @@ curl -s -o /dev/null -w '%{redirect_url}\n' \
 ```
 
 A redirect to `/u/login` means Auth0 accepted it; anything carrying `error=`
-names exactly what is missing. Verify on a **Preview** deployment next — its
-URL needs adding to Allowed Callback URLs, Logout URLs and Web Origins first.
-Changing `VITE_*` values requires a redeploy either way: Vite bakes them into
-the bundle.
+names exactly what is missing. Adding `&prompt=none&response_mode=web_message`
+probes the renewal path specifically — `login_required` there is success, since
+curl carries no session.
+
+Rehearse the real login on **`localhost:5173`**, not on a Preview deployment.
+Preview URLs are generated per deployment and are not in Allowed Callback URLs,
+so they cannot complete a login at all; localhost is registered and exercises
+the identical parameter set. Changing `VITE_*` values requires a redeploy
+either way: Vite bakes them into the bundle, so editing the variable in Vercel
+does nothing to what is already live.
 
 ### 3. Local
 

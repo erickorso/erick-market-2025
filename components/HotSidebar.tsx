@@ -63,7 +63,7 @@ const HotSidebar: React.FC = () => {
                 onClick={() =>
                   dispatch({ type: "OPEN_DETAIL", payload: s.symbol })
                 }
-                className="w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-left transition hover:border-teal-500 hover:bg-teal-50 lg:rounded-none lg:border-0 lg:border-b lg:border-slate-200 lg:bg-transparent lg:px-0 lg:py-2.5 dark:border-gray-700/80 dark:bg-gray-800/60 dark:hover:border-teal-600 dark:hover:bg-gray-800 lg:dark:border-gray-700/60"
+                className="w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-left transition hover:border-teal-500 hover:bg-teal-50 lg:rounded-none lg:border-0 lg:border-b lg:border-slate-200 lg:bg-transparent lg:px-[2px] lg:py-2.5 dark:border-gray-700/80 dark:bg-gray-800/60 dark:hover:border-teal-600 dark:hover:bg-gray-800 lg:dark:border-gray-700/60"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs text-slate-400 dark:text-gray-500">{i + 1}.</span>

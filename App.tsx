@@ -10,7 +10,6 @@ import NoticeBanner from "./components/NoticeBanner";
 import HotSidebar from "./components/HotSidebar";
 import RankSidebar from "./components/RankSidebar";
 import StockDetailModal from "./components/StockDetailModal";
-import RequirePlayer from "./components/RequirePlayer";
 import { StockProvider } from "./context/StockContext";
 import { LeagueProvider } from "./context/LeagueContext";
 import { I18nProvider, useI18n } from "./context/I18nContext";
@@ -32,30 +31,9 @@ const AppShell: React.FC = () => {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/league" element={<LeaguePage />} />
-              <Route
-                path="/my-stocks"
-                element={
-                  <RequirePlayer>
-                    <MyStocksPage />
-                  </RequirePlayer>
-                }
-              />
-              <Route
-                path="/my-fund"
-                element={
-                  <RequirePlayer>
-                    <MyFundPage />
-                  </RequirePlayer>
-                }
-              />
-              <Route
-                path="/sell/:stockCompany"
-                element={
-                  <RequirePlayer>
-                    <SellStockForm />
-                  </RequirePlayer>
-                }
-              />
+              <Route path="/my-stocks" element={<MyStocksPage />} />
+              <Route path="/my-fund" element={<MyFundPage />} />
+              <Route path="/sell/:stockCompany" element={<SellStockForm />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

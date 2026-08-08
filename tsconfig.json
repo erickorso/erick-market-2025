@@ -32,7 +32,9 @@
     "context/**/*.tsx",
     "services/**/*.ts",
     "hooks/**/*.ts",
+    "hooks/**/*.tsx",
     "i18n/**/*.ts",
+    "test/**/*.ts",
     "server/watchlist.ts"
   ]
 }

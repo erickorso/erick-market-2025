@@ -1,43 +1,24 @@
-import React, { useState } from "react";
+import React from "react";
 import { EnrichedStock } from "../types";
 import { useStockContext } from "../context/StockContext";
-import { useUser } from "../context/UserContext";
 import { useI18n } from "../context/I18nContext";
+import { symbolFromStock } from "../services/symbols";
 import StockChart from "./Chart";
-import ComicTooltip from "./ComicTooltip";
+import TradePanel from "./TradePanel";
 
 interface StockCardProps {
   stock: EnrichedStock;
 }
 
 const StockCard: React.FC<StockCardProps> = ({ stock }) => {
-  const { buyStock, state, dispatch } = useStockContext();
-  const { isAuthenticated, login } = useUser();
+  const { dispatch } = useStockContext();
   const { t } = useI18n();
-  const [quantity, setQuantity] = useState(1);
-  const [busy, setBusy] = useState(false);
 
-  const symbol =
-    stock.symbol ??
-    (/\(([A-Z.]+)\)\s*$/.exec(stock.company)?.[1] ?? stock.id.toUpperCase());
+  const symbol = symbolFromStock(stock);
 
   const openDetailModal = () => {
     dispatch({ type: "OPEN_DETAIL", payload: symbol });
   };
-
-  const handleBuyStock = async () => {
-    if (!isAuthenticated || busy) return;
-    setBusy(true);
-    try {
-      await buyStock(stock, quantity);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const totalPrice = stock.price * quantity;
-  const canAfford = state.fund >= totalPrice;
-  const locked = !isAuthenticated;
 
   return (
     <div
@@ -115,72 +96,12 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
       </div>
 
       <div className="mt-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm text-gray-400">{t("quantity")}</span>
-          <div className="flex items-center">
-            <button
-              data-testid="decrement"
-              type="button"
-              disabled={locked}
-              onClick={() => setQuantity((p) => Math.max(1, p - 1))}
-              aria-label={t("decAria")}
-              className="rounded-l bg-red-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              -
-            </button>
-            <span
-              data-testid="quantity"
-              className="bg-gray-700 px-4 py-1 text-gray-100"
-            >
-              {quantity}
-            </span>
-            <button
-              data-testid="increment"
-              type="button"
-              disabled={locked}
-              onClick={() => setQuantity((p) => p + 1)}
-              aria-label={t("incAria")}
-              className="rounded-r bg-green-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              +
-            </button>
-          </div>
-        </div>
-        <div data-testid="totalPrice" className="mb-3 text-sm text-gray-300">
-          {t("total")} ${totalPrice.toFixed(2)}
-        </div>
-        <div className="group relative">
-          <button
-            data-testid={`addCart-${stock.company}`}
-            type="button"
-            onClick={() => {
-              if (locked) {
-                login();
-                return;
-              }
-              void handleBuyStock();
-            }}
-            disabled={busy || (!locked && (!canAfford || quantity <= 0))}
-            aria-describedby={`buy-tip-${symbol}`}
-            className={`w-full rounded-lg px-4 py-2 text-sm font-semibold transition duration-300 ${
-              !locked && canAfford && quantity > 0 && !busy
-                ? "bg-teal-500 text-white hover:bg-teal-600"
-                : locked
-                  ? "cursor-pointer bg-gray-600 text-gray-200 hover:bg-gray-500"
-                  : "cursor-not-allowed bg-gray-600 text-gray-400"
-            }`}
-          >
-            {t("buy")}{" "}
-            {!locked && !canAfford ? t("insufficientFunds") : ""}
-          </button>
-          <ComicTooltip id={`buy-tip-${symbol}`}>
-            {locked
-              ? t("buyTooltipGuest")
-              : !canAfford
-                ? t("buyTooltipFunds")
-                : t("buyTooltipOk")}
-          </ComicTooltip>
-        </div>
+        <TradePanel
+          stock={stock}
+          tipId={`buy-tip-${symbol}`}
+          size="md"
+          buyTestId={`addCart-${stock.company}`}
+        />
       </div>
     </div>
   );

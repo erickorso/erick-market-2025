@@ -1,39 +1,19 @@
-﻿import React, { useState, useEffect } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useStockContext } from "../context/StockContext";
 import { useI18n } from "../context/I18nContext";
+import { useSellForm } from "../hooks/useSellForm";
 
 const SellStockForm: React.FC = () => {
   const { stockCompany } = useParams<{ stockCompany: string }>();
   const navigate = useNavigate();
-  const { state, sellStock } = useStockContext();
   const { t } = useI18n();
-  const [quantity, setQuantity] = useState<number>(1);
-  const [error, setError] = useState<string>("");
-  const [busy, setBusy] = useState(false);
+  const form = useSellForm(stockCompany);
 
-  const decodedStockCompany = stockCompany
-    ? decodeURIComponent(stockCompany)
-    : "";
-
-  const portfolioItem = state.portfolio.find(
-    (item) => item.company === decodedStockCompany,
-  );
-  const stockDetails = state.allStocks.find(
-    (s) => s.company === decodedStockCompany,
-  );
-
-  useEffect(() => {
-    if (!portfolioItem || !stockDetails) {
-      setError(t("stockNotFound"));
-    }
-  }, [portfolioItem, stockDetails, t]);
-
-  if (!portfolioItem || !stockDetails) {
+  if (!form.found) {
     return (
       <div className="container mx-auto p-4 text-center">
         <h2 className="mb-4 text-2xl font-bold text-red-500">{t("error")}</h2>
-        <p className="text-gray-300">{error || t("loadingStock")}</p>
+        <p className="text-gray-300">{t("stockNotFound")}</p>
         <button
           onClick={() => navigate("/my-stocks")}
           className="mt-4 rounded-md bg-teal-500 px-4 py-2 font-semibold text-white transition duration-300 hover:bg-teal-600"
@@ -44,29 +24,8 @@ const SellStockForm: React.FC = () => {
     );
   }
 
-  const currentPrice = stockDetails.price;
-  const maxQuantity = portfolioItem.quantity;
-
   const handleSell = async () => {
-    setError("");
-    if (quantity <= 0) {
-      setError(t("qtyMustBePositive"));
-      return;
-    }
-    if (quantity > maxQuantity) {
-      setError(t("canSellUpTo", { max: maxQuantity }));
-      return;
-    }
-
-    setBusy(true);
-    try {
-      await sellStock(decodedStockCompany, quantity, currentPrice);
-      navigate("/my-stocks");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("error"));
-    } finally {
-      setBusy(false);
-    }
+    if (await form.submit()) navigate("/my-stocks");
   };
 
   return (
@@ -81,7 +40,7 @@ const SellStockForm: React.FC = () => {
           </label>
           <input
             type="text"
-            value={decodedStockCompany}
+            value={form.company}
             readOnly
             className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 leading-tight text-gray-200 focus:outline-none"
           />
@@ -91,32 +50,34 @@ const SellStockForm: React.FC = () => {
             className="mb-2 block text-sm font-bold text-gray-400"
             htmlFor="quantity"
           >
-            {t("qtyToSell", { max: maxQuantity })}
+            {t("qtyToSell", { max: form.maxQuantity })}
           </label>
           <input
             type="number"
             id="quantity"
-            value={quantity}
+            value={form.quantity}
             onChange={(e) =>
-              setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))
+              form.setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))
             }
             min="1"
-            max={maxQuantity}
+            max={form.maxQuantity}
             className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 leading-tight text-gray-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
-        {error && <p className="mb-4 text-xs italic text-red-500">{error}</p>}
+        {form.error && (
+          <p className="mb-4 text-xs italic text-red-500">{form.error}</p>
+        )}
         <p className="mb-1 text-gray-300">
-          {t("currentPricePerShare", { price: currentPrice.toFixed(2) })}
+          {t("currentPricePerShare", { price: form.currentPrice.toFixed(2) })}
         </p>
         <p className="mb-6 font-semibold text-gray-300">
-          {t("totalValue")} ${(currentPrice * quantity).toFixed(2)}
+          {t("totalValue")} ${form.totalValue.toFixed(2)}
         </p>
         <div className="flex items-center justify-between">
           <button
             data-testid="sell"
             onClick={() => void handleSell()}
-            disabled={busy}
+            disabled={form.busy}
             className="w-full rounded-lg bg-red-500 px-4 py-3 font-bold text-white transition duration-300 hover:bg-red-600 focus:outline-none focus:shadow-outline disabled:opacity-60"
           >
             {t("confirmSell")}

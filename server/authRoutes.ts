@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { verifyBearer } from "../api/_lib/auth";
 import { dbConfigured } from "../api/_lib/db";
 import { currentMonthKey } from "../api/_lib/month";
+import { parseTradeInput } from "../api/_lib/tradeValidation";
 import {
   ensurePortfolio,
   executeTrade,
@@ -99,27 +100,10 @@ export async function handleAuthApi(
     }
 
     if (pathname.startsWith("/api/trade") && req.method === "POST") {
-      const body = (await readBody(req)) as {
-        side?: string;
-        symbol?: string;
-        company?: string;
-        qty?: number;
-        price?: number;
-      };
-      const side =
-        body.side === "sell" ? "sell" : body.side === "buy" ? "buy" : null;
-      if (!side || !body.symbol) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "side and symbol required" }));
-        return true;
-      }
+      const body = (await readBody(req)) as Record<string, unknown>;
       const portfolio = await executeTrade({
         userId: user.id,
-        side,
-        symbol: body.symbol,
-        company: body.company?.trim() || body.symbol,
-        qty: Number(body.qty),
-        price: Number(body.price),
+        ...parseTradeInput(body),
       });
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(portfolio));

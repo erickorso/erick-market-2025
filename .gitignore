@@ -28,3 +28,6 @@ dist-ssr
 .vercel
 .env*
 !.env.example
+test-results
+playwright-report
+playwright/.auth

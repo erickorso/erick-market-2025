@@ -56,6 +56,26 @@ describe("parseTradeInput", () => {
       parseTradeInput({ side: "buy", symbol: "  ", qty: 1, price: 10 }),
     ).toThrow(/symbol/i);
   });
+
+  it("uses the symbol when company is missing and trims it", () => {
+    expect(
+      parseTradeInput({ side: "sell", symbol: " msft ", qty: 1, price: 25 }),
+    ).toMatchObject({
+      symbol: "MSFT",
+      company: "MSFT",
+    });
+  });
+
+  it.each([
+    ["zero quantity", { qty: 0, price: 10 }, /quantity/i],
+    ["zero price", { qty: 1, price: 0 }, /price/i],
+    ["oversized quantity", { qty: 1_000_001, price: 10 }, /quantity/i],
+    ["oversized price", { qty: 1, price: 1_000_001 }, /price/i],
+  ])("rejects %s", (_label, values, message) => {
+    expect(() =>
+      parseTradeInput({ side: "buy", symbol: "AAPL", ...values }),
+    ).toThrow(message);
+  });
 });
 
 describe("computeEquityFromBooks", () => {

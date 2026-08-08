@@ -168,12 +168,17 @@ the board about every 60s.
 
 | Feature | Detail |
 |---------|--------|
-| Quotes | `GET /api/quotes?limit=&offset=&q=&category=` → Finnhub |
+| Quotes | `GET /api/quotes?limit=&offset=&q=&category=` → Finnhub, up to 500 US common stocks with pagination |
 | Hot | Sidebar top gainers; local WS `/ws/hot` or poll `/api/hot` |
 | Detail | Modal → `/api/detail?symbol=` (quote + profile + Yahoo/Finnhub candles) |
 | Categories | Educational tags + day gainers/losers |
 
 Without `FINNHUB_API_KEY` the UI falls back to mock (simulated ticks).
+The `All` catalog discovers and caches up to 500 US common stocks from Finnhub
+for six hours. Only the visible page is quoted, with a maximum concurrency of
+five requests. If symbol discovery is unavailable, the API safely falls back
+to the curated 40-company watchlist; individual quote failures are shown with
+the mock quote label instead of removing the company from the page.
 
 ---
 

@@ -142,7 +142,51 @@ function filterWatchlist(q: string, category: CategoryId): WatchItem[] {
   });
 }
 
+function filterUniverse(q: string, items: WatchItem[]) {
+  const query = q.trim().toLowerCase();
+  return items.filter(
+    (item) =>
+      !query ||
+      `${item.symbol} ${item.company}`.toLowerCase().includes(query),
+  );
+}
+
 type FinnhubQuote = { c?: number; d?: number; dp?: number };
+type FinnhubSymbol = { symbol?: string; description?: string; type?: string };
+const MAX_UNIVERSE = 500;
+const UNIVERSE_TTL_MS = 6 * 60 * 60 * 1000;
+let universeCache: { at: number; items: WatchItem[] } | null = null;
+
+async function getUniverse(token: string): Promise<WatchItem[]> {
+  if (universeCache && Date.now() - universeCache.at < UNIVERSE_TTL_MS) {
+    return universeCache.items;
+  }
+  try {
+    const response = await fetch(
+      `https://finnhub.io/api/v1/stock/symbol?exchange=US&token=${encodeURIComponent(token)}`,
+    );
+    if (!response.ok) throw new Error("symbol universe unavailable");
+    const rows = (await response.json()) as FinnhubSymbol[];
+    const curated = new Map(WATCHLIST.map((item) => [item.symbol, item]));
+    const merged = new Map<string, WatchItem>();
+    [...WATCHLIST, ...rows
+      .filter(
+        (row) =>
+          row.type === "Common Stock" &&
+          typeof row.symbol === "string" &&
+          /^[A-Z][A-Z0-9.-]{0,9}$/.test(row.symbol),
+      )
+      .map((row) => ({
+        symbol: row.symbol as string,
+        company: row.description?.trim() || (row.symbol as string),
+        tags: curated.get(row.symbol as string)?.tags ?? [],
+      }))].forEach((item) => merged.set(item.symbol, item));
+    universeCache = { at: Date.now(), items: [...merged.values()].slice(0, MAX_UNIVERSE) };
+  } catch {
+    universeCache = { at: Date.now(), items: WATCHLIST };
+  }
+  return universeCache.items;
+}
 
 async function fetchOne(
   symbol: string,
@@ -271,7 +315,7 @@ function parsePaging(req: VercelRequest) {
   const limitRaw = Number(req.query.limit ?? PAGE_SIZE);
   const offsetRaw = Number(req.query.offset ?? 0);
   const limit = Number.isFinite(limitRaw)
-    ? Math.min(Math.max(1, Math.floor(limitRaw)), WATCHLIST.length)
+    ? Math.min(Math.max(1, Math.floor(limitRaw)), MAX_UNIVERSE)
     : PAGE_SIZE;
   const offset = Number.isFinite(offsetRaw)
     ? Math.max(0, Math.floor(offsetRaw))
@@ -307,7 +351,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    const filtered = filterWatchlist(q, category);
+    const universe = category === "all" ? await getUniverse(apiKey) : WATCHLIST;
+    const filtered = category === "all"
+      ? filterUniverse(q, universe)
+      : filterWatchlist(q, category);
     const isMovers = category === "gainers" || category === "losers";
 
     if (isMovers) {

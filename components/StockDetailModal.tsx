@@ -423,13 +423,13 @@ const StockDetailModal: React.FC = () => {
                           </dd>
                         </div>
                     </dl>
-                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="mt-4 flex flex-col items-center gap-3">
                       {detail.profile.weburl ? (
                         <a
                           href={detail.profile.weburl}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-sm text-teal-400 hover:text-teal-300"
+                          className="text-center text-sm text-teal-400 hover:text-teal-300"
                         >
                           {t("companyWebsite")}
                         </a>
@@ -440,7 +440,7 @@ const StockDetailModal: React.FC = () => {
                         <DetailBuyPanel
                           {...buyProps}
                           tipId={`buy-tip-detail-${symbol}`}
-                          className="sm:ml-auto"
+                          className="items-center"
                         />
                       )}
                     </div>

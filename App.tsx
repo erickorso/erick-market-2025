@@ -22,8 +22,10 @@ const AppShell: React.FC = () => {
   return (
     <HashRouter>
       <div className="flex min-h-screen flex-col bg-gray-900 text-gray-100">
-        <Navbar />
-        <NoticeBanner />
+        <header className="sticky top-0 z-50">
+          <Navbar />
+          <NoticeBanner />
+        </header>
         <div className="relative z-10 flex flex-grow flex-col lg:flex-row">
           <HotSidebar />
           <main className="container relative z-10 mx-auto min-w-0 flex-grow px-2 py-8 sm:px-4">

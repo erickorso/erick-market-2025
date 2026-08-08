@@ -10,7 +10,7 @@ const Navbar: React.FC = () => {
   const { t, toggleLang, lang } = useI18n();
 
   return (
-    <nav className="sticky top-0 z-50 bg-gray-800 p-4 shadow-lg">
+    <nav className="bg-gray-800 p-4 shadow-lg">
       <div className="container mx-auto flex flex-col items-center justify-between sm:flex-row">
         <Link
           to="/"

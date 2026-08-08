@@ -52,32 +52,36 @@ const DetailBuyPanel: React.FC<DetailBuyPanelProps> = ({
 }) => {
   const { t } = useI18n();
   return (
-    <div className={className}>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <span className="text-sm text-gray-400">{t("quantity")}</span>
+    <div
+      className={`flex w-full max-w-[14rem] flex-col items-stretch gap-2 ${className}`}
+    >
+      <div className="flex items-center justify-end gap-2">
+        <span className="text-xs text-gray-400">{t("quantity")}</span>
         <div className="flex items-center">
           <button
             type="button"
             disabled={locked}
             onClick={() => setQuantity((p) => Math.max(1, p - 1))}
             aria-label={t("decAria")}
-            className="rounded-l bg-red-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-l bg-red-600 px-2 py-0.5 text-sm font-bold text-white transition duration-150 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             -
           </button>
-          <span className="bg-gray-700 px-4 py-1 text-gray-100">{quantity}</span>
+          <span className="min-w-[2rem] bg-gray-700 px-2 py-0.5 text-center text-sm text-gray-100">
+            {quantity}
+          </span>
           <button
             type="button"
             disabled={locked}
             onClick={() => setQuantity((p) => p + 1)}
             aria-label={t("incAria")}
-            className="rounded-r bg-green-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-r bg-green-600 px-2 py-0.5 text-sm font-bold text-white transition duration-150 hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             +
           </button>
         </div>
       </div>
-      <p className="mb-3 text-sm text-gray-300">
+      <p className="text-right text-xs text-gray-300">
         {t("total")} ${totalPrice.toFixed(2)}
       </p>
       <div className="group relative">
@@ -92,7 +96,7 @@ const DetailBuyPanel: React.FC<DetailBuyPanelProps> = ({
           }}
           disabled={busy || (!locked && (!canAfford || quantity <= 0))}
           aria-describedby={tipId}
-          className={`w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition duration-300 ${
+          className={`w-full rounded-lg px-3 py-2 text-sm font-semibold transition duration-300 ${
             !locked && canAfford && quantity > 0 && !busy
               ? "bg-teal-500 text-white hover:bg-teal-600"
               : locked
@@ -111,8 +115,7 @@ const DetailBuyPanel: React.FC<DetailBuyPanelProps> = ({
         </ComicTooltip>
       </div>
       {locked && (
-        <p className="mt-2 text-center text-xs text-amber-300/90">
-          {t("loginToTrade")}{" "}
+        <p className="text-right text-[10px] text-amber-300/90">
           <button
             type="button"
             onClick={onLogin}
@@ -269,7 +272,7 @@ const StockDetailModal: React.FC = () => {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-[61] grid max-h-[92vh] w-full max-w-2xl grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl sm:rounded-2xl"
+        className="relative z-[61] grid max-h-[92vh] w-full max-w-2xl grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 border-b border-gray-700 bg-gray-900 px-4 py-3">
@@ -349,14 +352,6 @@ const StockDetailModal: React.FC = () => {
                   ))}
                 </dl>
 
-                {tradeStock && (
-                  <DetailBuyPanel
-                    {...buyProps}
-                    tipId={`buy-tip-detail-mid-${symbol}`}
-                    className="rounded-xl border border-teal-500/30 bg-gray-800/60 p-4"
-                  />
-                )}
-
                 <div>
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <h3 className="text-sm font-semibold text-gray-200">
@@ -389,54 +384,65 @@ const StockDetailModal: React.FC = () => {
                   <h3 className="mb-2 text-sm font-semibold text-gray-200">
                     {t("company")}
                   </h3>
-                  <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                    <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
-                      <dt className="text-gray-500">{t("exchange")}</dt>
-                      <dd className="text-gray-200">
-                        {detail.profile.exchange ?? "—"}
-                      </dd>
+                  <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-[1fr_auto]">
+                    <div className="min-w-0">
+                      <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                        <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
+                          <dt className="text-gray-500">{t("exchange")}</dt>
+                          <dd className="text-gray-200">
+                            {detail.profile.exchange ?? "—"}
+                          </dd>
+                        </div>
+                        <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
+                          <dt className="text-gray-500">{t("industry")}</dt>
+                          <dd className="text-right text-gray-200">
+                            {detail.profile.industry ?? "—"}
+                          </dd>
+                        </div>
+                        <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
+                          <dt className="text-gray-500">{t("marketCap")}</dt>
+                          <dd className="text-gray-200">
+                            {formatMarketCap(detail.profile.marketCap)}
+                          </dd>
+                        </div>
+                        <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
+                          <dt className="text-gray-500">{t("ipo")}</dt>
+                          <dd className="text-gray-200">
+                            {detail.profile.ipo ?? "—"}
+                          </dd>
+                        </div>
+                        <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
+                          <dt className="text-gray-500">{t("country")}</dt>
+                          <dd className="text-gray-200">
+                            {detail.profile.country ?? "—"}
+                          </dd>
+                        </div>
+                        <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
+                          <dt className="text-gray-500">{t("currency")}</dt>
+                          <dd className="text-gray-200">
+                            {detail.profile.currency ?? "—"}
+                          </dd>
+                        </div>
+                      </dl>
+                      {detail.profile.weburl && (
+                        <a
+                          href={detail.profile.weburl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-3 inline-block text-sm text-teal-400 hover:text-teal-300"
+                        >
+                          {t("companyWebsite")}
+                        </a>
+                      )}
                     </div>
-                    <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
-                      <dt className="text-gray-500">{t("industry")}</dt>
-                      <dd className="text-right text-gray-200">
-                        {detail.profile.industry ?? "—"}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
-                      <dt className="text-gray-500">{t("marketCap")}</dt>
-                      <dd className="text-gray-200">
-                        {formatMarketCap(detail.profile.marketCap)}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
-                      <dt className="text-gray-500">{t("ipo")}</dt>
-                      <dd className="text-gray-200">
-                        {detail.profile.ipo ?? "—"}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
-                      <dt className="text-gray-500">{t("country")}</dt>
-                      <dd className="text-gray-200">
-                        {detail.profile.country ?? "—"}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
-                      <dt className="text-gray-500">{t("currency")}</dt>
-                      <dd className="text-gray-200">
-                        {detail.profile.currency ?? "—"}
-                      </dd>
-                    </div>
-                  </dl>
-                  {detail.profile.weburl && (
-                    <a
-                      href={detail.profile.weburl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-3 inline-block text-sm text-teal-400 hover:text-teal-300"
-                    >
-                      {t("companyWebsite")}
-                    </a>
-                  )}
+                    {tradeStock && (
+                      <DetailBuyPanel
+                        {...buyProps}
+                        tipId={`buy-tip-detail-${symbol}`}
+                        className="justify-self-end sm:self-end"
+                      />
+                    )}
+                  </div>
                 </div>
 
                 {detail.tags.length > 0 && (
@@ -455,14 +461,6 @@ const StockDetailModal: React.FC = () => {
             )}
           </div>
         </div>
-
-        {!loading && tradeStock && (
-          <DetailBuyPanel
-            {...buyProps}
-            tipId={`buy-tip-detail-foot-${symbol}`}
-            className="border-t border-gray-700 bg-gray-900 px-4 py-4 sm:px-6"
-          />
-        )}
       </div>
     </div>
   );

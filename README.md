@@ -353,7 +353,7 @@ Every push and pull request to `main` runs
 [the CI workflow](.github/workflows/ci.yml): typecheck, unit tests with
 coverage, build, and the Playwright suite on Chromium.
 
-**686 unit tests in 61 files — one test file per source file**, at **97.5% line
+**705 unit tests in 62 files — one test file per source file**, at **98.6% line
 coverage**. Vitest runs everything under `jsdom` with Testing Library;
 components render against the real i18n and theme providers, so tests assert on
 the strings users actually see.
@@ -364,8 +364,8 @@ the strings users actually see.
 | atoms · molecules · templates | **100%** | formatting, variants, disabled states, aria wiring |
 | organisms | **99%** | the detail modal end to end, sidebars, route guards, the sell form |
 | services | **99%** | quote merging, detail mapping, API errors, the offline league fallback |
+| context | **98%** | every reducer action, the Auth0 bridge and its redirect callback |
 | hooks | **96%** | debounced search, refresh loops, guest routing, focus trap |
-| context | **92%** | every reducer action, provider composition, token fallbacks |
 
 `store.ts` is unit-tested against a stubbed Neon tagged template — the mapping
 and the money guards, including that a buy the cash cannot cover and a sell of

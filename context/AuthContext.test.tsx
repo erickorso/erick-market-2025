@@ -18,8 +18,21 @@ const config = vi.hoisted(() => ({
   usesCustomApi: true,
 }));
 
+/** Captures what AuthProvider hands to the SDK, so its config is assertable. */
+const providerProps = vi.hoisted(
+  () => ({ current: null as Record<string, unknown> | null }),
+);
+
 vi.mock("@auth0/auth0-react", () => ({
-  Auth0Provider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  Auth0Provider: ({
+    children,
+    ...props
+  }: {
+    children: React.ReactNode;
+  } & Record<string, unknown>) => {
+    providerProps.current = props;
+    return <>{children}</>;
+  },
   useAuth0: () => auth0,
 }));
 
@@ -183,6 +196,87 @@ describe("without Auth0 configured", () => {
   it("logs out without error", () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
     expect(() => act(() => result.current.logout())).not.toThrow();
+  });
+});
+
+describe("SDK configuration", () => {
+  it("passes the tenant and client through", () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    expect(providerProps.current).toMatchObject({
+      domain: "tenant.eu.auth0.com",
+      clientId: "client123",
+    });
+  });
+
+  it("survives a reload by caching the session in localStorage", () => {
+    renderHook(() => useAuth(), { wrapper });
+    expect(providerProps.current?.cacheLocation).toBe("localstorage");
+  });
+
+  it("asks for the custom API audience when there is one", () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    expect(providerProps.current?.authorizationParams).toMatchObject({
+      redirect_uri: window.location.origin,
+      audience: "https://erick-market-api",
+    });
+  });
+
+  it("omits the audience when the tenant has no custom API", () => {
+    config.usesCustomApi = false;
+    renderHook(() => useAuth(), { wrapper });
+
+    expect(providerProps.current?.authorizationParams).not.toHaveProperty(
+      "audience",
+    );
+  });
+});
+
+describe("redirect callback", () => {
+  function redirect(appState?: { returnTo?: string }) {
+    renderHook(() => useAuth(), { wrapper });
+    (
+      providerProps.current?.onRedirectCallback as (
+        s?: { returnTo?: string },
+      ) => void
+    )(appState);
+  }
+
+  it("returns the user to where they were headed", () => {
+    const replace = vi.spyOn(window.history, "replaceState");
+
+    redirect({ returnTo: "/my-fund" });
+
+    expect(replace).toHaveBeenCalledWith({}, document.title, "/my-fund");
+  });
+
+  it("falls back to the current path when Auth0 sends no state", () => {
+    const replace = vi.spyOn(window.history, "replaceState");
+
+    redirect(undefined);
+
+    expect(replace).toHaveBeenCalledWith(
+      {},
+      document.title,
+      window.location.pathname,
+    );
+  });
+
+  // Otherwise Back would walk the user straight into the Auth0 round trip.
+  it("replaces the callback URL rather than pushing it", () => {
+    const push = vi.spyOn(window.history, "pushState");
+
+    redirect({ returnTo: "/league" });
+
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("scrubs the Auth0 code and state out of the address bar", () => {
+    window.history.replaceState({}, "", "/?code=abc&state=xyz");
+    redirect({ returnTo: "/league" });
+
+    expect(window.location.search).not.toContain("code=");
   });
 });
 

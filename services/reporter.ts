@@ -11,15 +11,20 @@ export type ClientErrorReport = {
 type Sink = (report: ClientErrorReport) => void;
 
 /**
- * Where client errors go. Defaults to a structured console line, which is what
- * the browser devtools and any log forwarder can already read.
- *
- * Swap it once for a real backend — `setErrorSink(r => Sentry.captureException(r))`
- * in index.tsx — and every call site keeps working untouched.
+ * Default destination: one structured console line, which the browser devtools
+ * and any log forwarder can already read. Exported so it can be asserted on
+ * directly, and so a caller can restore it.
  */
-let sink: Sink = (report) => {
+export const consoleErrorSink: Sink = (report) => {
   console.error("[client-error]", JSON.stringify(report));
 };
+
+/**
+ * Where client errors go. Swap it once for a real backend —
+ * `setErrorSink(r => Sentry.captureException(r))` in index.tsx — and every
+ * call site keeps working untouched.
+ */
+let sink: Sink = consoleErrorSink;
 
 export function setErrorSink(next: Sink) {
   sink = next;

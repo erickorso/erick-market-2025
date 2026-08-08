@@ -12,6 +12,10 @@ import {
   isAuth0Configured,
 } from "../auth/config";
 
+const E2E_AUTH_KEY = "erick-market.e2e-auth";
+const e2eAuthEnabled =
+  import.meta.env.DEV && import.meta.env.VITE_E2E_AUTH === "true";
+
 type AuthValue = {
   configured: boolean;
   isLoading: boolean;
@@ -23,6 +27,49 @@ type AuthValue = {
 };
 
 const AuthContext = createContext<AuthValue | null>(null);
+
+const E2EAuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [authenticated, setAuthenticated] = React.useState(() => {
+    try {
+      return localStorage.getItem(E2E_AUTH_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  const login = useCallback(() => {
+    localStorage.setItem(E2E_AUTH_KEY, "1");
+    setAuthenticated(true);
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem(E2E_AUTH_KEY);
+    setAuthenticated(false);
+  }, []);
+
+  const value = useMemo<AuthValue>(
+    () => ({
+      configured: true,
+      isLoading: false,
+      isAuthenticated: authenticated,
+      user: authenticated
+        ? {
+            name: "E2E Trader",
+            email: "e2e@example.com",
+            sub: "auth0|e2e-user",
+          }
+        : null,
+      login,
+      logout,
+      getAccessToken: async () => (authenticated ? "e2e-test-token" : null),
+    }),
+    [authenticated, login, logout],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
 
 const FallbackAuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -112,6 +159,10 @@ const Auth0Bridge: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  if (e2eAuthEnabled) {
+    return <E2EAuthProvider>{children}</E2EAuthProvider>;
+  }
+
   if (!isAuth0Configured() || !auth0Domain || !auth0ClientId) {
     return <FallbackAuthProvider>{children}</FallbackAuthProvider>;
   }

@@ -92,6 +92,11 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
             ? t("chartLive")
             : t("chartSim")}
         </p>
+        {stock.quoteSource === "simulated" && (
+          <span className="mb-2 inline-flex rounded border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">
+            {t("mockQuote")}
+          </span>
+        )}
         <button
           type="button"
           onClick={openDetailModal}

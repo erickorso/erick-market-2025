@@ -36,6 +36,7 @@ function mockRows(): ApiStockRow[] {
       change: changePercent,
       changePercent,
       tags: w.tags,
+      quoteSource: "simulated",
     };
   });
 }
@@ -88,6 +89,7 @@ function normalizeRow(row: ApiStockRow, index: number): EnrichedStock {
     price,
     chartData: liveChart ?? generateChartData(price),
     chartSource,
+    quoteSource: row.quoteSource ?? "live",
     tags,
     change,
     changePercent,

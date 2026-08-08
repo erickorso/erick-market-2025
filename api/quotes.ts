@@ -24,6 +24,7 @@ type QuoteRow = {
   tags: StyleTag[];
   chart?: { name: string; price: number }[];
   chartSource?: "yahoo" | "simulated";
+  quoteSource?: "live" | "simulated";
 };
 
 const PAGE_SIZE = 10;
@@ -31,9 +32,28 @@ const yahooCache = new Map<
   string,
   { at: number; chart: { name: string; price: number }[] }
 >();
+  quoteSource?: "live" | "simulated";
 const YAHOO_TTL_MS = 30 * 60 * 1000;
 
 const CATEGORIES: { id: CategoryId; label: string; hint: string }[] = [
+
+function fallbackQuote(symbol: string, company: string): QuoteRow {
+  const seed = [...symbol].reduce(
+    (total, character) => total + character.charCodeAt(0),
+    0,
+  );
+  const price = Number((40 + (seed % 460) + (seed % 100) / 100).toFixed(2));
+  const item = WATCHLIST.find((w) => w.symbol === symbol);
+  return {
+    symbol,
+    company,
+    price,
+    change: 0,
+    changePercent: 0,
+    tags: item?.tags ?? [],
+    quoteSource: "simulated",
+  };
+}
   { id: "all", label: "All", hint: "Full watchlist" },
   { id: "long-term", label: "Long-term", hint: "Compounders / quality holds (curated)" },
   { id: "short-term", label: "Short-term", hint: "Higher beta / tactical names (curated)" },
@@ -43,11 +63,16 @@ const CATEGORIES: { id: CategoryId; label: string; hint: string }[] = [
   { id: "volatile", label: "Volatile", hint: "Higher swing names (curated)" },
   { id: "gainers", label: "Day gainers", hint: "Best % change today (live)" },
   { id: "losers", label: "Day losers", hint: "Worst % change today (live)" },
-];
-
-const WATCHLIST: WatchItem[] = [
+  let res: Response;
+  try {
+    res = await fetch(url);
+  } catch {
+    return fallbackQuote(symbol, company);
+  }
+  if (!res.ok) return fallbackQuote(symbol, company);
+  const data = (await res.json()) as FinnhubQuote;
   { symbol: "AAPL", company: "Apple", tags: ["long-term", "blue-chip", "growth"] },
-  { symbol: "MSFT", company: "Microsoft", tags: ["long-term", "blue-chip", "growth"] },
+  if (!price || price <= 0) return fallbackQuote(symbol, company);
   { symbol: "GOOGL", company: "Alphabet", tags: ["long-term", "blue-chip", "growth"] },
   { symbol: "AMZN", company: "Amazon", tags: ["long-term", "growth", "volatile"] },
   { symbol: "NVDA", company: "NVIDIA", tags: ["growth", "short-term", "volatile"] },
@@ -56,6 +81,7 @@ const WATCHLIST: WatchItem[] = [
   { symbol: "JPM", company: "JPMorgan", tags: ["blue-chip", "dividend", "long-term"] },
   { symbol: "V", company: "Visa", tags: ["long-term", "blue-chip", "growth"] },
   { symbol: "MA", company: "Mastercard", tags: ["long-term", "blue-chip", "growth"] },
+    quoteSource: "live",
   { symbol: "JNJ", company: "Johnson & Johnson", tags: ["dividend", "blue-chip", "long-term"] },
   { symbol: "WMT", company: "Walmart", tags: ["dividend", "blue-chip", "long-term"] },
   { symbol: "PG", company: "Procter & Gamble", tags: ["dividend", "blue-chip", "long-term"] },
@@ -68,7 +94,7 @@ const WATCHLIST: WatchItem[] = [
   { symbol: "COST", company: "Costco", tags: ["long-term", "blue-chip", "growth"] },
   { symbol: "AVGO", company: "Broadcom", tags: ["growth", "dividend", "volatile"] },
   { symbol: "CRM", company: "Salesforce", tags: ["growth", "short-term"] },
-  { symbol: "NFLX", company: "Netflix", tags: ["growth", "volatile", "short-term"] },
+    out.push(...settled.filter((x): x is QuoteRow => x !== null));
   { symbol: "AMD", company: "AMD", tags: ["growth", "volatile", "short-term"] },
   { symbol: "INTC", company: "Intel", tags: ["volatile", "short-term", "dividend"] },
   { symbol: "ORCL", company: "Oracle", tags: ["blue-chip", "growth", "dividend"] },
@@ -237,6 +263,7 @@ function mapStock(row: QuoteRow) {
     tags: row.tags,
     chart: row.chart,
     chartSource: row.chartSource,
+    quoteSource: row.quoteSource,
   };
 }
 

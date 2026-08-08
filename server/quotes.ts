@@ -43,9 +43,27 @@ async function fetchOne(
   if (!price || price <= 0) return null;
   const quote: QuoteRow = {
     symbol,
+    quoteSource?: "live" | "simulated";
     company,
     price,
     change: typeof data.d === "number" ? data.d : 0,
+
+  function fallbackQuote(symbol: string, company: string): QuoteRow {
+    const seed = [...symbol].reduce(
+      (total, character) => total + character.charCodeAt(0),
+      0,
+    );
+    const price = Number((40 + (seed % 460) + (seed % 100) / 100).toFixed(2));
+    return {
+      symbol,
+      company,
+      price,
+      change: 0,
+      changePercent: 0,
+      tags: tagsForSymbol(symbol),
+      quoteSource: "simulated",
+    };
+  }
     changePercent: typeof data.dp === "number" ? data.dp : 0,
     tags: tagsForSymbol(symbol),
   };
@@ -57,11 +75,16 @@ function isDayMovers(category: CategoryId) {
   return category === "gainers" || category === "losers";
 }
 
-export async function getMarketQuotesPage(
-  apiKey: string | undefined,
-  opts: {
+    let res: Response;
+    try {
+      res = await fetch(url);
+    } catch {
+      return fallbackQuote(symbol, company);
+    }
+    if (!res.ok) return fallbackQuote(symbol, company);
+    const data = (await res.json()) as FinnhubQuote;
     q?: string;
-    offset?: number;
+    if (!price || price <= 0) return fallbackQuote(symbol, company);
     limit?: number;
     category?: string;
   } = {},
@@ -69,6 +92,7 @@ export async function getMarketQuotesPage(
   const category = parseCategory(opts.category);
   const q = (opts.q ?? "").trim().toLowerCase();
   const limit = Math.min(
+      quoteSource: "live",
     Math.max(1, opts.limit ?? PAGE_SIZE),
     WATCHLIST.length,
   );

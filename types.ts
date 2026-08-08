@@ -18,6 +18,8 @@ export interface EnrichedStock extends Stock {
   chartData: ChartDataPoint[];
   /** Real daily closes when BFF attaches Yahoo/Finnhub history. */
   chartSource?: "simulated" | "live" | "yahoo" | "finnhub";
+  /** Quote price origin, independent from the chart history origin. */
+  quoteSource?: "live" | "simulated";
   symbol?: string;
   tags?: StyleTag[];
   change?: number;
@@ -108,4 +110,5 @@ export type ApiStockRow = {
   tags?: StyleTag[];
   chart?: ChartDataPoint[];
   chartSource?: "simulated" | "yahoo" | "finnhub" | "live";
+  quoteSource?: "live" | "simulated";
 };

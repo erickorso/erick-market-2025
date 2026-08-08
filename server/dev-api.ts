@@ -77,6 +77,7 @@ const server = http.createServer(async (req, res) => {
                     tags: row.tags,
                     chart: row.chart,
                     chartSource: row.chartSource,
+                    quoteSource: row.quoteSource,
                   })),
           source: result.source,
           total: result.total,

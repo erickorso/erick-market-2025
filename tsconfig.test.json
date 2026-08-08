@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["vitest/globals", "node"]
+  },
+  "include": [
+    "test/**/*.ts",
+    "api/**/*.test.ts",
+    "services/**/*.test.ts",
+    "hooks/**/*.test.ts",
+    "hooks/**/*.test.tsx",
+    "context/**/*.test.ts",
+    "components/**/*.test.tsx",
+    "types.ts",
+    "constants.ts",
+    "vite-env.d.ts"
+  ],
+  "exclude": []
+}

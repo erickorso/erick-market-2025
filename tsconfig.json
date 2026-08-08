@@ -32,9 +32,9 @@
     "context/**/*.tsx",
     "services/**/*.ts",
     "hooks/**/*.ts",
-    "hooks/**/*.tsx",
     "i18n/**/*.ts",
-    "test/**/*.ts",
     "server/watchlist.ts"
-  ]
+  ],
+  "//": "Tests are typechecked separately — see tsconfig.test.json. Keeping them out here means the production build never needs the test toolchain.",
+  "exclude": ["**/*.test.ts", "**/*.test.tsx"]
 }

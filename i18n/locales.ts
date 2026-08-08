@@ -16,7 +16,6 @@ const en = {
   total: "Total:",
   incAria: "Increase quantity",
   decAria: "Decrease quantity",
-  joinToPlay: "Join to play",
   publicViewTrade: "Public view — join Play to trade in the monthly game.",
   chartLive: "Daily closes · live history",
   chartSim: "Sparkline · simulated",
@@ -72,9 +71,6 @@ const en = {
   modeEphemeral: "Server ephemeral + local backup",
   modeLocal: "This device (local)",
   noScoresMonth: "No scores yet this month.",
-  privateGames: "Private games area",
-  privateGamesBody:
-    "Quotes, charts and Hot now are public. Buying/selling, your portfolio and the monthly league need a player seat (nickname + PIN).",
   myPortfolio: "My Portfolio",
   portfolioSummary: "Portfolio Summary",
   totalNet: "Total Net Value:",
@@ -191,7 +187,6 @@ const es: Dict = {
   total: "Total:",
   incAria: "Aumentar cantidad",
   decAria: "Disminuir cantidad",
-  joinToPlay: "Entrar a jugar",
   publicViewTrade:
     "Vista pública — entrá a Jugar para operar en el juego mensual.",
   chartLive: "Cierres diarios · histórico real",
@@ -248,9 +243,6 @@ const es: Dict = {
   modeEphemeral: "Servidor efímero + backup local",
   modeLocal: "Este dispositivo (local)",
   noScoresMonth: "Sin puntajes este mes.",
-  privateGames: "Área de juego privada",
-  privateGamesBody:
-    "Cotizaciones, charts y Hot son públicos. Comprar/vender, tu portfolio y la liga mensual requieren un asiento (nick + PIN).",
   myPortfolio: "Mi portfolio",
   portfolioSummary: "Resumen del portfolio",
   totalNet: "Valor neto total:",

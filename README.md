@@ -79,22 +79,25 @@ components/
   molecules/   TradePanel · QuantityStepper · StatCard · TagList · ChartPanel
                ComicTooltip · DetailSkeleton · Hot/Rank/StockListItem
   organisms/   StockCard · StockDetailModal · StockGrid · HotSidebar
-               RankSidebar · Navbar · SellStockForm · ErrorBoundary
+               RankSidebar · Navbar · SellStockForm · CategoryFilter
+               NoticeBanner · MarketBackground · ErrorBoundary
   templates/   AppShell
-  routing/     RequireAuth · RequirePlayer
+  routing/     RequireAuth
 pages/         Home · League · MyStocks · MyFund
 ```
 
-| Hook                                          | Owns                                                                 |
-| --------------------------------------------- | -------------------------------------------------------------------- |
-| [`useStockCatalog`](hooks/useStockCatalog.ts) | initial load, paging, debounced search, the tick and live-poll loops |
-| [`useTrading`](hooks/useTrading.ts)           | portfolio hydration and buy/sell through one guarded path            |
-| [`useStockDetail`](hooks/useStockDetail.ts)   | detail fetch + live quote overlay (no refetch on price polls)        |
-| [`useTradePanel`](hooks/useTradePanel.ts)     | quantity, affordability, guarded submit — shared by card and modal   |
-| [`useSellForm`](hooks/useSellForm.ts)         | position lookup and sell validation                                  |
-| [`useQueryFilters`](hooks/useQueryFilters.ts) | filters ↔ URL, so any view is linkable                               |
-| [`useFocusTrap`](hooks/useFocusTrap.ts)       | dialog focus containment and restore                                 |
-| [`useHotStocks`](hooks/useHotStocks.ts)       | hot-gainers socket with poll fallback                                |
+| Hook                                                | Owns                                                                 |
+| --------------------------------------------------- | -------------------------------------------------------------------- |
+| [`useStockCatalog`](hooks/useStockCatalog.ts)       | initial load, paging, debounced search, the tick and live-poll loops |
+| [`useTrading`](hooks/useTrading.ts)                 | portfolio hydration and buy/sell through one guarded path            |
+| [`useStockDetail`](hooks/useStockDetail.ts)         | detail fetch + live quote overlay (no refetch on price polls)        |
+| [`useTradePanel`](hooks/useTradePanel.ts)           | quantity, affordability, guarded submit — shared by card and modal   |
+| [`useSellForm`](hooks/useSellForm.ts)               | position lookup and sell validation                                  |
+| [`useQueryFilters`](hooks/useQueryFilters.ts)       | filters ↔ URL, so any view is linkable                               |
+| [`useFocusTrap`](hooks/useFocusTrap.ts)             | dialog focus containment and restore                                 |
+| [`useInertBackground`](hooks/useInertBackground.ts) | marking the page behind an overlay inert                             |
+| [`useReducedMotion`](hooks/useReducedMotion.ts)     | whether to animate at all                                            |
+| [`useHotStocks`](hooks/useHotStocks.ts)             | hot-gainers socket with poll fallback                                |
 
 [`StockContext`](context/StockContext.tsx) is only a composition root; the state
 transitions live in [`stockReducer`](context/stockReducer.ts) as a pure,
@@ -401,8 +404,9 @@ turning it on found refs being written during render (unsafe under concurrent
 rendering), two `setState` calls in effects that had better patterns available,
 a `stopPropagation` on a non-interactive element, and a dead import.
 
-**770 unit tests in 68 files — one test file per source file** — plus 29
-Playwright specs, of which 9 are a full WCAG 2.1 AA axe scan. Vitest runs
+**771 unit tests in 68 files — one test file per source file** — plus 29
+Playwright runs, including a full WCAG 2.1 AA axe scan of every page in both
+themes and on a phone viewport. Vitest runs
 everything under `jsdom` with Testing Library; components render against the
 real i18n and theme providers, so tests assert on the strings users actually
 see.
@@ -415,6 +419,8 @@ see.
 | services                      |  **99%** | quote merging, detail mapping, API errors, the offline league fallback      |
 | context                       |  **98%** | every reducer action, the Auth0 bridge and its redirect callback            |
 | hooks                         |  **96%** | debounced search, refresh loops, guest routing, focus trap                  |
+
+**98.5% overall**, and CI fails if it drops — see the coverage gate above.
 
 `store.ts` is unit-tested against a stubbed Neon tagged template — the mapping
 and the money guards, including that a buy the cash cannot cover and a sell of

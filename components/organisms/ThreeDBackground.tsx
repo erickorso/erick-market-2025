@@ -302,7 +302,9 @@ const ThreeDBackground: React.FC = () => {
         const particleCount = 200; // Increased slightly for more variety
         const group = new THREE.Group();
         particleGroupRef.current = group;
-        const spriteScale = 8; // Slightly increased scale for pixel art visibility
+        // 80% smaller than the original 8: at that size the pieces read as
+        // foreground clutter over the market grid rather than as background.
+        const spriteScale = 1.6;
 
         for (let i = 0; i < particleCount; i++) {
           if (particleTexturesRef.current.length === 0) break; // Safety break

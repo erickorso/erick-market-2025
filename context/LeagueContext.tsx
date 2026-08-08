@@ -58,17 +58,19 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const board = await fetchLeagueBoard(month);
       setEntries(board.entries);
+      // Coerce the numbers: the board is rendered with .toFixed(), so a field
+      // the API ever omits would take the whole page down.
       setPreviousWinner(
         board.previousWinner
           ? {
               playerId: board.previousWinner.playerId,
               name: board.previousWinner.name,
               month: month,
-              equity: board.previousWinner.equity,
+              equity: Number(board.previousWinner.equity) || 0,
               cash: 0,
               invested: 0,
               pnl: 0,
-              pnlPercent: board.previousWinner.pnlPercent,
+              pnlPercent: Number(board.previousWinner.pnlPercent) || 0,
               updatedAt: new Date().toISOString(),
             }
           : null,

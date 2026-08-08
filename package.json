@@ -16,7 +16,8 @@
     "test:coverage": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --grep-invert @screenshots",
+    "screenshots": "playwright test --project=screenshots",
     "test:e2e:ui": "playwright test --ui",
     "db:schema": "node -e \"console.log('Run: psql \\\"$DATABASE_URL\\\" -f db/schema.sql')\""
   },

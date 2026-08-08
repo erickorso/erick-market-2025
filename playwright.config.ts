@@ -28,18 +28,29 @@ export default defineConfig({
     },
     {
       name: "chromium",
-      testIgnore: /auth\.spec\.ts/,
+      testIgnore: /(auth|screenshots)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
     {
       name: "mobile-chromium",
-      testIgnore: /auth\.spec\.ts/,
+      testIgnore: /(auth|screenshots)\.spec\.ts/,
       use: { ...devices["Pixel 5"] },
     },
     {
       name: "authenticated",
       dependencies: ["setup"],
       testMatch: /auth\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/e2e.json",
+      },
+    },
+    // README images. Run with `npm run screenshots`; the default e2e run
+    // filters this out by tag so CI never regenerates them.
+    {
+      name: "screenshots",
+      dependencies: ["setup"],
+      testMatch: /screenshots\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: "playwright/.auth/e2e.json",

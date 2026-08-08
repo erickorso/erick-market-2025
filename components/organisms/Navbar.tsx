@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useStockContext } from "../../context/StockContext";
 import { useUser } from "../../context/UserContext";
 import { useI18n } from "../../context/I18nContext";
@@ -10,6 +10,8 @@ const Navbar: React.FC = () => {
   const { isAuthenticated, displayName, login, logout, isLoading, auth } =
     useUser();
   const { t, toggleLang, lang } = useI18n();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <nav className="border-b border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:shadow-lg">
@@ -86,9 +88,15 @@ const Navbar: React.FC = () => {
             data-testid="search"
             placeholder={t("searchPlaceholder")}
             value={state.searchTerm}
-            onChange={(e) =>
-              dispatch({ type: "SET_SEARCH_TERM", payload: e.target.value })
-            }
+            onChange={(e) => {
+              dispatch({ type: "SET_SEARCH_TERM", payload: e.target.value });
+              // The results only exist on the catalog, so searching from
+              // anywhere else takes you there rather than silently doing
+              // nothing. Clearing the box does not yank you off the page.
+              if (e.target.value.trim() && location.pathname !== "/") {
+                navigate("/");
+              }
+            }}
             aria-label={t("searchAria")}
             className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800 transition duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-teal-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 sm:w-auto"
           />

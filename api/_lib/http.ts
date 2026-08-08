@@ -74,7 +74,14 @@ export function statusOf(err: unknown): number {
     : 500;
 }
 
+/** Stable identifier the client can branch on, when the thrower set one. */
+export function codeOf(err: unknown): string | undefined {
+  const code = (err as { code?: unknown })?.code;
+  return typeof code === "string" ? code : undefined;
+}
+
 export function sendError(res: VercelResponse, err: unknown) {
   const message = err instanceof Error ? err.message : "request failed";
-  res.status(statusOf(err)).json({ error: message });
+  const code = codeOf(err);
+  res.status(statusOf(err)).json({ error: message, ...(code ? { code } : {}) });
 }

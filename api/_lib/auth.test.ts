@@ -133,7 +133,7 @@ describe("verifyBearer", () => {
     const err = await status(verifyBearer("Bearer tok"));
 
     expect(err?.status).toBe(401);
-    expect(err?.message).toMatch(/subject/i);
+    expect((err as { code?: string })?.code).toBe("token_invalid");
   });
 
   it("rejects a token whose subject is not a string", async () => {
@@ -141,9 +141,28 @@ describe("verifyBearer", () => {
     expect((await status(verifyBearer("Bearer tok")))?.status).toBe(401);
   });
 
-  it("lets a signature failure surface", async () => {
+  // '"exp" claim timestamp check failed' is jose's wording: meaningless to a
+  // user and needless detail for an attacker.
+  it("does not leak the library's message for a bad signature", async () => {
     jwtVerify.mockRejectedValue(new Error("signature verification failed"));
-    await expect(verifyBearer("Bearer tok")).rejects.toThrow(/signature/);
+    const err = await status(verifyBearer("Bearer tok"));
+
+    expect(err?.status).toBe(401);
+    expect(err?.message).toBe("Authentication failed");
+    expect(err?.message).not.toMatch(/signature/i);
+    expect((err as { code?: string })?.code).toBe("token_invalid");
+  });
+
+  it("distinguishes an expired token, so the client can renew and retry", async () => {
+    jwtVerify.mockRejectedValue(
+      Object.assign(new Error('"exp" claim timestamp check failed'), {
+        code: "ERR_JWT_EXPIRED",
+      }),
+    );
+    const err = await status(verifyBearer("Bearer tok"));
+
+    expect((err as { code?: string })?.code).toBe("token_expired");
+    expect(err?.message).not.toMatch(/exp/);
   });
 
   it("caches the JWKS per tenant, so a warm instance does not refetch", async () => {

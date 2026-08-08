@@ -24,25 +24,47 @@ export async function verifyBearer(
   authorization: string | undefined,
 ): Promise<AuthUser> {
   if (!authorization?.startsWith("Bearer ")) {
-    throw Object.assign(new Error("Missing Bearer token"), { status: 401 });
+    throw Object.assign(new Error("Authentication required"), {
+      status: 401,
+      code: "token_missing",
+    });
   }
   const token = authorization.slice(7).trim();
   if (!token) {
-    throw Object.assign(new Error("Missing Bearer token"), { status: 401 });
+    throw Object.assign(new Error("Authentication required"), {
+      status: 401,
+      code: "token_missing",
+    });
   }
 
   const domain = process.env.AUTH0_DOMAIN;
   const audience = process.env.AUTH0_AUDIENCE;
   if (!domain || !audience) {
-    throw Object.assign(new Error("Auth0 server env not configured"), {
+    throw Object.assign(new Error("Auth is not configured on the server"), {
       status: 503,
+      code: "auth_not_configured",
     });
   }
 
-  const { payload } = await jwtVerify(token, getJwks(domain), {
-    issuer: `https://${domain}/`,
-    audience,
-  });
+  let payload: JWTPayload;
+  try {
+    ({ payload } = await jwtVerify(token, getJwks(domain), {
+      issuer: `https://${domain}/`,
+      audience,
+    }));
+  } catch (err) {
+    // jose messages like '"exp" claim timestamp check failed' are library
+    // internals: unhelpful to a user and needless detail for an attacker.
+    // Collapse them to a stable code the client can act on.
+    const code =
+      (err as { code?: string })?.code === "ERR_JWT_EXPIRED"
+        ? "token_expired"
+        : "token_invalid";
+    throw Object.assign(new Error("Authentication failed"), {
+      status: 401,
+      code,
+    });
+  }
 
   return claimsToUser(payload);
 }
@@ -50,7 +72,10 @@ export async function verifyBearer(
 function claimsToUser(payload: JWTPayload): AuthUser {
   const sub = typeof payload.sub === "string" ? payload.sub : "";
   if (!sub) {
-    throw Object.assign(new Error("Invalid token subject"), { status: 401 });
+    throw Object.assign(new Error("Authentication failed"), {
+      status: 401,
+      code: "token_invalid",
+    });
   }
   return {
     sub,

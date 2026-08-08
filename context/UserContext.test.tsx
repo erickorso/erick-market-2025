@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UserProvider, useUser } from "./UserContext";
+import { ApiError } from "../services/portfolioApi";
 
 const fetchMe = vi.hoisted(() => vi.fn());
 const getAccessToken = vi.hoisted(() => vi.fn());
@@ -85,13 +86,51 @@ describe("profile loading", () => {
     expect(result.current.portfolio).toBeNull();
   });
 
-  it("treats a missing token as a profile failure", async () => {
+  it("treats a missing token as an ended session, not an error", async () => {
     getAccessToken.mockResolvedValue(null);
     const { result } = renderHook(() => useUser(), { wrapper });
 
-    await waitFor(() =>
-      expect(result.current.profileError).toBe("No access token"),
+    await waitFor(() => expect(result.current.sessionExpired).toBe(true));
+    expect(result.current.profileError).toBeNull();
+  });
+
+  // The ordinary case after an idle hour: the cached token is stale but the
+  // Auth0 session is alive.
+  it("renews a stale token and retries once", async () => {
+    fetchMe
+      .mockRejectedValueOnce(
+        new ApiError("Authentication failed", 401, "token_expired"),
+      )
+      .mockResolvedValue(me);
+
+    const { result } = renderHook(() => useUser(), { wrapper });
+
+    await waitFor(() => expect(result.current.profile).not.toBeNull());
+    expect(getAccessToken).toHaveBeenLastCalledWith({ forceRefresh: true });
+    expect(result.current.sessionExpired).toBe(false);
+  });
+
+  it("declares the session over when the renewal also fails", async () => {
+    fetchMe.mockRejectedValue(
+      new ApiError("Authentication failed", 401, "token_expired"),
     );
+
+    const { result } = renderHook(() => useUser(), { wrapper });
+
+    await waitFor(() => expect(result.current.sessionExpired).toBe(true));
+    // Never the JWT library's wording.
+    expect(result.current.profileError).toBeNull();
+    expect(fetchMe).toHaveBeenCalledTimes(2);
+  });
+
+  it("still reports a non-auth failure as an error", async () => {
+    fetchMe.mockRejectedValue(new ApiError("Neon unreachable", 503));
+    const { result } = renderHook(() => useUser(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.profileError).toBe("Neon unreachable"),
+    );
+    expect(result.current.sessionExpired).toBe(false);
   });
 
   it("clears the spinner whatever the outcome", async () => {

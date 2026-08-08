@@ -10,8 +10,14 @@ import { useI18n } from "../../context/I18nContext";
 export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { configured, isLoading, isAuthenticated, login, profileError } =
-    useUser();
+  const {
+    configured,
+    isLoading,
+    isAuthenticated,
+    login,
+    profileError,
+    sessionExpired,
+  } = useUser();
   const { t } = useI18n();
   const location = useLocation();
 
@@ -45,6 +51,29 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({
         <p className="mt-3 text-[11px] text-slate-600 dark:text-gray-400">
           {location.pathname}
         </p>
+      </div>
+    );
+  }
+
+  // An expired credential is an ordinary end-of-session, not a failure. It
+  // gets its own copy so the user is told what happened and what to do,
+  // instead of reading the JWT library's wording.
+  if (sessionExpired) {
+    return (
+      <div className="mx-auto max-w-lg p-6 text-center">
+        <h1 className="mb-2 text-xl font-bold text-slate-900 dark:text-gray-100">
+          {t("sessionExpiredTitle")}
+        </h1>
+        <p className="mb-4 text-sm text-slate-600 dark:text-gray-400">
+          {t("sessionExpiredBody")}
+        </p>
+        <button
+          type="button"
+          onClick={login}
+          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+        >
+          {t("signInAgain")}
+        </button>
       </div>
     );
   }

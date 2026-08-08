@@ -39,6 +39,42 @@ async function authFetch(
   });
 }
 
+/** Error carrying the API's stable code, so callers can branch without regexes. */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+  }
+
+  /** True when signing in again is the fix. */
+  get isAuthFailure() {
+    return (
+      this.status === 401 ||
+      this.code === "token_expired" ||
+      this.code === "token_missing" ||
+      this.code === "token_invalid"
+    );
+  }
+}
+
+/** Turns a failed response into an ApiError, whatever shape the body has. */
+async function toApiError(res: Response, fallback: string): Promise<ApiError> {
+  const body = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    code?: string;
+  };
+  return new ApiError(
+    body.error || `${fallback} ${res.status}`,
+    res.status,
+    body.code,
+  );
+}
+
 export function portfolioToState(p: ApiPortfolio): {
   portfolio: PortfolioItem[];
   fund: number;
@@ -66,8 +102,7 @@ export async function fetchMe(token: string): Promise<{
 }> {
   const res = await authFetch(ME_URL, token);
   if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error || `me ${res.status}`);
+    throw await toApiError(res, "me");
   }
   return (await res.json()) as { user: ApiUser; portfolio: ApiPortfolio };
 }
@@ -75,8 +110,7 @@ export async function fetchMe(token: string): Promise<{
 export async function fetchPortfolio(token: string): Promise<ApiPortfolio> {
   const res = await authFetch(PORTFOLIO_URL, token);
   if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error || `portfolio ${res.status}`);
+    throw await toApiError(res, "portfolio");
   }
   return (await res.json()) as ApiPortfolio;
 }
@@ -96,8 +130,7 @@ export async function postTrade(
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error || `trade ${res.status}`);
+    throw await toApiError(res, "trade");
   }
   return (await res.json()) as ApiPortfolio;
 }
@@ -106,8 +139,7 @@ export async function fetchLeagueBoard(month?: string) {
   const q = month ? `?month=${encodeURIComponent(month)}` : "";
   const res = await fetch(`${LEAGUE_URL}${q}`);
   if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error || `league ${res.status}`);
+    throw await toApiError(res, "league");
   }
   return (await res.json()) as {
     mode: string;
@@ -147,8 +179,7 @@ export async function postLeagueScore(
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error || `league score ${res.status}`);
+    throw await toApiError(res, "league score");
   }
   return res.json();
 }

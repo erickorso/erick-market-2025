@@ -24,7 +24,9 @@ type AuthValue = {
   } | null;
   login: () => void;
   logout: () => void;
-  getAccessToken: () => Promise<string | null>;
+  getAccessToken: (options?: {
+    forceRefresh?: boolean;
+  }) => Promise<string | null>;
 };
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -115,24 +117,40 @@ const Auth0Bridge: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     });
   }, [auth0Logout]);
 
-  const getAccessToken = useCallback(async () => {
-    try {
-      if (auth0UsesCustomApi) {
-        return await getAccessTokenSilently({
-          authorizationParams: { audience: auth0Audience },
-        });
-      }
-      const claims = await getIdTokenClaims();
-      return claims?.__raw ?? null;
-    } catch {
+  /**
+   * `forceRefresh` bypasses the SDK's token cache. Without it an expired token
+   * is handed out indefinitely: the ID-token path just reads whatever is
+   * cached, so the app keeps sending a dead credential and the API keeps
+   * answering 401.
+   */
+  const getAccessToken = useCallback(
+    async ({ forceRefresh = false } = {}) => {
+      const cacheMode = forceRefresh ? ("off" as const) : undefined;
       try {
+        if (auth0UsesCustomApi) {
+          return await getAccessTokenSilently({
+            authorizationParams: { audience: auth0Audience },
+            ...(cacheMode ? { cacheMode } : {}),
+          });
+        }
+        // Refreshing the session is what renews the ID token; the claims call
+        // only reads the cache.
+        if (forceRefresh) {
+          await getAccessTokenSilently({ cacheMode: "off" }).catch(() => null);
+        }
         const claims = await getIdTokenClaims();
         return claims?.__raw ?? null;
       } catch {
-        return null;
+        try {
+          const claims = await getIdTokenClaims();
+          return claims?.__raw ?? null;
+        } catch {
+          return null;
+        }
       }
-    }
-  }, [getAccessTokenSilently, getIdTokenClaims]);
+    },
+    [getAccessTokenSilently, getIdTokenClaims],
+  );
 
   const value = useMemo<AuthValue>(
     () => ({

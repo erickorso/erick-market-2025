@@ -169,6 +169,11 @@ const en = {
   chartUnavailable: "Chart unavailable",
   backgroundUnavailable: "3D background unavailable",
   skipToContent: "Skip to main content",
+  sessionExpiredTitle: "Your session ended",
+  sessionExpiredBody:
+    "You were signed out for security after a period of inactivity. Sign in again to pick up where you left off — your portfolio is safe.",
+  signInAgain: "Sign in again",
+  sessionExpiredNotice: "Your session ended. Taking you to sign in…",
 } as const;
 
 type Dict = { [K in keyof typeof en]: string };
@@ -341,6 +346,11 @@ const es: Dict = {
   chartUnavailable: "Gráfica no disponible",
   backgroundUnavailable: "Fondo 3D no disponible",
   skipToContent: "Saltar al contenido principal",
+  sessionExpiredTitle: "Tu sesión terminó",
+  sessionExpiredBody:
+    "Por seguridad cerramos la sesión tras un rato de inactividad. Volvé a entrar y seguís donde estabas — tu portfolio está a salvo.",
+  signInAgain: "Volver a entrar",
+  sessionExpiredNotice: "Tu sesión terminó. Te llevamos a iniciar sesión…",
 };
 
 export type MsgKey = keyof typeof en;

@@ -74,11 +74,14 @@ const RankSidebar: React.FC = () => {
           <button
             type="button"
             onClick={() => setCollapsed(true)}
-            className="rounded px-1.5 py-0.5 text-xs text-slate-600 dark:text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+            className="rounded px-1 py-0.5 text-lg leading-none text-slate-600 hover:bg-gray-800 hover:text-gray-300 dark:text-gray-400"
             aria-expanded={true}
             aria-label={t("collapse")}
+            title={t("collapse")}
           >
-            {t("collapse")}
+            {/* Icon only — the label lives in aria-label and the tooltip, so
+                screen readers and hover still get the full word. */}
+            <span aria-hidden>»</span>
           </button>
         </div>
         <p className="mb-3 text-[11px] text-slate-600 dark:text-gray-400">

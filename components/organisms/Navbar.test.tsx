@@ -4,6 +4,8 @@ import { renderWithProviders, screen } from "../../test/render";
 import Navbar from "./Navbar";
 
 const dispatch = vi.hoisted(() => vi.fn());
+const navigate = vi.hoisted(() => vi.fn());
+const store = vi.hoisted(() => ({ searchTerm: "" }));
 const login = vi.hoisted(() => vi.fn());
 const logout = vi.hoisted(() => vi.fn());
 const user = vi.hoisted(() => ({
@@ -13,7 +15,15 @@ const user = vi.hoisted(() => ({
 }));
 
 vi.mock("../../context/StockContext", () => ({
-  useStockContext: () => ({ state: { searchTerm: "" }, dispatch }),
+  useStockContext: () => ({
+    state: { searchTerm: store.searchTerm },
+    dispatch,
+  }),
+}));
+
+vi.mock("react-router-dom", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react-router-dom")>()),
+  useNavigate: () => navigate,
 }));
 
 vi.mock("../../context/UserContext", () => ({
@@ -29,6 +39,8 @@ vi.mock("../../context/UserContext", () => ({
 
 beforeEach(() => {
   dispatch.mockReset();
+  navigate.mockReset();
+  store.searchTerm = "";
   login.mockReset();
   logout.mockReset();
   localStorage.clear();
@@ -117,6 +129,41 @@ describe("search", () => {
   it("labels the field for screen readers", () => {
     renderWithProviders(<Navbar />);
     expect(screen.getByTestId("search")).toHaveAccessibleName();
+  });
+
+  // Results only exist on the catalog. Searching from My Fund used to update
+  // the term and then appear to do nothing.
+  it("takes you to the catalog when you search from another page", async () => {
+    renderWithProviders(<Navbar />, { route: "/my-fund" });
+
+    await userEvent.type(screen.getByTestId("search"), "t");
+
+    expect(navigate).toHaveBeenCalledWith("/");
+  });
+
+  it("stays put when you are already on the catalog", async () => {
+    renderWithProviders(<Navbar />, { route: "/" });
+
+    await userEvent.type(screen.getByTestId("search"), "t");
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("does not yank you away when you clear the box", async () => {
+    store.searchTerm = "tesla";
+    renderWithProviders(<Navbar />, { route: "/my-fund" });
+
+    await userEvent.clear(screen.getByTestId("search"));
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("does not navigate on whitespace alone", async () => {
+    renderWithProviders(<Navbar />, { route: "/my-fund" });
+
+    await userEvent.type(screen.getByTestId("search"), " ");
+
+    expect(navigate).not.toHaveBeenCalled();
   });
 });
 

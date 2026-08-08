@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { useAuth } from "./AuthContext";
 import {
+  ApiError,
   fetchMe,
   type ApiPortfolio,
   type ApiUser,
@@ -36,9 +37,13 @@ type UserContextValue = {
   /** Loading Neon profile after Auth0 ready */
   profileLoading: boolean;
   profileError: string | null;
+  /** The session ended; the UI should offer to sign in again, not an error. */
+  sessionExpired: boolean;
   login: () => void;
   logout: () => void;
-  getAccessToken: () => Promise<string | null>;
+  getAccessToken: (options?: {
+    forceRefresh?: boolean;
+  }) => Promise<string | null>;
   refreshProfile: () => Promise<void>;
   /** Convenience display label */
   displayName: string | null;
@@ -63,28 +68,53 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   const [portfolio, setPortfolio] = useState<ApiPortfolio | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  /** Set when the credential is dead and re-authenticating is the only fix. */
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const refreshProfile = useCallback(async () => {
     if (!isAuthenticated) {
       setProfile(null);
       setPortfolio(null);
       setProfileError(null);
+      setSessionExpired(false);
       return;
     }
     setProfileLoading(true);
     setProfileError(null);
+
+    const load = async (forceRefresh: boolean) => {
+      const token = await getAccessToken({ forceRefresh });
+      if (!token) throw new ApiError("No access token", 401, "token_missing");
+      return fetchMe(token);
+    };
+
     try {
-      const token = await getAccessToken();
-      if (!token) throw new Error("No access token");
-      const data = await fetchMe(token);
+      let data;
+      try {
+        data = await load(false);
+      } catch (err) {
+        // The cached token was stale. Renew it once before giving up — this is
+        // the ordinary case after an hour idle, not something worth showing.
+        if (!(err instanceof ApiError) || !err.isAuthFailure) throw err;
+        data = await load(true);
+      }
       setProfile(data.user);
       setPortfolio(data.portfolio);
+      setSessionExpired(false);
     } catch (err) {
       setProfile(null);
       setPortfolio(null);
-      setProfileError(
-        err instanceof Error ? err.message : "Failed to load profile",
-      );
+      if (err instanceof ApiError && err.isAuthFailure) {
+        // Signing in again is the fix, so say that rather than echoing the
+        // API. The raw message stays in the console for debugging.
+        setSessionExpired(true);
+        setProfileError(null);
+      } else {
+        setSessionExpired(false);
+        setProfileError(
+          err instanceof Error ? err.message : "Failed to load profile",
+        );
+      }
     } finally {
       setProfileLoading(false);
     }
@@ -115,6 +145,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       portfolio,
       profileLoading,
       profileError,
+      sessionExpired,
       login,
       logout,
       getAccessToken,
@@ -131,6 +162,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       portfolio,
       profileLoading,
       profileError,
+      sessionExpired,
       login,
       logout,
       getAccessToken,

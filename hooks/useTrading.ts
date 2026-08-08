@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect } from "react";
 import type { EnrichedStock, StockAction, StockContextState } from "../types";
 import { INITIAL_FUND_AMOUNT } from "../constants";
-import { portfolioToState, postTrade } from "../services/portfolioApi";
+import {
+  ApiError,
+  portfolioToState,
+  postTrade,
+} from "../services/portfolioApi";
 import { symbolFromCompany, symbolFromStock } from "../services/symbols";
 import { useUser } from "../context/UserContext";
 
@@ -20,6 +24,7 @@ export function useTrading(
     isLoading: authLoading,
     portfolio: serverPortfolio,
     refreshProfile,
+    login,
   } = useUser();
   // Derived rather than stored: it is exactly "signed in and the server has
   // answered", so keeping it in state only created a second source of truth
@@ -62,22 +67,28 @@ export function useTrading(
         });
         return;
       }
-      const token = await getAccessToken();
-      if (!token) {
-        dispatch({
-          type: "SET_NOTICE",
-          payload: { type: "error", message: "Auth token unavailable." },
-        });
-        return;
-      }
-      try {
-        const portfolio = await postTrade(token, {
+      const send = async (forceRefresh: boolean) => {
+        const token = await getAccessToken({ forceRefresh });
+        if (!token) throw new ApiError("No access token", 401, "token_missing");
+        return postTrade(token, {
           side: input.side,
           symbol: input.symbol,
           company: input.company,
           qty: input.qty,
           price: input.price,
         });
+      };
+
+      try {
+        let portfolio;
+        try {
+          portfolio = await send(false);
+        } catch (err) {
+          // A stale cached token is the common case after an idle hour. Renew
+          // and retry once before bothering the user about it.
+          if (!(err instanceof ApiError) || !err.isAuthFailure) throw err;
+          portfolio = await send(true);
+        }
         const mapped = portfolioToState(portfolio);
         dispatch({
           type: "HYDRATE_PORTFOLIO",
@@ -89,6 +100,19 @@ export function useTrading(
           payload: { type: "success", message: input.successMessage },
         });
       } catch (err) {
+        // A dead session is not a trade error: say so plainly and send the
+        // user where they can fix it, instead of surfacing the API's wording.
+        if (err instanceof ApiError && err.isAuthFailure) {
+          dispatch({
+            type: "SET_NOTICE",
+            payload: {
+              type: "info",
+              message: "Your session ended. Taking you to sign in…",
+            },
+          });
+          login();
+          return;
+        }
         dispatch({
           type: "SET_NOTICE",
           payload: {
@@ -98,7 +122,7 @@ export function useTrading(
         });
       }
     },
-    [isAuthenticated, getAccessToken, refreshProfile, dispatch],
+    [isAuthenticated, getAccessToken, refreshProfile, dispatch, login],
   );
 
   const buyStock = useCallback(

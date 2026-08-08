@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTrading } from "./useTrading";
 import { initialState } from "../context/stockReducer";
 import { INITIAL_FUND_AMOUNT } from "../constants";
+import { ApiError } from "../services/portfolioApi";
 import type { EnrichedStock, StockContextState } from "../types";
 
 const postTrade = vi.hoisted(() => vi.fn());
 const refreshProfile = vi.hoisted(() => vi.fn());
 const getAccessToken = vi.hoisted(() => vi.fn());
+const login = vi.hoisted(() => vi.fn());
 const user = vi.hoisted(() => ({
   isAuthenticated: true,
   isLoading: false,
@@ -26,6 +28,7 @@ vi.mock("../context/UserContext", () => ({
     portfolio: user.portfolio,
     getAccessToken,
     refreshProfile,
+    login,
   }),
 }));
 
@@ -54,6 +57,7 @@ beforeEach(() => {
   postTrade.mockReset().mockResolvedValue(serverPortfolio);
   refreshProfile.mockReset().mockResolvedValue(undefined);
   getAccessToken.mockReset().mockResolvedValue("tok");
+  login.mockReset();
   user.isAuthenticated = true;
   user.isLoading = false;
   user.portfolio = null;
@@ -179,7 +183,7 @@ describe("buyStock", () => {
     });
   });
 
-  it("reports a missing token rather than posting without one", async () => {
+  it("sends the user to sign in when there is no usable token", async () => {
     getAccessToken.mockResolvedValue(null);
     const dispatch = vi.fn();
     const { result } = renderHook(() => useTrading(state(), dispatch));
@@ -189,9 +193,75 @@ describe("buyStock", () => {
     });
 
     expect(postTrade).not.toHaveBeenCalled();
+    expect(login).toHaveBeenCalledTimes(1);
     expect(dispatch).toHaveBeenCalledWith({
       type: "SET_NOTICE",
-      payload: { type: "error", message: "Auth token unavailable." },
+      payload: expect.objectContaining({ type: "info" }),
+    });
+  });
+
+  // The common case after an idle hour: the cached token is stale but the
+  // Auth0 session is alive, so the trade should still go through.
+  it("renews a stale token and retries once", async () => {
+    postTrade
+      .mockRejectedValueOnce(
+        new ApiError("Authentication failed", 401, "token_expired"),
+      )
+      .mockResolvedValue(serverPortfolio);
+    const dispatch = vi.fn();
+    const { result } = renderHook(() => useTrading(state(), dispatch));
+
+    await act(async () => {
+      await result.current.buyStock(stock(), 1);
+    });
+
+    expect(getAccessToken).toHaveBeenLastCalledWith({ forceRefresh: true });
+    expect(postTrade).toHaveBeenCalledTimes(2);
+    expect(login).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "SET_NOTICE",
+        payload: expect.objectContaining({ type: "success" }),
+      }),
+    );
+  });
+
+  it("sends the user to sign in when the renewal also fails", async () => {
+    postTrade.mockRejectedValue(
+      new ApiError("Authentication failed", 401, "token_expired"),
+    );
+    const dispatch = vi.fn();
+    const { result } = renderHook(() => useTrading(state(), dispatch));
+
+    await act(async () => {
+      await result.current.buyStock(stock(), 1);
+    });
+
+    expect(login).toHaveBeenCalledTimes(1);
+    // Never the API's wording — the user gets told the session ended.
+    const notices = dispatch.mock.calls
+      .map(([a]) => a)
+      .filter((a) => a.type === "SET_NOTICE");
+    expect(
+      notices.some((n) => /Authentication failed/.test(n.payload.message)),
+    ).toBe(false);
+  });
+
+  it("still reports a genuine trade rejection as an error", async () => {
+    postTrade.mockRejectedValue(
+      new ApiError("Insufficient funds", 400, undefined),
+    );
+    const dispatch = vi.fn();
+    const { result } = renderHook(() => useTrading(state(), dispatch));
+
+    await act(async () => {
+      await result.current.buyStock(stock(), 1);
+    });
+
+    expect(login).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "SET_NOTICE",
+      payload: { type: "error", message: "Insufficient funds" },
     });
   });
 

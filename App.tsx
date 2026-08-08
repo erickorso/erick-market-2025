@@ -10,11 +10,12 @@ import NoticeBanner from "./components/NoticeBanner";
 import HotSidebar from "./components/HotSidebar";
 import RankSidebar from "./components/RankSidebar";
 import StockDetailModal from "./components/StockDetailModal";
-import RequireAuth from "./components/RequireAuth";
+import { protectedRoute } from "./components/RequireAuth";
 import { StockProvider } from "./context/StockContext";
 import { LeagueProvider } from "./context/LeagueContext";
 import { I18nProvider, useI18n } from "./context/I18nContext";
 import { AuthProvider } from "./context/AuthContext";
+import { UserProvider } from "./context/UserContext";
 
 const AppShell: React.FC = () => {
   const year = new Date().getFullYear();
@@ -32,37 +33,15 @@ const AppShell: React.FC = () => {
           <main className="container relative z-10 mx-auto min-w-0 flex-grow px-2 py-8 sm:px-4">
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route
-                path="/league"
-                element={
-                  <RequireAuth>
-                    <LeaguePage />
-                  </RequireAuth>
-                }
-              />
+              <Route path="/league" element={protectedRoute(<LeaguePage />)} />
               <Route
                 path="/my-stocks"
-                element={
-                  <RequireAuth>
-                    <MyStocksPage />
-                  </RequireAuth>
-                }
+                element={protectedRoute(<MyStocksPage />)}
               />
-              <Route
-                path="/my-fund"
-                element={
-                  <RequireAuth>
-                    <MyFundPage />
-                  </RequireAuth>
-                }
-              />
+              <Route path="/my-fund" element={protectedRoute(<MyFundPage />)} />
               <Route
                 path="/sell/:stockCompany"
-                element={
-                  <RequireAuth>
-                    <SellStockForm />
-                  </RequireAuth>
-                }
+                element={protectedRoute(<SellStockForm />)}
               />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
@@ -83,11 +62,13 @@ const AppShell: React.FC = () => {
 const App: React.FC = () => (
   <I18nProvider>
     <AuthProvider>
-      <StockProvider>
-        <LeagueProvider>
-          <AppShell />
-        </LeagueProvider>
-      </StockProvider>
+      <UserProvider>
+        <StockProvider>
+          <LeagueProvider>
+            <AppShell />
+          </LeagueProvider>
+        </StockProvider>
+      </UserProvider>
     </AuthProvider>
   </I18nProvider>
 );

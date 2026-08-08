@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { EnrichedStock } from "../types";
 import { useStockContext } from "../context/StockContext";
-import { useAuth } from "../context/AuthContext";
+import { useUser } from "../context/UserContext";
 import { useI18n } from "../context/I18nContext";
 import StockChart from "./Chart";
 
@@ -11,7 +11,7 @@ interface StockCardProps {
 
 const StockCard: React.FC<StockCardProps> = ({ stock }) => {
   const { buyStock, state, dispatch } = useStockContext();
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login } = useUser();
   const { t } = useI18n();
   const [quantity, setQuantity] = useState(1);
   const [busy, setBusy] = useState(false);

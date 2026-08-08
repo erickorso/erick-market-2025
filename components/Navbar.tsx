@@ -1,12 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useStockContext } from "../context/StockContext";
-import { useAuth } from "../context/AuthContext";
+import { useUser } from "../context/UserContext";
 import { useI18n } from "../context/I18nContext";
 
 const Navbar: React.FC = () => {
   const { state, dispatch } = useStockContext();
-  const { isAuthenticated, user, login, logout, isLoading } = useAuth();
+  const { isAuthenticated, displayName, login, logout, isLoading, auth } =
+    useUser();
   const { t, toggleLang, lang } = useI18n();
 
   return (
@@ -48,9 +49,9 @@ const Navbar: React.FC = () => {
             >
               {t("navPlay")}
             </Link>
-            {!isLoading && isAuthenticated && user && (
+            {!isLoading && isAuthenticated && (
               <span className="hidden max-w-[8rem] truncate text-xs text-gray-500 sm:inline">
-                {user.name || user.email}
+                {displayName || auth?.email}
               </span>
             )}
             {!isLoading && (

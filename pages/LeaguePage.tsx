@@ -1,7 +1,7 @@
 ﻿import React from "react";
 import { Link } from "react-router-dom";
 import { useLeague } from "../context/LeagueContext";
-import { useAuth } from "../context/AuthContext";
+import { useUser } from "../context/UserContext";
 import { useI18n } from "../context/I18nContext";
 import { INITIAL_FUND_AMOUNT } from "../constants";
 
@@ -15,7 +15,7 @@ const LeaguePage: React.FC = () => {
     equity,
     pushScore,
   } = useLeague();
-  const { logout } = useAuth();
+  const { logout, displayName, profile } = useUser();
   const { t } = useI18n();
 
   const modeLabel =
@@ -60,7 +60,12 @@ const LeaguePage: React.FC = () => {
               <p className="text-xs uppercase tracking-wide text-gray-500">
                 {t("you")}
               </p>
-              <p className="text-xl font-semibold text-teal-300">{player.name}</p>
+              <p className="text-xl font-semibold text-teal-300">
+                {displayName || player.name}
+              </p>
+              {profile?.email && (
+                <p className="text-xs text-gray-500">{profile.email}</p>
+              )}
               <p className="mt-2 text-sm text-gray-300">
                 {t("equity")}{" "}
                 <span className="font-semibold text-gray-100">

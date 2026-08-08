@@ -28,11 +28,10 @@ import {
   tickStockPrices,
 } from "../services/stockService";
 import {
-  fetchMe,
   portfolioToState,
   postTrade,
 } from "../services/portfolioApi";
-import { useAuth } from "./AuthContext";
+import { useUser } from "./UserContext";
 
 const initialState: StockContextState = {
   allStocks: [],
@@ -280,7 +279,13 @@ const StockContext = createContext<StockContextValue | null>(null);
 export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { isAuthenticated, getAccessToken, isLoading: authLoading } = useAuth();
+  const {
+    isAuthenticated,
+    getAccessToken,
+    isLoading: authLoading,
+    portfolio: serverPortfolio,
+    refreshProfile,
+  } = useUser();
   const [portfolioSynced, setPortfolioSynced] = useState(false);
   const [state, dispatch] = useReducer(stockReducer, null, () => {
     const { q, category } = readQueryFilters();
@@ -392,37 +397,14 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
       });
       return;
     }
-    let cancelled = false;
-    void (async () => {
-      try {
-        const token = await getAccessToken();
-        if (!token || cancelled) return;
-        const { portfolio } = await fetchMe(token);
-        if (cancelled) return;
-        const mapped = portfolioToState(portfolio);
-        dispatch({
-          type: "HYDRATE_PORTFOLIO",
-          payload: { portfolio: mapped.portfolio, fund: mapped.fund },
-        });
-        setPortfolioSynced(true);
-      } catch (err) {
-        if (cancelled) return;
-        dispatch({
-          type: "SET_NOTICE",
-          payload: {
-            type: "error",
-            message:
-              err instanceof Error
-                ? err.message
-                : "Could not load portfolio from server",
-          },
-        });
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [authLoading, isAuthenticated, getAccessToken]);
+    if (!serverPortfolio) return;
+    const mapped = portfolioToState(serverPortfolio);
+    dispatch({
+      type: "HYDRATE_PORTFOLIO",
+      payload: { portfolio: mapped.portfolio, fund: mapped.fund },
+    });
+    setPortfolioSynced(true);
+  }, [authLoading, isAuthenticated, serverPortfolio]);
 
   const buyStock = useCallback(
     async (stock: EnrichedStock, quantity: number) => {
@@ -455,6 +437,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
           type: "HYDRATE_PORTFOLIO",
           payload: { portfolio: mapped.portfolio, fund: mapped.fund },
         });
+        await refreshProfile();
         dispatch({
           type: "SET_NOTICE",
           payload: {
@@ -472,7 +455,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       }
     },
-    [isAuthenticated, getAccessToken],
+    [isAuthenticated, getAccessToken, refreshProfile],
   );
 
   const sellStock = useCallback(
@@ -504,6 +487,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
           type: "HYDRATE_PORTFOLIO",
           payload: { portfolio: mapped.portfolio, fund: mapped.fund },
         });
+        await refreshProfile();
         dispatch({
           type: "SET_NOTICE",
           payload: {
@@ -521,7 +505,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       }
     },
-    [isAuthenticated, getAccessToken, state.portfolio],
+    [isAuthenticated, getAccessToken, state.portfolio, refreshProfile],
   );
 
   useEffect(() => {

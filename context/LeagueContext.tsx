@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { useStockContext } from "./StockContext";
-import { useAuth } from "./AuthContext";
+import { useUser } from "./UserContext";
 import { computeEquity, currentMonthKey } from "../services/leagueService";
 import {
   fetchLeagueBoard,
@@ -32,14 +32,14 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { state } = useStockContext();
-  const { isAuthenticated, user, getAccessToken } = useAuth();
+  const { isAuthenticated, auth, getAccessToken, profile, displayName } =
+    useUser();
   const [month] = useState(() => currentMonthKey());
   const [entries, setEntries] = useState<LeagueEntry[]>([]);
   const [previousWinner, setPreviousWinner] = useState<LeagueEntry | null>(
     null,
   );
   const [mode, setMode] = useState<"shared" | "local" | "ephemeral">("shared");
-  const [dbUserId, setDbUserId] = useState<string | null>(null);
 
   const equity = useMemo(
     () => computeEquity(state.fund, state.portfolio, state.allStocks),
@@ -47,12 +47,12 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const player = useMemo(() => {
-    if (!isAuthenticated || !user) return null;
+    if (!isAuthenticated) return null;
     return {
-      id: dbUserId || user.sub || "me",
-      name: user.name || user.email || "Trader",
+      id: profile?.id || auth?.sub || "me",
+      name: displayName || auth?.email || "Trader",
     };
-  }, [isAuthenticated, user, dbUserId]);
+  }, [isAuthenticated, profile, auth, displayName]);
 
   const refresh = useCallback(async () => {
     try {
@@ -74,19 +74,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           : null,
       );
       setMode(board.mode === "shared" ? "shared" : "ephemeral");
-      if (dbUserId) {
-        /* keep */
-      } else if (isAuthenticated && user?.sub) {
-        const mine = board.entries.find(
-          (e) => e.name === (user.name || user.email),
-        );
-        if (mine) setDbUserId(mine.playerId);
-      }
     } catch {
       setEntries([]);
       setMode("local");
     }
-  }, [month, dbUserId, isAuthenticated, user]);
+  }, [month]);
 
   const pushScore = useCallback(async () => {
     if (!isAuthenticated) return;

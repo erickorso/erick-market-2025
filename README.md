@@ -27,6 +27,12 @@ See [`db/schema.sql`](db/schema.sql): `users`, `portfolios`, `positions`, `trade
 
 Month key `YYYY-MM`. New month → fresh `$10,000` cash; previous month winner archived.
 
+## Auth & user layer
+
+- **API middleware:** `api/_lib/middleware.ts` → `withAuth()` (JWT + Neon upsert) on `/api/me`, `/api/portfolio`, `/api/trade`, league POST.
+- **Client:** `AuthProvider` (Auth0) → `UserProvider` (`useUser()`) shares Auth0 identity + Neon `profile` / `portfolio` app-wide.
+- **Route guard:** `protectedRoute(<Page />)` / `RequireAuth` for Play, portfolio, sell.
+
 ## Setup
 
 ### 1. Neon

@@ -16,7 +16,6 @@ const en = {
   total: "Total:",
   incAria: "Increase quantity",
   decAria: "Decrease quantity",
-  publicViewTrade: "Public view — join Play to trade in the monthly game.",
   chartLive: "Daily closes · live history",
   chartSim: "Sparkline · simulated",
   viewDetails: "View details →",
@@ -51,20 +50,11 @@ const en = {
   playTitle: "Play · monthly training",
   playIntro:
     "Auth0 seat for month {month}. Market data stays public; trading & ranking need login. Everyone starts with ${fund}. Highest equity wins the month — then a fresh start. Demo only.",
-  joinMonth: "Join this month",
-  joinHint:
-    "Nickname + PIN (4–6 digits). Not bank-grade auth — enough to keep your seat on the board.",
-  displayName: "Display name",
-  pin: "PIN",
-  joinLeague: "Join league",
-  joining: "Joining…",
-  joinFailed: "Join failed",
   you: "You",
   equity: "Equity",
   cash: "Cash",
   positions: "Positions",
   syncScore: "Sync score",
-  leaveSeat: "Leave seat",
   tradeArrow: "Trade →",
   leaderboard: "Leaderboard",
   modeShared: "Shared board (Neon)",
@@ -134,8 +124,6 @@ const en = {
     "Portfolio, fund and Play need an Auth0 account. Market browse stays public.",
   authNotConfigured:
     "Auth0 env vars are missing. Add VITE_AUTH0_* and DATABASE_URL to enable Play.",
-  loginToTrade: "Sign in to buy and sell.",
-  tradingLocked: "Trading locked until you sign in.",
   buyTooltipGuest:
     "To buy: Log in with Auth0 (button in the navbar). Then choose quantity and press Buy — uses your virtual $10k fund.",
   buyTooltipFunds: "Not enough cash in your fund for this quantity.",
@@ -156,10 +144,8 @@ const en = {
   error: "Error",
   stockNotFound:
     "Stock details not found. You might not own this stock or it is no longer listed.",
-  loadingStock: "Loading stock details...",
   qtyMustBePositive: "Quantity must be greater than zero.",
   canSellUpTo: "You can only sell up to {max} shares.",
-  detailLoadFailed: "Failed to load detail",
   closeDetail: "Close detail",
   crashTitle: "Something broke on this screen",
   crashBody:
@@ -167,13 +153,15 @@ const en = {
   crashReload: "Reload",
   crashDetails: "Technical details",
   chartUnavailable: "Chart unavailable",
-  backgroundUnavailable: "3D background unavailable",
   skipToContent: "Skip to main content",
   sessionExpiredTitle: "Your session ended",
   sessionExpiredBody:
     "You were signed out for security after a period of inactivity. Sign in again to pick up where you left off — your portfolio is safe.",
   signInAgain: "Sign in again",
-  sessionExpiredNotice: "Your session ended. Taking you to sign in…",
+  sessionExpiredNotice: "Your session ended.",
+  authPromptTradeBody:
+    "Trading uses a virtual $10,000 fund tied to your account. Signing in takes you to Auth0 and brings you straight back here.",
+  notNow: "Not now",
 } as const;
 
 type Dict = { [K in keyof typeof en]: string };
@@ -192,8 +180,6 @@ const es: Dict = {
   total: "Total:",
   incAria: "Aumentar cantidad",
   decAria: "Disminuir cantidad",
-  publicViewTrade:
-    "Vista pública — entrá a Jugar para operar en el juego mensual.",
   chartLive: "Cierres diarios · histórico real",
   chartSim: "Sparkline · simulado",
   viewDetails: "Ver detalle →",
@@ -228,20 +214,11 @@ const es: Dict = {
   playTitle: "Jugar · entrenamiento mensual",
   playIntro:
     "Área Auth0 del mes {month}. El mercado es público; operar y el ranking piden login. Todos empiezan con ${fund}. Gana quien tenga más equity al cerrar el mes. Solo demo.",
-  joinMonth: "Unirse a este mes",
-  joinHint:
-    "Nick + PIN (4–6 dígitos). No es auth bancaria — alcanza para tu lugar en el tablero.",
-  displayName: "Nombre",
-  pin: "PIN",
-  joinLeague: "Entrar a la liga",
-  joining: "Entrando…",
-  joinFailed: "No se pudo entrar",
   you: "Vos",
   equity: "Equity",
   cash: "Efectivo",
   positions: "Posiciones",
   syncScore: "Sincronizar",
-  leaveSeat: "Salir",
   tradeArrow: "Operar →",
   leaderboard: "Ranking",
   modeShared: "Tablero compartido (Neon)",
@@ -311,8 +288,6 @@ const es: Dict = {
     "Portfolio, fondo y Jugar necesitan cuenta Auth0. El mercado sigue público.",
   authNotConfigured:
     "Faltan vars Auth0. Agregá VITE_AUTH0_* y DATABASE_URL para habilitar Play.",
-  loginToTrade: "Iniciá sesión para comprar y vender.",
-  tradingLocked: "Trading bloqueado hasta que inicies sesión.",
   buyTooltipGuest:
     "Para comprar: iniciá sesión con Auth0 (botón en la navbar). Después elegí cantidad y tocá Comprar — usa tu fondo virtual de $10k.",
   buyTooltipFunds: "No te alcanza el efectivo del fondo para esa cantidad.",
@@ -333,10 +308,8 @@ const es: Dict = {
   error: "Error",
   stockNotFound:
     "No se encontró la acción. Puede que no la tengas o ya no esté listada.",
-  loadingStock: "Cargando detalles…",
   qtyMustBePositive: "La cantidad debe ser mayor que cero.",
   canSellUpTo: "Solo podés vender hasta {max} acciones.",
-  detailLoadFailed: "No se pudo cargar el detalle",
   closeDetail: "Cerrar detalle",
   crashTitle: "Algo se rompió en esta pantalla",
   crashBody:
@@ -344,13 +317,15 @@ const es: Dict = {
   crashReload: "Recargar",
   crashDetails: "Detalles técnicos",
   chartUnavailable: "Gráfica no disponible",
-  backgroundUnavailable: "Fondo 3D no disponible",
   skipToContent: "Saltar al contenido principal",
   sessionExpiredTitle: "Tu sesión terminó",
   sessionExpiredBody:
     "Por seguridad cerramos la sesión tras un rato de inactividad. Volvé a entrar y seguís donde estabas — tu portfolio está a salvo.",
   signInAgain: "Volver a entrar",
-  sessionExpiredNotice: "Tu sesión terminó. Te llevamos a iniciar sesión…",
+  sessionExpiredNotice: "Tu sesión terminó.",
+  authPromptTradeBody:
+    "Operar usa un fondo virtual de $10.000 ligado a tu cuenta. Al entrar pasás por Auth0 y volvés justo acá.",
+  notNow: "Ahora no",
 };
 
 export type MsgKey = keyof typeof en;

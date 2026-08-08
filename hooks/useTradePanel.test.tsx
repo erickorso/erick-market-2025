@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTradePanel } from "./useTradePanel";
 import type { EnrichedStock } from "../types";
 
+const requestLogin = vi.hoisted(() => vi.fn());
 const buyStock = vi.hoisted(() => vi.fn());
 const login = vi.hoisted(() => vi.fn());
 const contextState = vi.hoisted(() => ({
@@ -15,6 +16,10 @@ vi.mock("../context/StockContext", () => ({
     buyStock,
     state: { fund: contextState.fund },
   }),
+}));
+
+vi.mock("../context/AuthPromptContext", () => ({
+  useAuthPrompt: () => ({ requestLogin, reason: null }),
 }));
 
 vi.mock("../context/UserContext", () => ({
@@ -34,6 +39,7 @@ function stock(over: Partial<EnrichedStock> = {}): EnrichedStock {
 beforeEach(() => {
   buyStock.mockReset().mockResolvedValue(undefined);
   login.mockReset();
+  requestLogin.mockReset();
   contextState.fund = 10_000;
   contextState.isAuthenticated = true;
 });
@@ -127,7 +133,8 @@ describe("submit", () => {
       await result.current.submit();
     });
 
-    expect(login).toHaveBeenCalledTimes(1);
+    expect(requestLogin).toHaveBeenCalledWith("trade");
+    expect(login).not.toHaveBeenCalled();
     expect(buyStock).not.toHaveBeenCalled();
   });
 

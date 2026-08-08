@@ -11,6 +11,7 @@ import HotSidebar from "../organisms/HotSidebar";
 import RankSidebar from "../organisms/RankSidebar";
 import SellStockForm from "../organisms/SellStockForm";
 import StockDetailModal from "../organisms/StockDetailModal";
+import AuthPromptModal from "../organisms/AuthPromptModal";
 import ErrorBoundary from "../organisms/ErrorBoundary";
 import { protectedRoute } from "../routing/RequireAuth";
 
@@ -89,6 +90,7 @@ const AppShell: React.FC = () => {
         </div>
 
         <StockDetailModal />
+        <AuthPromptModal />
       </div>
     </HashRouter>
   );

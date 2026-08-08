@@ -8,6 +8,8 @@ import {
 } from "../services/portfolioApi";
 import { symbolFromCompany, symbolFromStock } from "../services/symbols";
 import { useUser } from "../context/UserContext";
+import { useI18n } from "../context/I18nContext";
+import { useAuthPrompt } from "../context/AuthPromptContext";
 
 /**
  * Owns the write side of the portfolio: hydrating it from the server and
@@ -24,8 +26,9 @@ export function useTrading(
     isLoading: authLoading,
     portfolio: serverPortfolio,
     refreshProfile,
-    login,
   } = useUser();
+  const { t } = useI18n();
+  const { requestLogin } = useAuthPrompt();
   // Derived rather than stored: it is exactly "signed in and the server has
   // answered", so keeping it in state only created a second source of truth
   // that an effect had to keep in step.
@@ -105,12 +108,9 @@ export function useTrading(
         if (err instanceof ApiError && err.isAuthFailure) {
           dispatch({
             type: "SET_NOTICE",
-            payload: {
-              type: "info",
-              message: "Your session ended. Taking you to sign in…",
-            },
+            payload: { type: "info", message: t("sessionExpiredNotice") },
           });
-          login();
+          requestLogin("sessionExpired");
           return;
         }
         dispatch({
@@ -122,7 +122,14 @@ export function useTrading(
         });
       }
     },
-    [isAuthenticated, getAccessToken, refreshProfile, dispatch, login],
+    [
+      isAuthenticated,
+      getAccessToken,
+      refreshProfile,
+      dispatch,
+      requestLogin,
+      t,
+    ],
   );
 
   const buyStock = useCallback(

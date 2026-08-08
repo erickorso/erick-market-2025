@@ -4,11 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import StockCard from "./StockCard";
 import type { EnrichedStock } from "../../types";
 
+const requestLogin = vi.hoisted(() => vi.fn());
 const dispatch = vi.hoisted(() => vi.fn());
 const buyStock = vi.hoisted(() => vi.fn());
 
 vi.mock("../../context/StockContext", () => ({
   useStockContext: () => ({ dispatch, buyStock, state: { fund: 10_000 } }),
+}));
+
+vi.mock("../../context/AuthPromptContext", () => ({
+  useAuthPrompt: () => ({ requestLogin, reason: null }),
 }));
 
 vi.mock("../../context/UserContext", () => ({

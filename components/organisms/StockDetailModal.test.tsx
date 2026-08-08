@@ -4,6 +4,7 @@ import { renderWithProviders, screen, waitFor } from "../../test/render";
 import StockDetailModal from "./StockDetailModal";
 import type { StockDetail } from "../../services/detailService";
 
+const requestLogin = vi.hoisted(() => vi.fn());
 const dispatch = vi.hoisted(() => vi.fn());
 const buyStock = vi.hoisted(() => vi.fn());
 const fetchStockDetail = vi.hoisted(() => vi.fn());
@@ -15,6 +16,10 @@ vi.mock("../../context/StockContext", () => ({
     dispatch,
     buyStock,
   }),
+}));
+
+vi.mock("../../context/AuthPromptContext", () => ({
+  useAuthPrompt: () => ({ requestLogin, reason: null }),
 }));
 
 vi.mock("../../context/UserContext", () => ({

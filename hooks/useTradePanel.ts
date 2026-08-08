@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import type { EnrichedStock } from "../types";
 import { useStockContext } from "../context/StockContext";
 import { useUser } from "../context/UserContext";
+import { useAuthPrompt } from "../context/AuthPromptContext";
 
 type Options = {
   /** Changing this resets the quantity — e.g. opening a different symbol. */
@@ -17,7 +18,8 @@ export function useTradePanel(
   { resetKey }: Options = {},
 ) {
   const { buyStock, state } = useStockContext();
-  const { isAuthenticated, login } = useUser();
+  const { isAuthenticated } = useUser();
+  const { requestLogin } = useAuthPrompt();
   const [quantity, setQuantity] = useState(1);
   const [busy, setBusy] = useState(false);
 
@@ -42,7 +44,8 @@ export function useTradePanel(
 
   const submit = useCallback(async () => {
     if (locked) {
-      login();
+      // Ask rather than redirect: leaving the app mid-task is the user's call.
+      requestLogin("trade");
       return;
     }
     if (!stock || busy || quantity <= 0 || !canAfford) return;
@@ -52,7 +55,7 @@ export function useTradePanel(
     } finally {
       setBusy(false);
     }
-  }, [locked, login, stock, busy, quantity, canAfford, buyStock]);
+  }, [locked, requestLogin, stock, busy, quantity, canAfford, buyStock]);
 
   return {
     quantity,

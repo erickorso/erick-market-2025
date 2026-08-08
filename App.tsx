@@ -5,6 +5,7 @@ import { LeagueProvider } from "./context/LeagueContext";
 import { I18nProvider } from "./context/I18nContext";
 import { AuthProvider } from "./context/AuthContext";
 import { UserProvider } from "./context/UserContext";
+import { AuthPromptProvider } from "./context/AuthPromptContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
 /** Provider stack. The frame itself lives in the AppShell template. */
@@ -13,11 +14,13 @@ const App: React.FC = () => (
     <I18nProvider>
       <AuthProvider>
         <UserProvider>
-          <StockProvider>
-            <LeagueProvider>
-              <AppShell />
-            </LeagueProvider>
-          </StockProvider>
+          <AuthPromptProvider>
+            <StockProvider>
+              <LeagueProvider>
+                <AppShell />
+              </LeagueProvider>
+            </StockProvider>
+          </AuthPromptProvider>
         </UserProvider>
       </AuthProvider>
     </I18nProvider>

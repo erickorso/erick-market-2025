@@ -6,6 +6,7 @@ import TradePanel from "../molecules/TradePanel";
 import StockGrid from "./StockGrid";
 import type { EnrichedStock } from "../../types";
 
+const requestLogin = vi.hoisted(() => vi.fn());
 const authed = vi.hoisted(() => ({ isAuthenticated: true }));
 
 vi.mock("../../context/StockContext", () => ({
@@ -14,6 +15,10 @@ vi.mock("../../context/StockContext", () => ({
     buyStock: vi.fn(),
     state: { fund: 10_000 },
   }),
+}));
+
+vi.mock("../../context/AuthPromptContext", () => ({
+  useAuthPrompt: () => ({ requestLogin, reason: null }),
 }));
 
 vi.mock("../../context/UserContext", () => ({

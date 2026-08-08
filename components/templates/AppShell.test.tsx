@@ -18,6 +18,9 @@ vi.mock("../organisms/HotSidebar", () => ({
 vi.mock("../organisms/RankSidebar", () => ({
   default: () => <aside data-testid="rank" />,
 }));
+vi.mock("../organisms/AuthPromptModal", () => ({
+  default: () => <div data-testid="auth-prompt" />,
+}));
 vi.mock("../organisms/StockDetailModal", () => ({
   default: () => <div data-testid="detail-modal" />,
 }));

@@ -4,6 +4,7 @@ import { expectNoA11yViolations } from "../../test/a11y";
 import StockDetailModal from "./StockDetailModal";
 import type { StockDetail } from "../../services/detailService";
 
+const requestLogin = vi.hoisted(() => vi.fn());
 const fetchStockDetail = vi.hoisted(() => vi.fn());
 
 vi.mock("../../context/StockContext", () => ({
@@ -12,6 +13,10 @@ vi.mock("../../context/StockContext", () => ({
     dispatch: vi.fn(),
     buyStock: vi.fn(),
   }),
+}));
+
+vi.mock("../../context/AuthPromptContext", () => ({
+  useAuthPrompt: () => ({ requestLogin, reason: null }),
 }));
 
 vi.mock("../../context/UserContext", () => ({

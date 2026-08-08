@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import TradePanel from "./TradePanel";
 import type { EnrichedStock } from "../../types";
 
+const requestLogin = vi.hoisted(() => vi.fn());
 const buyStock = vi.hoisted(() => vi.fn());
 const login = vi.hoisted(() => vi.fn());
 const contextState = vi.hoisted(() => ({
@@ -13,6 +14,10 @@ const contextState = vi.hoisted(() => ({
 
 vi.mock("../../context/StockContext", () => ({
   useStockContext: () => ({ buyStock, state: { fund: contextState.fund } }),
+}));
+
+vi.mock("../../context/AuthPromptContext", () => ({
+  useAuthPrompt: () => ({ requestLogin, reason: null }),
 }));
 
 vi.mock("../../context/UserContext", () => ({
@@ -49,6 +54,7 @@ function stock(over: Partial<EnrichedStock> = {}): EnrichedStock {
 beforeEach(() => {
   buyStock.mockReset().mockResolvedValue(undefined);
   login.mockReset();
+  requestLogin.mockReset();
   contextState.fund = 10_000;
   contextState.isAuthenticated = true;
 });
@@ -103,7 +109,9 @@ describe("TradePanel", () => {
       expect(buy).toBeEnabled();
 
       await userEvent.click(buy);
-      expect(login).toHaveBeenCalledTimes(1);
+      // Asks first — leaving for Auth0 is the user's decision.
+      expect(requestLogin).toHaveBeenCalledWith("trade");
+      expect(login).not.toHaveBeenCalled();
       expect(buyStock).not.toHaveBeenCalled();
     });
 

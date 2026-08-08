@@ -10,6 +10,7 @@ const postTrade = vi.hoisted(() => vi.fn());
 const refreshProfile = vi.hoisted(() => vi.fn());
 const getAccessToken = vi.hoisted(() => vi.fn());
 const login = vi.hoisted(() => vi.fn());
+const requestLogin = vi.hoisted(() => vi.fn());
 const user = vi.hoisted(() => ({
   isAuthenticated: true,
   isLoading: false,
@@ -19,6 +20,14 @@ const user = vi.hoisted(() => ({
 vi.mock("../services/portfolioApi", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../services/portfolioApi")>()),
   postTrade,
+}));
+
+vi.mock("../context/AuthPromptContext", () => ({
+  useAuthPrompt: () => ({ requestLogin, reason: null }),
+}));
+
+vi.mock("../context/I18nContext", () => ({
+  useI18n: () => ({ t: (k: string) => k }),
 }));
 
 vi.mock("../context/UserContext", () => ({
@@ -58,6 +67,7 @@ beforeEach(() => {
   refreshProfile.mockReset().mockResolvedValue(undefined);
   getAccessToken.mockReset().mockResolvedValue("tok");
   login.mockReset();
+  requestLogin.mockReset();
   user.isAuthenticated = true;
   user.isLoading = false;
   user.portfolio = null;
@@ -193,7 +203,7 @@ describe("buyStock", () => {
     });
 
     expect(postTrade).not.toHaveBeenCalled();
-    expect(login).toHaveBeenCalledTimes(1);
+    expect(requestLogin).toHaveBeenCalledWith("sessionExpired");
     expect(dispatch).toHaveBeenCalledWith({
       type: "SET_NOTICE",
       payload: expect.objectContaining({ type: "info" }),
@@ -217,7 +227,7 @@ describe("buyStock", () => {
 
     expect(getAccessToken).toHaveBeenLastCalledWith({ forceRefresh: true });
     expect(postTrade).toHaveBeenCalledTimes(2);
-    expect(login).not.toHaveBeenCalled();
+    expect(requestLogin).not.toHaveBeenCalled();
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "SET_NOTICE",
@@ -237,7 +247,7 @@ describe("buyStock", () => {
       await result.current.buyStock(stock(), 1);
     });
 
-    expect(login).toHaveBeenCalledTimes(1);
+    expect(requestLogin).toHaveBeenCalledWith("sessionExpired");
     // Never the API's wording — the user gets told the session ended.
     const notices = dispatch.mock.calls
       .map(([a]) => a)
@@ -258,7 +268,7 @@ describe("buyStock", () => {
       await result.current.buyStock(stock(), 1);
     });
 
-    expect(login).not.toHaveBeenCalled();
+    expect(requestLogin).not.toHaveBeenCalled();
     expect(dispatch).toHaveBeenCalledWith({
       type: "SET_NOTICE",
       payload: { type: "error", message: "Insufficient funds" },

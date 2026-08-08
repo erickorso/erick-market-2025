@@ -197,9 +197,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       clientId={auth0ClientId}
       authorizationParams={{
         redirect_uri: window.location.origin,
+        // offline_access is what actually makes Auth0 issue a refresh token;
+        // the useRefreshTokens flag alone does nothing without it.
+        scope: auth0UsesCustomApi
+          ? "openid profile email offline_access"
+          : "openid profile email",
         ...(auth0UsesCustomApi ? { audience: auth0Audience } : {}),
       }}
       cacheLocation="localstorage"
+      // Refresh tokens need an Auth0 API with Allow Offline Access; without a
+      // custom audience there is nothing to request offline_access against, so
+      // this stays off until VITE_AUTH0_AUDIENCE points at a real API.
+      useRefreshTokens={auth0UsesCustomApi}
+      // Keeps iframe silent auth as the fallback, so a tenant that has not
+      // enabled offline access yet degrades to today's behaviour rather than
+      // failing outright.
+      useRefreshTokensFallback={auth0UsesCustomApi}
       onRedirectCallback={onRedirectCallback}
     >
       <Auth0Bridge>{children}</Auth0Bridge>

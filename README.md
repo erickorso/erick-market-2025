@@ -335,6 +335,35 @@ No `psql`: Neon → **SQL Editor** → paste [`db/schema.sql`](db/schema.sql) �
 | `AUTH0_AUDIENCE` / `VITE_AUTH0_AUDIENCE` | API Identifier                                |
 | `ALLOWED_ORIGINS`                        | Optional. Extra CORS origins, comma separated |
 
+### Sessions that survive Safari
+
+The audience **must differ from the Client ID**. When it does, the app requests
+a real access token for the API and asks for `offline_access`, so Auth0 issues
+a refresh token — see [`AuthContext`](context/AuthContext.tsx).
+
+That matters because the alternative is silent authentication through a hidden
+iframe, which depends on a third-party cookie: Safari's ITP and Firefox's
+strict mode block it outright, so a session that Auth0 still considers valid
+dies in the browser. Refresh tokens do not need the cookie.
+
+Both flags are derived from `auth0UsesCustomApi`, so a tenant without an API
+keeps today's iframe behaviour rather than requesting a scope that would be
+rejected. `useRefreshTokensFallback` keeps the iframe as a second chance.
+
+On the Auth0 side this needs, all in the dashboard:
+
+| Where                                | Setting                                                               |
+| ------------------------------------ | --------------------------------------------------------------------- |
+| API → Settings → Access Settings     | **Allow Offline Access** on                                           |
+| Application → Advanced → Grant Types | **Refresh Token** checked                                             |
+| Application → Refresh Token Rotation | **On** — a non-rotating refresh token in a browser is a standing risk |
+
+A SPA does **not** need to appear under the API's _Application Access_ tab;
+that is for machine-to-machine clients. Tokens here are issued on behalf of
+the signed-in user.
+
+Changing `VITE_*` values requires a redeploy — Vite bakes them into the bundle.
+
 ### 3. Local
 
 ```bash

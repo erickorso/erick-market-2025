@@ -233,6 +233,35 @@ describe("SDK configuration", () => {
       "audience",
     );
   });
+
+  // Refresh tokens survive Safari's third-party cookie blocking, which iframe
+  // silent auth does not.
+  it("uses refresh tokens when there is an API to request them against", () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    expect(providerProps.current?.useRefreshTokens).toBe(true);
+    expect(providerProps.current?.useRefreshTokensFallback).toBe(true);
+  });
+
+  it("asks for offline_access, which is what actually mints one", () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    expect(
+      (providerProps.current?.authorizationParams as { scope: string }).scope,
+    ).toContain("offline_access");
+  });
+
+  // Requesting offline_access without an API would be rejected outright, which
+  // is worse than the iframe path it replaces.
+  it("stays off entirely when the tenant has no custom API", () => {
+    config.usesCustomApi = false;
+    renderHook(() => useAuth(), { wrapper });
+
+    expect(providerProps.current?.useRefreshTokens).toBe(false);
+    expect(
+      (providerProps.current?.authorizationParams as { scope: string }).scope,
+    ).not.toContain("offline_access");
+  });
 });
 
 describe("redirect callback", () => {

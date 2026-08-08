@@ -8,6 +8,7 @@ import {
   auth0Audience,
   auth0ClientId,
   auth0Domain,
+  auth0UsesCustomApi,
   isAuth0Configured,
 } from "../auth/config";
 
@@ -34,7 +35,7 @@ const FallbackAuthProvider: React.FC<{ children: React.ReactNode }> = ({
       user: null,
       login: () => {
         window.alert(
-          "Auth0 is not configured. Set VITE_AUTH0_DOMAIN, VITE_AUTH0_CLIENT_ID and VITE_AUTH0_AUDIENCE.",
+          "Auth0 is not configured. Set VITE_AUTH0_DOMAIN and VITE_AUTH0_CLIENT_ID.",
         );
       },
       logout: () => undefined,
@@ -53,6 +54,7 @@ const Auth0Bridge: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     loginWithRedirect,
     logout: auth0Logout,
     getAccessTokenSilently,
+    getIdTokenClaims,
   } = useAuth0();
 
   const login = useCallback(() => {
@@ -67,13 +69,22 @@ const Auth0Bridge: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const getAccessToken = useCallback(async () => {
     try {
-      return await getAccessTokenSilently({
-        authorizationParams: { audience: auth0Audience },
-      });
+      if (auth0UsesCustomApi) {
+        return await getAccessTokenSilently({
+          authorizationParams: { audience: auth0Audience },
+        });
+      }
+      const claims = await getIdTokenClaims();
+      return claims?.__raw ?? null;
     } catch {
-      return null;
+      try {
+        const claims = await getIdTokenClaims();
+        return claims?.__raw ?? null;
+      } catch {
+        return null;
+      }
     }
-  }, [getAccessTokenSilently]);
+  }, [getAccessTokenSilently, getIdTokenClaims]);
 
   const value = useMemo<AuthValue>(
     () => ({
@@ -116,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       clientId={auth0ClientId}
       authorizationParams={{
         redirect_uri: window.location.origin,
-        audience: auth0Audience,
+        ...(auth0UsesCustomApi ? { audience: auth0Audience } : {}),
       }}
       cacheLocation="localstorage"
       onRedirectCallback={onRedirectCallback}

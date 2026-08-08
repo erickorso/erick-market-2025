@@ -130,6 +130,25 @@ const en = {
   hint_losers: "Worst % change today (live)",
   langToggle: "ES",
   langAria: "Switch language to Spanish",
+  avgBuyPrice: "Avg. Buy Price:",
+  currentPrice: "Current Price:",
+  currentValue: "Current Value:",
+  pnl: "P/L:",
+  sellStocks: "Sell Stocks",
+  qtyToSell: "Quantity to Sell (Max: {max})",
+  currentPricePerShare: "Current Price: ${price} per share",
+  totalValue: "Total Value:",
+  confirmSell: "Confirm Sell",
+  cancel: "Cancel",
+  backToMyStocks: "Back to My Stocks",
+  error: "Error",
+  stockNotFound:
+    "Stock details not found. You might not own this stock or it is no longer listed.",
+  loadingStock: "Loading stock details...",
+  qtyMustBePositive: "Quantity must be greater than zero.",
+  canSellUpTo: "You can only sell up to {max} shares.",
+  detailLoadFailed: "Failed to load detail",
+  closeDetail: "Close detail",
 } as const;
 
 type Dict = { [K in keyof typeof en]: string };
@@ -263,6 +282,25 @@ const es: Dict = {
   hint_losers: "Peor % del día (live)",
   langToggle: "EN",
   langAria: "Cambiar idioma a inglés",
+  avgBuyPrice: "Precio prom. compra:",
+  currentPrice: "Precio actual:",
+  currentValue: "Valor actual:",
+  pnl: "G/P:",
+  sellStocks: "Vender acciones",
+  qtyToSell: "Cantidad a vender (máx: {max})",
+  currentPricePerShare: "Precio actual: ${price} por acción",
+  totalValue: "Valor total:",
+  confirmSell: "Confirmar venta",
+  cancel: "Cancelar",
+  backToMyStocks: "Volver a Mis acciones",
+  error: "Error",
+  stockNotFound:
+    "No se encontró la acción. Puede que no la tengas o ya no esté listada.",
+  loadingStock: "Cargando detalles…",
+  qtyMustBePositive: "La cantidad debe ser mayor que cero.",
+  canSellUpTo: "Solo podés vender hasta {max} acciones.",
+  detailLoadFailed: "No se pudo cargar el detalle",
+  closeDetail: "Cerrar detalle",
 };
 
 export type MsgKey = keyof typeof en;

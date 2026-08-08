@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useLeague } from "../context/LeagueContext";
+import { useI18n } from "../context/I18nContext";
 import { INITIAL_FUND_AMOUNT } from "../constants";
 
 const LeaguePage: React.FC = () => {
@@ -16,6 +17,7 @@ const LeaguePage: React.FC = () => {
     logout,
     pushScore,
   } = useLeague();
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,34 +28,33 @@ const LeaguePage: React.FC = () => {
     try {
       await join(name, pin);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Join failed");
+      setError(err instanceof Error ? err.message : t("joinFailed"));
     }
   };
 
   const modeLabel =
     mode === "shared"
-      ? "Shared board (Upstash)"
+      ? t("modeShared")
       : mode === "ephemeral"
-        ? "Server ephemeral + local backup"
-        : "This device (local)";
+        ? t("modeEphemeral")
+        : t("modeLocal");
 
   return (
     <div className="relative z-10 mx-auto max-w-3xl p-4 sm:p-6">
       <h1 className="mb-2 text-3xl font-bold text-teal-400 sm:text-4xl">
-        Play · monthly training
+        {t("playTitle")}
       </h1>
       <p className="mb-6 text-sm text-gray-400">
-        Private games seat for month{" "}
-        <span className="text-gray-200">{month}</span>. Market data stays public;
-        trading & ranking need nickname + PIN. Everyone starts with $
-        {INITIAL_FUND_AMOUNT.toLocaleString()}. Highest equity wins the month —
-        then a fresh start. Demo only.
+        {t("playIntro", {
+          month,
+          fund: INITIAL_FUND_AMOUNT.toLocaleString(),
+        })}
       </p>
 
       {previousWinner && (
         <div className="mb-6 rounded-xl border border-amber-500/40 bg-amber-950/30 p-4">
           <p className="text-xs uppercase tracking-wide text-amber-400">
-            Last month winner
+            {t("lastWinner")}
           </p>
           <p className="text-lg font-semibold text-amber-100">
             {previousWinner.name}{" "}
@@ -71,13 +72,10 @@ const LeaguePage: React.FC = () => {
           onSubmit={onJoin}
           className="mb-8 space-y-4 rounded-xl border border-gray-700 bg-gray-800/80 p-5"
         >
-          <h2 className="text-lg font-semibold text-gray-100">Join this month</h2>
-          <p className="text-xs text-gray-500">
-            Nickname + PIN (4–6 digits). Not bank-grade auth — enough to keep your
-            seat on the board.
-          </p>
+          <h2 className="text-lg font-semibold text-gray-100">{t("joinMonth")}</h2>
+          <p className="text-xs text-gray-500">{t("joinHint")}</p>
           <label className="block text-sm text-gray-300">
-            Display name
+            {t("displayName")}
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -88,10 +86,12 @@ const LeaguePage: React.FC = () => {
             />
           </label>
           <label className="block text-sm text-gray-300">
-            PIN
+            {t("pin")}
             <input
               value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              onChange={(e) =>
+                setPin(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
               className="mt-1 w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
               inputMode="numeric"
               pattern="\d{4,6}"
@@ -105,17 +105,19 @@ const LeaguePage: React.FC = () => {
             disabled={joining}
             className="rounded-lg bg-teal-500 px-4 py-2 font-semibold text-white hover:bg-teal-600 disabled:opacity-60"
           >
-            {joining ? "Joining…" : "Join league"}
+            {joining ? t("joining") : t("joinLeague")}
           </button>
         </form>
       ) : (
         <div className="mb-8 rounded-xl border border-gray-700 bg-gray-800/80 p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500">You</p>
+              <p className="text-xs uppercase tracking-wide text-gray-500">
+                {t("you")}
+              </p>
               <p className="text-xl font-semibold text-teal-300">{player.name}</p>
               <p className="mt-2 text-sm text-gray-300">
-                Equity{" "}
+                {t("equity")}{" "}
                 <span className="font-semibold text-gray-100">
                   ${equity.equity.toFixed(2)}
                 </span>{" "}
@@ -129,7 +131,7 @@ const LeaguePage: React.FC = () => {
                 </span>
               </p>
               <p className="text-xs text-gray-500">
-                Cash ${equity.cash.toFixed(2)} · Positions $
+                {t("cash")} ${equity.cash.toFixed(2)} · {t("positions")} $
                 {equity.invested.toFixed(2)}
               </p>
             </div>
@@ -139,20 +141,20 @@ const LeaguePage: React.FC = () => {
                 onClick={() => void pushScore()}
                 className="rounded-md border border-teal-600 px-3 py-1.5 text-sm text-teal-300 hover:bg-teal-950"
               >
-                Sync score
+                {t("syncScore")}
               </button>
               <button
                 type="button"
                 onClick={logout}
                 className="rounded-md border border-gray-600 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200"
               >
-                Leave seat
+                {t("leaveSeat")}
               </button>
               <Link
                 to="/"
                 className="text-center text-xs text-teal-400 hover:text-teal-300"
               >
-                Trade →
+                {t("tradeArrow")}
               </Link>
             </div>
           </div>
@@ -161,11 +163,13 @@ const LeaguePage: React.FC = () => {
 
       <div className="rounded-xl border border-gray-700 bg-gray-800/60 p-5">
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-lg font-semibold text-gray-100">Leaderboard</h2>
+          <h2 className="text-lg font-semibold text-gray-100">
+            {t("leaderboard")}
+          </h2>
           <span className="text-[11px] text-gray-500">{modeLabel}</span>
         </div>
         {entries.length === 0 ? (
-          <p className="text-sm text-gray-500">No scores yet this month.</p>
+          <p className="text-sm text-gray-500">{t("noScoresMonth")}</p>
         ) : (
           <ol className="space-y-2">
             {entries.map((e, i) => (
@@ -187,7 +191,9 @@ const LeaguePage: React.FC = () => {
                   </div>
                   <div
                     className={
-                      e.pnl >= 0 ? "text-xs text-emerald-400" : "text-xs text-rose-400"
+                      e.pnl >= 0
+                        ? "text-xs text-emerald-400"
+                        : "text-xs text-rose-400"
                     }
                   >
                     {e.pnl >= 0 ? "+" : ""}

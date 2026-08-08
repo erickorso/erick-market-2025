@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLeague } from "../context/LeagueContext";
+import { useI18n } from "../context/I18nContext";
 
 const COLLAPSE_KEY = "erick-market.rank-sidebar.collapsed";
 
 const RankSidebar: React.FC = () => {
   const { entries, month, player, previousWinner, refresh } = useLeague();
+  const { t } = useI18n();
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem(COLLAPSE_KEY) === "1";
@@ -35,22 +37,22 @@ const RankSidebar: React.FC = () => {
     return (
       <aside
         className="relative z-20 flex w-full shrink-0 items-center justify-between border-b border-gray-700 bg-gray-900 px-3 py-2 lg:w-10 lg:flex-col lg:justify-start lg:gap-3 lg:border-b-0 lg:border-l lg:px-1 lg:py-4"
-        aria-label="Top 10 ranking collapsed"
+        aria-label={t("top10")}
       >
         <button
           type="button"
           onClick={() => setCollapsed(false)}
-          className="rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-400 hover:bg-gray-800 hover:text-amber-300 lg:writing-mode-vertical lg:[writing-mode:vertical-rl] lg:rotate-180"
+          className="rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-400 hover:bg-gray-800 hover:text-amber-300 lg:[writing-mode:vertical-rl] lg:rotate-180"
           aria-expanded={false}
-          title="Expand Top 10"
+          title={t("expandTop10")}
         >
-          Top 10
+          {t("top10")}
         </button>
         <button
           type="button"
           onClick={() => setCollapsed(false)}
           className="rounded p-1 text-gray-400 hover:text-teal-300"
-          aria-label="Expand ranking sidebar"
+          aria-label={t("expandTop10")}
         >
           «
         </button>
@@ -61,30 +63,31 @@ const RankSidebar: React.FC = () => {
   return (
     <aside
       className="relative z-20 w-full shrink-0 border-b border-gray-700 bg-gray-900 lg:w-56 lg:border-b-0 lg:border-l lg:border-gray-700"
-      aria-label="Top 10 monthly ranking"
+      aria-label={t("top10")}
     >
       <div className="sticky top-16 p-3 sm:p-4">
         <div className="mb-3 flex items-baseline justify-between gap-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-400">
-            Top 10
+            {t("top10")}
           </h2>
           <button
             type="button"
             onClick={() => setCollapsed(true)}
             className="rounded px-1.5 py-0.5 text-xs text-gray-500 hover:bg-gray-800 hover:text-gray-300"
             aria-expanded={true}
-            aria-label="Collapse ranking sidebar"
+            aria-label={t("collapse")}
           >
-            Collapse »
+            {t("collapse")}
           </button>
         </div>
         <p className="mb-3 text-[11px] text-gray-500">
-          Month {month} · equity rank
+          {t("monthEquity", { month })}
         </p>
 
         {previousWinner && (
           <p className="mb-3 rounded border border-amber-500/30 bg-amber-950/20 px-2 py-1.5 text-[10px] text-amber-200/90">
-            Last winner: <span className="font-semibold">{previousWinner.name}</span>
+            {t("lastWinner")}{" "}
+            <span className="font-semibold">{previousWinner.name}</span>
           </p>
         )}
 
@@ -123,9 +126,9 @@ const RankSidebar: React.FC = () => {
           })}
           {top10.length === 0 && (
             <li className="py-3 text-xs text-gray-500">
-              No scores yet.{" "}
+              {t("noScoresYet")}{" "}
               <Link to="/league" className="text-teal-400 hover:text-teal-300">
-                Join Play
+                {t("joinPlay")}
               </Link>
             </li>
           )}
@@ -135,7 +138,7 @@ const RankSidebar: React.FC = () => {
           to="/league"
           className="mt-4 inline-block text-[11px] font-medium text-teal-400 hover:text-teal-300"
         >
-          Full league →
+          {t("fullLeague")}
         </Link>
       </div>
     </aside>

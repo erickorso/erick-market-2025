@@ -71,10 +71,10 @@ const HomePage: React.FC = () => {
       <div className="relative z-10 container mx-auto p-4 sm:p-6">
         <div className="mb-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-teal-400 sm:text-4xl">
+            <h1 className="text-3xl font-bold text-teal-600 dark:text-teal-400 sm:text-4xl">
               {t("availableStocks")}
             </h1>
-            <p className="mt-1 text-sm text-gray-400">
+            <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">
               {t("showing")} {allStocks.length}
               {total > 0 ? ` ${t("of")} ${total}` : ""}
               {catLabel ? ` · ${catLabel}` : ""}

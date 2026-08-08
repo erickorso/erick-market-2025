@@ -16,6 +16,7 @@ import { LeagueProvider } from "./context/LeagueContext";
 import { I18nProvider, useI18n } from "./context/I18nContext";
 import { AuthProvider } from "./context/AuthContext";
 import { UserProvider } from "./context/UserContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 const AppShell: React.FC = () => {
   const year = new Date().getFullYear();
@@ -23,7 +24,7 @@ const AppShell: React.FC = () => {
 
   return (
     <HashRouter>
-      <div className="flex min-h-screen flex-col bg-gray-900 text-gray-100">
+      <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 dark:bg-gray-900 dark:text-gray-100">
         <header className="sticky top-0 z-50">
           <Navbar />
           <NoticeBanner />
@@ -48,7 +49,7 @@ const AppShell: React.FC = () => {
           </main>
           <RankSidebar />
         </div>
-        <footer className="relative z-10 mt-auto border-t border-gray-700 bg-gray-800 px-4 py-5 text-center text-sm text-gray-500">
+        <footer className="relative z-10 mt-auto border-t border-slate-200 bg-white px-4 py-5 text-center text-sm text-slate-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
           <p>
             © {year} Erick Stocks Simulator. {t("footerDemo")}
           </p>
@@ -60,17 +61,19 @@ const AppShell: React.FC = () => {
 };
 
 const App: React.FC = () => (
-  <I18nProvider>
-    <AuthProvider>
-      <UserProvider>
-        <StockProvider>
-          <LeagueProvider>
-            <AppShell />
-          </LeagueProvider>
-        </StockProvider>
-      </UserProvider>
-    </AuthProvider>
-  </I18nProvider>
+  <ThemeProvider>
+    <I18nProvider>
+      <AuthProvider>
+        <UserProvider>
+          <StockProvider>
+            <LeagueProvider>
+              <AppShell />
+            </LeagueProvider>
+          </StockProvider>
+        </UserProvider>
+      </AuthProvider>
+    </I18nProvider>
+  </ThemeProvider>
 );
 
 export default App;

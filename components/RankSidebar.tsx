@@ -36,7 +36,7 @@ const RankSidebar: React.FC = () => {
   if (collapsed) {
     return (
       <aside
-        className="relative z-20 flex w-full shrink-0 items-center justify-between border-b border-gray-700 bg-gray-900 px-3 py-2 lg:w-10 lg:flex-col lg:justify-start lg:gap-3 lg:border-b-0 lg:border-l lg:px-1 lg:py-4"
+        className="relative z-20 flex w-full shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 py-2 lg:w-10 lg:flex-col lg:justify-start lg:gap-3 lg:border-b-0 lg:border-l lg:border-slate-200 lg:px-1 lg:py-4 dark:border-gray-700 dark:bg-gray-900"
         aria-label={t("top10")}
       >
         <button
@@ -62,7 +62,7 @@ const RankSidebar: React.FC = () => {
 
   return (
     <aside
-      className="relative z-20 w-full shrink-0 border-b border-gray-700 bg-gray-900 lg:w-56 lg:border-b-0 lg:border-l lg:border-gray-700"
+      className="relative z-20 w-full shrink-0 border-b border-slate-200 bg-white lg:w-56 lg:border-b-0 lg:border-l lg:border-slate-200 dark:border-gray-700 dark:bg-gray-900 lg:dark:border-gray-700"
       aria-label={t("top10")}
     >
       <div className="sticky top-16 p-3 sm:p-4">
@@ -97,15 +97,15 @@ const RankSidebar: React.FC = () => {
             return (
               <li key={e.playerId} className="min-w-[9.5rem] lg:min-w-0">
                 <div
-                  className={`rounded-md border px-2.5 py-2 lg:rounded-none lg:border-0 lg:border-b lg:border-gray-700/60 lg:px-0 lg:py-2 ${
+                  className={`rounded-md border px-2.5 py-2 lg:rounded-none lg:border-0 lg:border-b lg:border-slate-200 lg:px-0 lg:py-2 dark:lg:border-gray-700/60 ${
                     mine
-                      ? "border-teal-600/50 bg-teal-950/40"
-                      : "border-gray-700/80 bg-gray-800/60 lg:bg-transparent"
+                      ? "border-teal-500/50 bg-teal-50 dark:border-teal-600/50 dark:bg-teal-950/40"
+                      : "border-slate-200 bg-slate-50 lg:bg-transparent dark:border-gray-700/80 dark:bg-gray-800/60"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-gray-500">{i + 1}.</span>
-                    <span className="flex-1 truncate text-sm font-semibold text-gray-100">
+                    <span className="text-xs text-slate-400 dark:text-gray-500">{i + 1}.</span>
+                    <span className="flex-1 truncate text-sm font-semibold text-slate-800 dark:text-gray-100">
                       {e.name}
                     </span>
                     <span

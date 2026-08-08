@@ -42,7 +42,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
   return (
     <div
       data-testid="company-name"
-      className="flex flex-col justify-between rounded-xl bg-gray-800 p-6 shadow-2xl transition-shadow duration-300 hover:shadow-teal-500/30"
+      className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 shadow-lg transition-shadow duration-300 hover:shadow-teal-500/20 dark:border-transparent dark:bg-gray-800 dark:shadow-2xl dark:hover:shadow-teal-500/30"
     >
       <div>
         <button
@@ -53,12 +53,12 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
         >
           <h3
             data-testid={stock.company}
-            className="truncate text-xl font-semibold text-teal-400 hover:text-teal-300"
+            className="truncate text-xl font-semibold text-teal-600 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300"
             title={stock.company}
           >
             {stock.company}
           </h3>
-          <p className="text-2xl font-bold text-gray-100">
+          <p className="text-2xl font-bold text-slate-900 dark:text-gray-100">
             ${stock.price.toFixed(2)}
           </p>
           {typeof stock.changePercent === "number" && (

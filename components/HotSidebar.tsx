@@ -30,7 +30,7 @@ const HotSidebar: React.FC = () => {
 
   return (
     <aside
-      className="relative z-20 w-full shrink-0 border-b border-gray-700 bg-gray-900 lg:w-56 lg:border-b-0 lg:border-r lg:border-gray-700"
+      className="relative z-20 w-full shrink-0 border-b border-slate-200 bg-white lg:w-56 lg:border-b-0 lg:border-r lg:border-slate-200 dark:border-gray-700 dark:bg-gray-900 lg:dark:border-gray-700"
       aria-label={t("hotNow")}
     >
       <div className="sticky top-16 p-3 sm:p-4">
@@ -63,11 +63,11 @@ const HotSidebar: React.FC = () => {
                 onClick={() =>
                   dispatch({ type: "OPEN_DETAIL", payload: s.symbol })
                 }
-                className="w-full rounded-md border border-gray-700/80 bg-gray-800/60 px-2.5 py-2 text-left transition hover:border-teal-600 hover:bg-gray-800 lg:rounded-none lg:border-0 lg:border-b lg:border-gray-700/60 lg:bg-transparent lg:px-0 lg:py-2.5"
+                className="w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-left transition hover:border-teal-500 hover:bg-teal-50 lg:rounded-none lg:border-0 lg:border-b lg:border-slate-200 lg:bg-transparent lg:px-0 lg:py-2.5 dark:border-gray-700/80 dark:bg-gray-800/60 dark:hover:border-teal-600 dark:hover:bg-gray-800 lg:dark:border-gray-700/60"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-gray-500">{i + 1}.</span>
-                  <span className="flex-1 truncate text-sm font-semibold text-gray-100">
+                  <span className="text-xs text-slate-400 dark:text-gray-500">{i + 1}.</span>
+                  <span className="flex-1 truncate text-sm font-semibold text-slate-800 dark:text-gray-100">
                     {s.symbol}
                   </span>
                   <span className="text-xs font-medium text-emerald-400">

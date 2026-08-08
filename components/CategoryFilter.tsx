@@ -39,8 +39,8 @@ const CategoryFilter: React.FC = () => {
               }
               className={`rounded-md border px-3 py-1.5 text-sm font-medium transition ${
                 selected
-                  ? "border-teal-400 bg-teal-500/20 text-teal-200"
-                  : "border-gray-600 bg-gray-800/80 text-gray-300 hover:border-teal-600 hover:text-teal-200"
+                  ? "border-teal-500 bg-teal-50 text-teal-700 dark:border-teal-400 dark:bg-teal-500/20 dark:text-teal-200"
+                  : "border-slate-300 bg-white text-slate-600 hover:border-teal-500 hover:text-teal-700 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-300 dark:hover:border-teal-600 dark:hover:text-teal-200"
               }`}
             >
               {t(catKey(cat.id))}

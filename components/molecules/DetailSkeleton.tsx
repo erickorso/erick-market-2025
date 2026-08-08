@@ -1,4 +1,5 @@
 import React from "react";
+import Skeleton from "../atoms/Skeleton";
 
 /**
  * Mirrors the loaded detail layout block by block (price, stat cards, chart,
@@ -8,23 +9,20 @@ import React from "react";
 const DetailSkeleton: React.FC<{ label: string }> = ({ label }) => (
   <div className="animate-pulse space-y-5" role="status" aria-label={label}>
     <div className="space-y-1">
-      <div className="h-9 w-40 rounded bg-gray-800" />
-      <div className="h-5 w-32 rounded bg-gray-800" />
+      <Skeleton className="h-9 w-40" />
+      <Skeleton className="h-5 w-32" />
     </div>
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {[1, 2, 3, 4].map((item) => (
-        <div
-          key={item}
-          className="h-[3.625rem] rounded-md border border-gray-700 bg-gray-800/60"
-        />
+        <Skeleton key={item} bordered className="h-[3.625rem]" />
       ))}
     </div>
     <div>
-      <div className="mb-2 h-5 w-28 rounded bg-gray-800" />
-      <div className="h-56 rounded-lg border border-gray-700 bg-gray-800/60" />
+      <Skeleton className="mb-2 h-5 w-28" />
+      <Skeleton bordered className="h-56 rounded-lg" />
     </div>
     <div>
-      <div className="mb-2 h-5 w-24 rounded bg-gray-800" />
+      <Skeleton className="mb-2 h-5 w-24" />
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {[1, 2, 3, 4, 5, 6].map((item) => (
           <div
@@ -35,10 +33,10 @@ const DetailSkeleton: React.FC<{ label: string }> = ({ label }) => (
       </div>
       <div className="mt-4 flex items-end justify-between gap-4">
         <div className="space-y-2">
-          <div className="h-5 w-32 rounded bg-gray-800" />
-          <div className="h-[1.3125rem] w-40 rounded bg-gray-800" />
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-[1.3125rem] w-40" />
         </div>
-        <div className="h-[5.875rem] w-[13rem] rounded bg-gray-800/60" />
+        <Skeleton className="h-[5.875rem] w-[13rem] bg-gray-800/60" />
       </div>
     </div>
   </div>

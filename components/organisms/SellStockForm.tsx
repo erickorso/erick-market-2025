@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useI18n } from "../context/I18nContext";
-import { useSellForm } from "../hooks/useSellForm";
+import { useI18n } from "../../context/I18nContext";
+import { useSellForm } from "../../hooks/useSellForm";
 
 const SellStockForm: React.FC = () => {
   const { stockCompany } = useParams<{ stockCompany: string }>();

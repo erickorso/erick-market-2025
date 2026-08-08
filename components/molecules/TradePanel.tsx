@@ -1,8 +1,9 @@
 import React from "react";
-import type { EnrichedStock } from "../types";
-import { useI18n } from "../context/I18nContext";
-import { useTradePanel } from "../hooks/useTradePanel";
+import type { EnrichedStock } from "../../types";
+import { useI18n } from "../../context/I18nContext";
+import { useTradePanel } from "../../hooks/useTradePanel";
 import ComicTooltip from "./ComicTooltip";
+import QuantityStepper from "./QuantityStepper";
 
 type Size = "sm" | "md";
 
@@ -22,22 +23,12 @@ type TradePanelProps = {
 
 const styles: Record<
   Size,
-  {
-    root: string;
-    row: string;
-    label: string;
-    step: string;
-    value: string;
-    total: string;
-    button: string;
-  }
+  { root: string; row: string; label: string; total: string; button: string }
 > = {
   md: {
     root: "w-full",
     row: "mb-3 flex items-center justify-between",
     label: "text-sm text-gray-400",
-    step: "px-3 py-1 font-bold",
-    value: "bg-gray-700 px-4 py-1 text-gray-100",
     total: "mb-3 text-sm text-gray-300",
     button: "w-full rounded-lg px-4 py-2 text-sm font-semibold",
   },
@@ -45,8 +36,6 @@ const styles: Record<
     root: "flex w-fit max-w-[14rem] flex-col items-stretch gap-2",
     row: "flex items-center justify-end gap-2",
     label: "text-xs text-gray-400",
-    step: "px-2 py-0.5 text-sm font-bold",
-    value: "min-w-[2rem] bg-gray-700 px-2 py-0.5 text-center text-sm text-gray-100",
     total: "text-right text-xs text-gray-300",
     button: "w-full rounded-lg px-3 py-2 text-sm font-semibold",
   },
@@ -82,31 +71,13 @@ const TradePanel: React.FC<TradePanelProps> = ({
     <div className={`${s.root} ${className}`}>
       <div className={s.row}>
         <span className={s.label}>{t("quantity")}</span>
-        <div className="flex items-center">
-          <button
-            data-testid="decrement"
-            type="button"
-            disabled={locked}
-            onClick={decrement}
-            aria-label={t("decAria")}
-            className={`rounded-l bg-red-600 text-white transition duration-150 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40 ${s.step}`}
-          >
-            -
-          </button>
-          <span data-testid="quantity" className={s.value}>
-            {quantity}
-          </span>
-          <button
-            data-testid="increment"
-            type="button"
-            disabled={locked}
-            onClick={increment}
-            aria-label={t("incAria")}
-            className={`rounded-r bg-green-600 text-white transition duration-150 hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40 ${s.step}`}
-          >
-            +
-          </button>
-        </div>
+        <QuantityStepper
+          quantity={quantity}
+          onIncrement={increment}
+          onDecrement={decrement}
+          disabled={locked}
+          size={size}
+        />
       </div>
 
       <p data-testid="totalPrice" className={s.total}>

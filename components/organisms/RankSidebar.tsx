@@ -1,7 +1,8 @@
 ﻿import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useLeague } from "../context/LeagueContext";
-import { useI18n } from "../context/I18nContext";
+import { useLeague } from "../../context/LeagueContext";
+import { useI18n } from "../../context/I18nContext";
+import RankListItem from "../molecules/RankListItem";
 
 const COLLAPSE_KEY = "erick-market.rank-sidebar.collapsed";
 
@@ -92,38 +93,17 @@ const RankSidebar: React.FC = () => {
         )}
 
         <ol className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-0 lg:overflow-visible lg:pb-0">
-          {top10.map((e, i) => {
-            const mine = player?.id === e.playerId;
-            return (
-              <li key={e.playerId} className="min-w-[9.5rem] lg:min-w-0">
-                <div
-                  className={`rounded-md border px-2.5 py-2 lg:rounded-none lg:border-0 lg:border-b lg:border-slate-200 lg:px-0 lg:py-2 dark:lg:border-gray-700/60 ${
-                    mine
-                      ? "border-teal-500/50 bg-teal-50 dark:border-teal-600/50 dark:bg-teal-950/40"
-                      : "border-slate-200 bg-slate-50 lg:bg-transparent dark:border-gray-700/80 dark:bg-gray-800/60"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-slate-400 dark:text-gray-500">{i + 1}.</span>
-                    <span className="flex-1 truncate text-sm font-semibold text-slate-800 dark:text-gray-100">
-                      {e.name}
-                    </span>
-                    <span
-                      className={`text-xs font-medium ${
-                        e.pnl >= 0 ? "text-emerald-400" : "text-rose-400"
-                      }`}
-                    >
-                      {e.pnlPercent >= 0 ? "+" : ""}
-                      {e.pnlPercent.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="mt-0.5 text-right text-[11px] text-gray-500">
-                    ${e.equity.toFixed(0)}
-                  </div>
-                </div>
-              </li>
-            );
-          })}
+          {top10.map((e, i) => (
+            <li key={e.playerId} className="min-w-[9.5rem] lg:min-w-0">
+              <RankListItem
+                rank={i + 1}
+                name={e.name}
+                equity={e.equity}
+                pnlPercent={e.pnlPercent}
+                mine={player?.id === e.playerId}
+              />
+            </li>
+          ))}
           {top10.length === 0 && (
             <li className="py-3 text-xs text-gray-500">
               {t("noScoresYet")}{" "}

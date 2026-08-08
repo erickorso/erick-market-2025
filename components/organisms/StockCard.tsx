@@ -1,10 +1,14 @@
 import React from "react";
-import { EnrichedStock } from "../types";
-import { useStockContext } from "../context/StockContext";
-import { useI18n } from "../context/I18nContext";
-import { symbolFromStock } from "../services/symbols";
-import StockChart from "./Chart";
-import TradePanel from "./TradePanel";
+import { EnrichedStock } from "../../types";
+import { useStockContext } from "../../context/StockContext";
+import { useI18n } from "../../context/I18nContext";
+import { symbolFromStock } from "../../services/symbols";
+import StockChart from "../atoms/Chart";
+import Badge from "../atoms/Badge";
+import Price from "../atoms/Price";
+import ChangePercent from "../atoms/ChangePercent";
+import TagList from "../molecules/TagList";
+import TradePanel from "../molecules/TradePanel";
 
 interface StockCardProps {
   stock: EnrichedStock;
@@ -39,33 +43,26 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
           >
             {stock.company}
           </h3>
-          <p className="text-2xl font-bold text-slate-900 dark:text-gray-100">
-            ${stock.price.toFixed(2)}
-          </p>
+          <Price
+            value={stock.price}
+            className="block text-2xl font-bold text-slate-900 dark:text-gray-100"
+          />
           {typeof stock.changePercent === "number" && (
-            <p
-              className={`text-sm font-medium ${
-                stock.changePercent >= 0 ? "text-emerald-400" : "text-rose-400"
-              }`}
-            >
-              {stock.changePercent >= 0 ? "+" : ""}
-              {stock.changePercent.toFixed(2)}
-              {t("todayPct")}
-            </p>
+            <ChangePercent
+              value={stock.changePercent}
+              suffix={t("todayPct")}
+              className="block text-sm font-medium"
+            />
           )}
         </button>
 
-        {stock.tags && stock.tags.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-1">
-            {stock.tags.slice(0, 3).map((tag) => (
-              <span
-                key={tag}
-                className="rounded border border-gray-600 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-400"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+        {stock.tags && (
+          <TagList
+            tags={stock.tags}
+            max={3}
+            size="xs"
+            className="mb-2 gap-1"
+          />
         )}
 
         <p className="mb-1 text-xs text-gray-500">
@@ -74,9 +71,9 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
             : t("chartSim")}
         </p>
         {stock.quoteSource === "simulated" && (
-          <span className="mb-2 inline-flex rounded border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">
+          <Badge variant="warning" size="xs" className="mb-2">
             {t("mockQuote")}
-          </span>
+          </Badge>
         )}
         <button
           type="button"

@@ -1,6 +1,6 @@
 import React from "react";
-import { useStockContext } from "../context/StockContext";
-import { useI18n } from "../context/I18nContext";
+import { useStockContext } from "../../context/StockContext";
+import { useI18n } from "../../context/I18nContext";
 
 const NoticeBanner: React.FC = () => {
   const { state, dispatch } = useStockContext();

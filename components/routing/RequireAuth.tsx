@@ -1,7 +1,7 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useUser } from "../context/UserContext";
-import { useI18n } from "../context/I18nContext";
+import { useUser } from "../../context/UserContext";
+import { useI18n } from "../../context/I18nContext";
 
 /**
  * Client route middleware: blocks private pages until Auth0 session exists.

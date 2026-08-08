@@ -1,11 +1,15 @@
 import React, { useEffect, useId } from "react";
-import { useStockContext } from "../context/StockContext";
-import { useI18n } from "../context/I18nContext";
-import { formatMarketCap } from "../services/detailService";
-import { useStockDetail } from "../hooks/useStockDetail";
-import StockChart from "./Chart";
-import DetailSkeleton from "./DetailSkeleton";
-import TradePanel from "./TradePanel";
+import { useStockContext } from "../../context/StockContext";
+import { useI18n } from "../../context/I18nContext";
+import { formatMarketCap } from "../../services/detailService";
+import { useStockDetail } from "../../hooks/useStockDetail";
+import Price from "../atoms/Price";
+import ChangePercent from "../atoms/ChangePercent";
+import ChartPanel from "../molecules/ChartPanel";
+import StatCard from "../molecules/StatCard";
+import TagList from "../molecules/TagList";
+import DetailSkeleton from "../molecules/DetailSkeleton";
+import TradePanel from "../molecules/TradePanel";
 
 const StockDetailModal: React.FC = () => {
   const { state, dispatch } = useStockContext();
@@ -82,17 +86,18 @@ const StockDetailModal: React.FC = () => {
               <>
                 <div className="flex flex-wrap items-end gap-4">
                   <div>
-                    <p className="text-3xl font-bold text-gray-50">
-                      ${q.price.toFixed(2)}
-                    </p>
+                    <Price
+                      value={q.price}
+                      className="block text-3xl font-bold text-gray-50"
+                    />
                     <p
                       className={`text-sm font-medium ${
                         up ? "text-emerald-400" : "text-rose-400"
                       }`}
                     >
                       {up ? "+" : ""}
-                      {q.change.toFixed(2)} ({up ? "+" : ""}
-                      {q.changePercent.toFixed(2)}%)
+                      {q.change.toFixed(2)} (
+                      <ChangePercent value={q.changePercent} />)
                     </p>
                   </div>
                   <span className="rounded-md bg-gray-800 px-2 py-1 text-[11px] text-gray-400">
@@ -101,53 +106,24 @@ const StockDetailModal: React.FC = () => {
                 </div>
 
                 <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {[
-                    [t("open"), q.open],
-                    [t("high"), q.high],
-                    [t("low"), q.low],
-                    [t("prevClose"), q.previousClose],
-                  ].map(([label, val]) => (
-                    <div
-                      key={String(label)}
-                      className="rounded-md border border-gray-700 bg-gray-800/50 p-2.5"
-                    >
-                      <dt className="text-[11px] uppercase tracking-wide text-gray-500">
-                        {label}
-                      </dt>
-                      <dd className="text-sm font-semibold text-gray-100">
-                        {typeof val === "number" ? `$${val.toFixed(2)}` : "—"}
-                      </dd>
-                    </div>
+                  {(
+                    [
+                      [t("open"), q.open],
+                      [t("high"), q.high],
+                      [t("low"), q.low],
+                      [t("prevClose"), q.previousClose],
+                    ] as [string, number | null][]
+                  ).map(([label, value]) => (
+                    <StatCard key={label} label={label} value={value} />
                   ))}
                 </dl>
 
-                <div>
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-semibold text-gray-200">
-                      {t("priceHistory")}
-                    </h3>
-                    <span
-                      className={`text-[11px] ${
-                        detail.chartSource === "simulated"
-                          ? "text-amber-400"
-                          : "text-emerald-400"
-                      }`}
-                    >
-                      {chartLabel}
-                    </span>
-                  </div>
-                  <div className="h-56">
-                    <StockChart
-                      data={detail.chart}
-                      lineColor={
-                        detail.chartSource === "simulated"
-                          ? "#2dd4bf"
-                          : "#34d399"
-                      }
-                      height={220}
-                    />
-                  </div>
-                </div>
+                <ChartPanel
+                  title={t("priceHistory")}
+                  sourceLabel={chartLabel}
+                  simulated={detail.chartSource === "simulated"}
+                  data={detail.chart}
+                />
 
                 <div>
                   <h3 className="mb-2 text-sm font-semibold text-gray-200">
@@ -184,18 +160,7 @@ const StockDetailModal: React.FC = () => {
                           {t("companyWebsite")}
                         </a>
                       )}
-                      {detail.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {detail.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="rounded border border-gray-600 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-400"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      <TagList tags={detail.tags} />
                     </div>
                     {tradeStock && (
                       <TradePanel

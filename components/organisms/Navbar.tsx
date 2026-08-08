@@ -1,9 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useStockContext } from "../context/StockContext";
-import { useUser } from "../context/UserContext";
-import { useI18n } from "../context/I18nContext";
-import ThemeToggle from "./ThemeToggle";
+import { useStockContext } from "../../context/StockContext";
+import { useUser } from "../../context/UserContext";
+import { useI18n } from "../../context/I18nContext";
+import ThemeToggle from "../molecules/ThemeToggle";
 
 const Navbar: React.FC = () => {
   const { state, dispatch } = useStockContext();

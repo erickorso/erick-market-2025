@@ -1,13 +1,14 @@
 import React, { Suspense } from "react";
-import StockCard from "../components/StockCard";
-import CategoryFilter from "../components/CategoryFilter";
+import CategoryFilter from "../components/organisms/CategoryFilter";
+import StockGrid from "../components/organisms/StockGrid";
+import Badge from "../components/atoms/Badge";
 import { useStockContext } from "../context/StockContext";
 import { useI18n } from "../context/I18nContext";
 import type { MsgKey } from "../i18n/locales";
 import { PAGE_SIZE } from "../server/watchlist";
 
 const ThreeDBackground = React.lazy(
-  () => import("../components/ThreeDBackground"),
+  () => import("../components/organisms/ThreeDBackground"),
 );
 
 const HomePage: React.FC = () => {
@@ -83,45 +84,25 @@ const HomePage: React.FC = () => {
             </p>
           </div>
           {dataSource === "live" && (
-            <span className="rounded-full bg-teal-500/20 px-3 py-1 text-xs font-medium text-teal-300">
+            <Badge variant="live" className="px-3 py-1 text-xs normal-case">
               {t("liveBadge", { size: PAGE_SIZE })}
-            </span>
+            </Badge>
           )}
           {dataSource === "mock" && (
-            <span className="rounded-full bg-slate-500/20 px-3 py-1 text-xs font-medium text-slate-300">
+            <Badge variant="muted" className="px-3 py-1 text-xs normal-case">
               {t("mockBadge", { size: PAGE_SIZE })}
-            </span>
+            </Badge>
           )}
         </div>
 
         <CategoryFilter />
 
-        {allStocks.length === 0 ? (
-          <div className="p-8 text-center text-xl text-gray-400">
-            {t("noStocks")}
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {allStocks.map((stock) => (
-                <StockCard key={stock.id} stock={stock} />
-              ))}
-            </div>
-            {hasMore && (
-              <div className="mt-8 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => void loadMore()}
-                  disabled={isLoadingMore}
-                  className="rounded-lg bg-teal-500 px-6 py-2.5 font-semibold text-white hover:bg-teal-600 disabled:cursor-wait disabled:opacity-60"
-                  aria-busy={isLoadingMore}
-                >
-                  {isLoadingMore ? t("loading") : t("loadMore")}
-                </button>
-              </div>
-            )}
-          </>
-        )}
+        <StockGrid
+          stocks={allStocks}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingMore}
+          onLoadMore={() => void loadMore()}
+        />
       </div>
     </>
   );

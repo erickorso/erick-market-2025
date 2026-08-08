@@ -1,6 +1,6 @@
 import React from "react";
-import { useTheme } from "../context/ThemeContext";
-import { useI18n } from "../context/I18nContext";
+import { useTheme } from "../../context/ThemeContext";
+import { useI18n } from "../../context/I18nContext";
 
 /** Sun / moon toggle for the header (top-left). */
 const ThemeToggle: React.FC = () => {

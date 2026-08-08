@@ -1,8 +1,8 @@
 ﻿import React from "react";
 import { useNavigate } from "react-router-dom";
-import { PortfolioItem } from "../types";
-import { useStockContext } from "../context/StockContext";
-import { useI18n } from "../context/I18nContext";
+import { PortfolioItem } from "../../types";
+import { useStockContext } from "../../context/StockContext";
+import { useI18n } from "../../context/I18nContext";
 
 interface StockListItemProps {
   item: PortfolioItem;

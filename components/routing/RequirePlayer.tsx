@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useLeague } from "../context/LeagueContext";
-import { useI18n } from "../context/I18nContext";
+import { useLeague } from "../../context/LeagueContext";
+import { useI18n } from "../../context/I18nContext";
 
 const RequirePlayer: React.FC<{ children: React.ReactNode }> = ({
   children,

@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { ChartDataPoint } from "../types";
+import { ChartDataPoint } from "../../types";
 
 interface StockChartProps {
   data: ChartDataPoint[];

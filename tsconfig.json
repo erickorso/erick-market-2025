@@ -27,6 +27,7 @@
     "constants.ts",
     "auth/**/*.ts",
     "components/**/*.tsx",
+    "components/**/*.ts",
     "pages/**/*.tsx",
     "context/**/*.tsx",
     "services/**/*.ts",

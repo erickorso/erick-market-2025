@@ -1,9 +1,9 @@
 import React from "react";
-import { CATEGORIES } from "../services/stockService";
-import { useStockContext } from "../context/StockContext";
-import { useI18n } from "../context/I18nContext";
-import type { CategoryId } from "../types";
-import type { MsgKey } from "../i18n/locales";
+import { CATEGORIES } from "../../services/stockService";
+import { useStockContext } from "../../context/StockContext";
+import { useI18n } from "../../context/I18nContext";
+import type { CategoryId } from "../../types";
+import type { MsgKey } from "../../i18n/locales";
 
 function catKey(id: string): MsgKey {
   return `cat_${id.replace(/-/g, "_")}` as MsgKey;

@@ -1,5 +1,5 @@
 ﻿import React from "react";
-import StockListItem from "../components/StockListItem";
+import StockListItem from "../components/molecules/StockListItem";
 import { useStockContext } from "../context/StockContext";
 import { useI18n } from "../context/I18nContext";
 

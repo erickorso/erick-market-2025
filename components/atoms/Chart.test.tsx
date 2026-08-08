@@ -22,8 +22,12 @@ describe("StockChart", () => {
 
   it("renders a chart container for a real series", () => {
     const { container } = render(<StockChart data={series} />);
-    expect(screen.queryByText("No chart data available.")).not.toBeInTheDocument();
-    expect(container.querySelector(".recharts-responsive-container")).not.toBeNull();
+    expect(
+      screen.queryByText("No chart data available."),
+    ).not.toBeInTheDocument();
+    expect(
+      container.querySelector(".recharts-responsive-container"),
+    ).not.toBeNull();
   });
 
   it("applies the requested height", () => {

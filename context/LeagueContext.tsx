@@ -9,10 +9,7 @@ import React, {
 import { useStockContext } from "./StockContext";
 import { useUser } from "./UserContext";
 import { computeEquity, currentMonthKey } from "../services/leagueService";
-import {
-  fetchLeagueBoard,
-  postLeagueScore,
-} from "../services/portfolioApi";
+import { fetchLeagueBoard, postLeagueScore } from "../services/portfolioApi";
 import type { LeagueEntry } from "../services/leagueService";
 
 type LeagueContextValue = {
@@ -97,6 +94,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [isAuthenticated, getAccessToken, equity, refresh]);
 
   useEffect(() => {
+    // Loads the board on mount; the state it sets lands in a promise callback,
+    // not synchronously in the render pass.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh();
   }, [refresh]);
 

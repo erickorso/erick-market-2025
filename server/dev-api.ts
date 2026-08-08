@@ -3,11 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { WebSocketServer, type WebSocket } from "ws";
 import { getMarketQuotesPage } from "./quotes";
 import { PAGE_SIZE } from "./watchlist";
-import {
-  HOT_INTERVAL_MS,
-  buildHotPayload,
-  type HotPayload,
-} from "./hot";
+import { HOT_INTERVAL_MS, buildHotPayload, type HotPayload } from "./hot";
 
 function loadDotEnv() {
   if (!existsSync(".env")) return;
@@ -35,10 +31,7 @@ const PORT = Number(process.env.MARKET_API_PORT || 4010);
 const server = http.createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization",
-  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
     res.writeHead(204);
@@ -67,18 +60,18 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(status, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
-                  stocks: result.quotes.map((row) => ({
-                    symbol: row.symbol,
-                    company: row.company,
-                    name: row.company,
-                    price: row.price,
-                    change: row.change,
-                    changePercent: row.changePercent,
-                    tags: row.tags,
-                    chart: row.chart,
-                    chartSource: row.chartSource,
-                    quoteSource: row.quoteSource,
-                  })),
+          stocks: result.quotes.map((row) => ({
+            symbol: row.symbol,
+            company: row.company,
+            name: row.company,
+            price: row.price,
+            change: row.change,
+            changePercent: row.changePercent,
+            tags: row.tags,
+            chart: row.chart,
+            chartSource: row.chartSource,
+            quoteSource: row.quoteSource,
+          })),
           source: result.source,
           total: result.total,
           offset: result.offset,
@@ -194,7 +187,9 @@ setInterval(() => {
 
 server.listen(PORT, "127.0.0.1", () => {
   console.log(`[market-api] http://127.0.0.1:${PORT}/api/quotes?limit=10`);
-  console.log(`[market-api] ws://127.0.0.1:${PORT}/ws/hot (every ${HOT_INTERVAL_MS / 60000}m)`);
+  console.log(
+    `[market-api] ws://127.0.0.1:${PORT}/ws/hot (every ${HOT_INTERVAL_MS / 60000}m)`,
+  );
   if (!process.env.FINNHUB_API_KEY) {
     console.warn("[market-api] FINNHUB_API_KEY missing — /api/quotes will 503");
   }

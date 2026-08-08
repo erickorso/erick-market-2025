@@ -147,7 +147,8 @@ describe("batching", () => {
 
 describe("deduplication", () => {
   it("folds a repeated error into one event with a count", async () => {
-    for (let i = 0; i < 5; i++) reportError(new Error("same"), "boundary:chart");
+    for (let i = 0; i < 5; i++)
+      reportError(new Error("same"), "boundary:chart");
     await vi.advanceTimersByTimeAsync(2_500);
 
     const events = await beaconEvents();
@@ -169,9 +170,7 @@ describe("deduplication", () => {
     flush();
 
     const total = (
-      await Promise.all(
-        sendBeacon.mock.calls.map((_, i) => beaconEvents(i)),
-      )
+      await Promise.all(sendBeacon.mock.calls.map((_, i) => beaconEvents(i)))
     ).flat();
     expect(total.length).toBeLessThanOrEqual(50);
   });

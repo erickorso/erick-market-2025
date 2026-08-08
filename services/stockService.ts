@@ -77,7 +77,10 @@ function normalizeRow(row: ApiStockRow, index: number): EnrichedStock {
       ? row.chart.map((p) => ({ name: p.name, price: Number(p.price) }))
       : null;
   const chartSource =
-    liveChart && (row.chartSource === "yahoo" || row.chartSource === "finnhub" || row.chartSource === "live")
+    liveChart &&
+    (row.chartSource === "yahoo" ||
+      row.chartSource === "finnhub" ||
+      row.chartSource === "live")
       ? row.chartSource === "live"
         ? "yahoo"
         : row.chartSource

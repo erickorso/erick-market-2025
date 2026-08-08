@@ -2,10 +2,7 @@ import type { AuthUser } from "./auth.js";
 import { getSql } from "./db.js";
 import { INITIAL_FUND, currentMonthKey, previousMonthKey } from "./month.js";
 import { fetchLivePrices } from "./prices.js";
-import {
-  computeEquityFromBooks,
-  parseTradeInput,
-} from "./tradeValidation.js";
+import { computeEquityFromBooks, parseTradeInput } from "./tradeValidation.js";
 
 export type DbUser = {
   id: string;
@@ -51,7 +48,8 @@ export async function updateDisplayName(
 ): Promise<DbUser> {
   const sql = getSql();
   const name = displayName.trim().slice(0, 64);
-  if (name.length < 2) throw Object.assign(new Error("Name too short"), { status: 400 });
+  if (name.length < 2)
+    throw Object.assign(new Error("Name too short"), { status: 400 });
   const rows = await sql`
     UPDATE users SET display_name = ${name}
     WHERE id = ${userId}
@@ -82,7 +80,9 @@ async function ensureMonthArchive(month: string) {
   `;
 }
 
-export async function ensurePortfolio(userId: string): Promise<PortfolioPayload> {
+export async function ensurePortfolio(
+  userId: string,
+): Promise<PortfolioPayload> {
   const sql = getSql();
   const month = currentMonthKey();
   await ensureMonthArchive(month);

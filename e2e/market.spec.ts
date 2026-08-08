@@ -123,18 +123,27 @@ test("loads the public market and filters by search", async ({ page }) => {
 
 test("opens and closes stock detail", async ({ page }) => {
   await page.goto("/");
-  await page.getByTestId("company-name").first().locator("button").first().click();
+  await page
+    .getByTestId("company-name")
+    .first()
+    .locator("button")
+    .first()
+    .click();
 
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("heading", { name: "Apple Inc." })).toBeVisible();
+  await expect(
+    dialog.getByRole("heading", { name: "Apple Inc." }),
+  ).toBeVisible();
   await expect(dialog.getByText("$190.00", { exact: true })).toBeVisible();
 
   await dialog.getByRole("button", { name: "Close detail" }).click();
   await expect(dialog).toBeHidden();
 });
 
-test("protects the league route for unauthenticated users", async ({ page }) => {
+test("protects the league route for unauthenticated users", async ({
+  page,
+}) => {
   await page.goto("/#/league");
 
   await expect(
@@ -145,7 +154,9 @@ test("protects the league route for unauthenticated users", async ({ page }) => 
   ).toBeVisible();
 });
 
-test("toggles theme and keeps the market usable on mobile", async ({ page }) => {
+test("toggles theme and keeps the market usable on mobile", async ({
+  page,
+}) => {
   await page.goto("/");
   await expect(page.locator("html")).toHaveClass(/dark/);
 

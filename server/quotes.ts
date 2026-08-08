@@ -73,7 +73,9 @@ async function getUniverse(token: string): Promise<WatchItem[]> {
         tags: curated.get(row.symbol as string)?.tags ?? [],
       }));
     const merged = new Map<string, WatchItem>();
-    [...WATCHLIST, ...discovered].forEach((item) => merged.set(item.symbol, item));
+    [...WATCHLIST, ...discovered].forEach((item) =>
+      merged.set(item.symbol, item),
+    );
     universeCache = {
       at: Date.now(),
       items: [...merged.values()].slice(0, MAX_UNIVERSE),
@@ -157,7 +159,9 @@ export async function getMarketQuotesPage(
     };
   }
 
-  const universe = isDayMovers(category) ? WATCHLIST : await getUniverse(apiKey);
+  const universe = isDayMovers(category)
+    ? WATCHLIST
+    : await getUniverse(apiKey);
   const filtered = isDayMovers(category)
     ? filterWatchlist(q, category)
     : universe.filter(

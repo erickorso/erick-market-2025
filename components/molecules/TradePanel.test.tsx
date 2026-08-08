@@ -57,10 +57,14 @@ describe("TradePanel", () => {
   it("shows the total for the current quantity", async () => {
     render(<TradePanel stock={stock({ price: 250 })} tipId="tip" />);
 
-    expect(screen.getByTestId("totalPrice")).toHaveTextContent("Total: $250.00");
+    expect(screen.getByTestId("totalPrice")).toHaveTextContent(
+      "Total: $250.00",
+    );
 
     await userEvent.click(screen.getByLabelText("Increase quantity"));
-    expect(screen.getByTestId("totalPrice")).toHaveTextContent("Total: $500.00");
+    expect(screen.getByTestId("totalPrice")).toHaveTextContent(
+      "Total: $500.00",
+    );
   });
 
   it("wires the buy button to its tooltip for screen readers", () => {
@@ -137,7 +141,11 @@ describe("TradePanel", () => {
 
   it("applies the caller's test id to the buy button", () => {
     render(
-      <TradePanel stock={stock()} tipId="tip" buyTestId="addCart-Apple (AAPL)" />,
+      <TradePanel
+        stock={stock()}
+        tipId="tip"
+        buyTestId="addCart-Apple (AAPL)"
+      />,
     );
 
     expect(screen.getByTestId("addCart-Apple (AAPL)")).toBeInTheDocument();

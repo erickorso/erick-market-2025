@@ -45,7 +45,9 @@ describe("StockProvider", () => {
   it("dispatches through the reducer", () => {
     const { result } = renderHook(() => useStockContext(), { wrapper });
 
-    act(() => result.current.dispatch({ type: "OPEN_DETAIL", payload: "aapl" }));
+    act(() =>
+      result.current.dispatch({ type: "OPEN_DETAIL", payload: "aapl" }),
+    );
     expect(result.current.state.detailSymbol).toBe("AAPL");
   });
 

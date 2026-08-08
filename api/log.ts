@@ -36,7 +36,10 @@ function setCors(req: VercelRequest, res: VercelResponse) {
   const origin = Array.isArray(req.headers.origin)
     ? req.headers.origin[0]
     : req.headers.origin;
-  if (origin && (ALLOWED_ORIGINS.includes(origin) || PREVIEW_ORIGIN.test(origin))) {
+  if (
+    origin &&
+    (ALLOWED_ORIGINS.includes(origin) || PREVIEW_ORIGIN.test(origin))
+  ) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
   res.setHeader("Vary", "Origin");
@@ -61,7 +64,9 @@ function rateLimited(req: VercelRequest, res: VercelResponse): boolean {
     res.setHeader("X-RateLimit-Remaining", "0");
     res.setHeader(
       "Retry-After",
-      String(Math.max(1, Math.ceil((hits[0] + RATE_LIMIT.windowMs - now) / 1000))),
+      String(
+        Math.max(1, Math.ceil((hits[0] + RATE_LIMIT.windowMs - now) / 1000)),
+      ),
     );
     res.status(429).json({ error: "rate limit exceeded" });
     return true;
@@ -69,7 +74,10 @@ function rateLimited(req: VercelRequest, res: VercelResponse): boolean {
 
   hits.push(now);
   rateHits.set(key, hits);
-  res.setHeader("X-RateLimit-Remaining", String(RATE_LIMIT.limit - hits.length));
+  res.setHeader(
+    "X-RateLimit-Remaining",
+    String(RATE_LIMIT.limit - hits.length),
+  );
   return false;
 }
 

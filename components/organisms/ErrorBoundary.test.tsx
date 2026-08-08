@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ErrorBoundary from "./ErrorBoundary";
 import { consoleErrorSink, setErrorSink } from "../../services/reporter";
 
-function Boom({ message = "kaboom" }: { message?: string }): React.ReactElement {
+function Boom({
+  message = "kaboom",
+}: {
+  message?: string;
+}): React.ReactElement {
   throw new Error(message);
 }
 
@@ -36,9 +40,7 @@ describe("ErrorBoundary", () => {
     );
 
     expect(screen.getByRole("alert")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /reload/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /reload/i })).toBeInTheDocument();
   });
 
   it("uses the caller's copy when provided", () => {
@@ -57,7 +59,9 @@ describe("ErrorBoundary", () => {
     );
 
     expect(screen.getByText("Se rompió")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Recargar" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Recargar" }),
+    ).toBeInTheDocument();
   });
 
   it("renders an inline fallback for small areas", () => {

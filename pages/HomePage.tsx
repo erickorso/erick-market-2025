@@ -24,9 +24,7 @@ const HomePage: React.FC = () => {
   } = state;
 
   const catLabel =
-    category === "all"
-      ? ""
-      : t(`cat_${category.replace(/-/g, "_")}` as MsgKey);
+    category === "all" ? "" : t(`cat_${category.replace(/-/g, "_")}` as MsgKey);
 
   if (isLoading) {
     return (

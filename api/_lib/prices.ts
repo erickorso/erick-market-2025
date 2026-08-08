@@ -7,7 +7,9 @@ export async function fetchLivePrices(
   apiKey: string | undefined,
 ): Promise<Map<string, number>> {
   const out = new Map<string, number>();
-  const unique = [...new Set(symbols.map((s) => s.toUpperCase()).filter(Boolean))];
+  const unique = [
+    ...new Set(symbols.map((s) => s.toUpperCase()).filter(Boolean)),
+  ];
   if (!apiKey || unique.length === 0) return out;
 
   await Promise.all(

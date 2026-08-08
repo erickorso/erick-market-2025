@@ -150,7 +150,10 @@ describe("withAuth", () => {
 
     expect(console.log).toHaveBeenCalledTimes(1);
     expect(() =>
-      JSON.parse((console.log as unknown as { mock: { calls: string[][] } }).mock.calls[0][0]),
+      JSON.parse(
+        (console.log as unknown as { mock: { calls: string[][] } }).mock
+          .calls[0][0],
+      ),
     ).not.toThrow();
   });
 

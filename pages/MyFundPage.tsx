@@ -21,8 +21,12 @@ const MyFundPage: React.FC = () => {
       </h1>
       <div className="space-y-6 rounded-xl bg-gray-800 p-8 shadow-2xl">
         <div>
-          <h2 className="text-xl font-semibold text-gray-300">{t("initialFund")}</h2>
-          <p className="text-3xl text-teal-300">${INITIAL_FUND_AMOUNT.toFixed(2)}</p>
+          <h2 className="text-xl font-semibold text-gray-300">
+            {t("initialFund")}
+          </h2>
+          <p className="text-3xl text-teal-300">
+            ${INITIAL_FUND_AMOUNT.toFixed(2)}
+          </p>
         </div>
         <hr className="border-gray-700" />
         <div>

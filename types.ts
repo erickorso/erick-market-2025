@@ -1,10 +1,5 @@
 export type StyleTag =
-  | "long-term"
-  | "short-term"
-  | "growth"
-  | "dividend"
-  | "blue-chip"
-  | "volatile";
+  "long-term" | "short-term" | "growth" | "dividend" | "blue-chip" | "volatile";
 
 export type CategoryId = "all" | StyleTag | "gainers" | "losers";
 
@@ -90,7 +85,10 @@ export type StockAction =
   | { type: "CLOSE_DETAIL" }
   | { type: "SET_NOTICE"; payload: Notice }
   | { type: "CLEAR_NOTICE" }
-  | { type: "HYDRATE_PORTFOLIO"; payload: { portfolio: PortfolioItem[]; fund: number } }
+  | {
+      type: "HYDRATE_PORTFOLIO";
+      payload: { portfolio: PortfolioItem[]; fund: number };
+    }
   | { type: "TICK_PRICES" };
 
 export interface StockDisplayData {

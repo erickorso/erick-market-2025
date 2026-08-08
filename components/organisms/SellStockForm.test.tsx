@@ -87,7 +87,9 @@ describe("with a held position", () => {
       target: { value: "4" },
     });
 
-    expect(screen.getByTestId("form")).toHaveTextContent("Total Value: $600.00");
+    expect(screen.getByTestId("form")).toHaveTextContent(
+      "Total Value: $600.00",
+    );
   });
 
   it("floors the quantity at one", () => {

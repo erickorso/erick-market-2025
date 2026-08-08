@@ -108,7 +108,9 @@ describe("enforceRateLimit", () => {
   it("lets a request through and advertises the budget", () => {
     const { res, headers } = mockRes();
 
-    expect(enforceRateLimit(req, res, { limit: 2, windowMs: 60_000 })).toBe(false);
+    expect(enforceRateLimit(req, res, { limit: 2, windowMs: 60_000 })).toBe(
+      false,
+    );
     expect(headers["X-RateLimit-Limit"]).toBe("2");
     expect(headers["X-RateLimit-Remaining"]).toBe("1");
   });

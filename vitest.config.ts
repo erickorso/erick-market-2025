@@ -35,6 +35,15 @@ export default defineConfig({
         // Three.js scene: no logic worth asserting, and jsdom has no WebGL.
         "components/organisms/ThreeDBackground.tsx",
       ],
+      // A gate, not a target. Set a couple of points under the current numbers
+      // so ordinary churn does not trip it, but a real regression does — CI
+      // fails rather than quietly letting coverage rot.
+      thresholds: {
+        statements: 96,
+        branches: 90,
+        functions: 96,
+        lines: 96,
+      },
     },
   },
 });

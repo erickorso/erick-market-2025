@@ -10,19 +10,17 @@ import { useI18n } from "../../context/I18nContext";
 export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const {
-    configured,
-    isLoading,
-    isAuthenticated,
-    login,
-    profileError,
-  } = useUser();
+  const { configured, isLoading, isAuthenticated, login, profileError } =
+    useUser();
   const { t } = useI18n();
   const location = useLocation();
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center text-slate-600 dark:text-gray-400" role="status">
+      <div
+        className="p-8 text-center text-slate-600 dark:text-gray-400"
+        role="status"
+      >
         {t("loading")}
       </div>
     );
@@ -54,8 +52,12 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({
   if (profileError) {
     return (
       <div className="mx-auto max-w-lg p-6 text-center">
-        <h1 className="mb-2 text-xl font-bold text-rose-600 dark:text-rose-400">{t("error")}</h1>
-        <p className="mb-4 text-sm text-slate-600 dark:text-gray-400">{profileError}</p>
+        <h1 className="mb-2 text-xl font-bold text-rose-600 dark:text-rose-400">
+          {t("error")}
+        </h1>
+        <p className="mb-4 text-sm text-slate-600 dark:text-gray-400">
+          {profileError}
+        </p>
         <button
           type="button"
           onClick={login}

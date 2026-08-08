@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { withAuth } from "./_lib/middleware.js";
 import { ensurePortfolio, updateDisplayName } from "./_lib/store.js";
 
@@ -10,9 +9,9 @@ export default withAuth(async (req, res, { user }) => {
   }
 
   if (req.method === "POST") {
-    const body = (typeof req.body === "string"
-      ? JSON.parse(req.body)
-      : req.body) as { displayName?: string };
+    const body = (
+      typeof req.body === "string" ? JSON.parse(req.body) : req.body
+    ) as { displayName?: string };
     const updated =
       typeof body?.displayName === "string"
         ? await updateDisplayName(user.id, body.displayName)

@@ -6,15 +6,8 @@ import { useI18n } from "../context/I18nContext";
 import { INITIAL_FUND_AMOUNT } from "../constants";
 
 const LeaguePage: React.FC = () => {
-  const {
-    player,
-    month,
-    entries,
-    previousWinner,
-    mode,
-    equity,
-    pushScore,
-  } = useLeague();
+  const { player, month, entries, previousWinner, mode, equity, pushScore } =
+    useLeague();
   const { logout, displayName, profile } = useUser();
   const { t } = useI18n();
 
@@ -64,7 +57,9 @@ const LeaguePage: React.FC = () => {
                 {displayName || player.name}
               </p>
               {profile?.email && (
-                <p className="text-xs text-slate-600 dark:text-gray-400">{profile.email}</p>
+                <p className="text-xs text-slate-600 dark:text-gray-400">
+                  {profile.email}
+                </p>
               )}
               <p className="mt-2 text-sm text-gray-300">
                 {t("equity")}{" "}
@@ -73,7 +68,9 @@ const LeaguePage: React.FC = () => {
                 </span>{" "}
                 <span
                   className={
-                    equity.pnl >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                    equity.pnl >= 0
+                      ? "text-emerald-700 dark:text-emerald-400"
+                      : "text-rose-600 dark:text-rose-400"
                   }
                 >
                   ({equity.pnl >= 0 ? "+" : ""}
@@ -116,10 +113,14 @@ const LeaguePage: React.FC = () => {
           <h2 className="text-lg font-semibold text-gray-100">
             {t("leaderboard")}
           </h2>
-          <span className="text-[11px] text-slate-600 dark:text-gray-400">{modeLabel}</span>
+          <span className="text-[11px] text-slate-600 dark:text-gray-400">
+            {modeLabel}
+          </span>
         </div>
         {entries.length === 0 ? (
-          <p className="text-sm text-slate-600 dark:text-gray-400">{t("noScoresMonth")}</p>
+          <p className="text-sm text-slate-600 dark:text-gray-400">
+            {t("noScoresMonth")}
+          </p>
         ) : (
           <ol className="space-y-2">
             {entries.map((e, i) => (
@@ -132,7 +133,9 @@ const LeaguePage: React.FC = () => {
                 }`}
               >
                 <div className="min-w-0">
-                  <span className="mr-2 text-xs text-slate-600 dark:text-gray-400">{i + 1}.</span>
+                  <span className="mr-2 text-xs text-slate-600 dark:text-gray-400">
+                    {i + 1}.
+                  </span>
                   <span className="font-medium text-gray-100">{e.name}</span>
                 </div>
                 <div className="text-right text-sm">

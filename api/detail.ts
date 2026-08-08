@@ -25,7 +25,10 @@ function setCors(req: VercelRequest, res: VercelResponse) {
   const origin = Array.isArray(req.headers.origin)
     ? req.headers.origin[0]
     : req.headers.origin;
-  if (origin && (ALLOWED_ORIGINS.includes(origin) || PREVIEW_ORIGIN.test(origin))) {
+  if (
+    origin &&
+    (ALLOWED_ORIGINS.includes(origin) || PREVIEW_ORIGIN.test(origin))
+  ) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
   res.setHeader("Vary", "Origin");
@@ -51,7 +54,9 @@ function rateLimited(req: VercelRequest, res: VercelResponse): boolean {
     res.setHeader("X-RateLimit-Remaining", "0");
     res.setHeader(
       "Retry-After",
-      String(Math.max(1, Math.ceil((hits[0] + RATE_LIMIT.windowMs - now) / 1000))),
+      String(
+        Math.max(1, Math.ceil((hits[0] + RATE_LIMIT.windowMs - now) / 1000)),
+      ),
     );
     res.status(429).json({ error: "rate limit exceeded" });
     return true;
@@ -59,7 +64,10 @@ function rateLimited(req: VercelRequest, res: VercelResponse): boolean {
 
   hits.push(now);
   rateHits.set(key, hits);
-  res.setHeader("X-RateLimit-Remaining", String(RATE_LIMIT.limit - hits.length));
+  res.setHeader(
+    "X-RateLimit-Remaining",
+    String(RATE_LIMIT.limit - hits.length),
+  );
   return false;
 }
 
@@ -76,12 +84,7 @@ function logRequest(req: VercelRequest, status: number, startedAt: number) {
 }
 
 type StyleTag =
-  | "long-term"
-  | "short-term"
-  | "growth"
-  | "dividend"
-  | "blue-chip"
-  | "volatile";
+  "long-term" | "short-term" | "growth" | "dividend" | "blue-chip" | "volatile";
 
 const TAGS: Record<string, StyleTag[]> = {
   AAPL: ["long-term", "blue-chip", "growth"],
@@ -126,7 +129,15 @@ const TAGS: Record<string, StyleTag[]> = {
   SPOT: ["growth", "volatile", "short-term"],
 };
 
-type Quote = { c?: number; d?: number; dp?: number; h?: number; l?: number; o?: number; pc?: number };
+type Quote = {
+  c?: number;
+  d?: number;
+  dp?: number;
+  h?: number;
+  l?: number;
+  o?: number;
+  pc?: number;
+};
 type Profile = {
   name?: string;
   ticker?: string;
@@ -186,7 +197,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const token = process.env.FINNHUB_API_KEY;
     if (!token) {
-      res.status(503).json({ error: "FINNHUB_API_KEY missing", source: "unavailable" });
+      res
+        .status(503)
+        .json({ error: "FINNHUB_API_KEY missing", source: "unavailable" });
       logRequest(req, 503, startedAt);
       return;
     }

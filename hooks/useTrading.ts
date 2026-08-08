@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import type { EnrichedStock, StockAction, StockContextState } from "../types";
 import { INITIAL_FUND_AMOUNT } from "../constants";
 import { portfolioToState, postTrade } from "../services/portfolioApi";
@@ -21,12 +21,16 @@ export function useTrading(
     portfolio: serverPortfolio,
     refreshProfile,
   } = useUser();
-  const [portfolioSynced, setPortfolioSynced] = useState(false);
+  // Derived rather than stored: it is exactly "signed in and the server has
+  // answered", so keeping it in state only created a second source of truth
+  // that an effect had to keep in step.
+  const portfolioSynced = Boolean(
+    !authLoading && isAuthenticated && serverPortfolio,
+  );
 
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
-      setPortfolioSynced(false);
       dispatch({
         type: "HYDRATE_PORTFOLIO",
         payload: { portfolio: [], fund: INITIAL_FUND_AMOUNT },
@@ -39,7 +43,6 @@ export function useTrading(
       type: "HYDRATE_PORTFOLIO",
       payload: { portfolio: mapped.portfolio, fund: mapped.fund },
     });
-    setPortfolioSynced(true);
   }, [authLoading, isAuthenticated, serverPortfolio, dispatch]);
 
   const trade = useCallback(

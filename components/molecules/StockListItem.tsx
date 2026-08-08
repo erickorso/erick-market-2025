@@ -13,7 +13,9 @@ const StockListItem: React.FC<StockListItemProps> = ({ item }) => {
   const { state } = useStockContext();
   const { t } = useI18n();
 
-  const currentStockDetails = state.allStocks.find((s) => s.id === item.stockId);
+  const currentStockDetails = state.allStocks.find(
+    (s) => s.id === item.stockId,
+  );
   const currentPrice = currentStockDetails
     ? currentStockDetails.price
     : item.purchasePrice;

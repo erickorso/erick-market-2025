@@ -143,16 +143,14 @@ describe("updateDisplayName", () => {
   });
 
   it("rejects a name that is only whitespace", async () => {
-    await expect(updateDisplayName("u1", "    ")).rejects.toThrow(
-      /too short/i,
-    );
+    await expect(updateDisplayName("u1", "    ")).rejects.toThrow(/too short/i);
   });
 
   it("truncates to the column width", async () => {
     queue([{ id: "u1" }]);
     await updateDisplayName("u1", "y".repeat(200));
 
-    expect((db.calls[0].values[0] as string)).toHaveLength(64);
+    expect(db.calls[0].values[0] as string).toHaveLength(64);
   });
 });
 
@@ -173,7 +171,10 @@ describe("loadPortfolio", () => {
   });
 
   it("coerces the numeric columns Postgres returns as strings", async () => {
-    queue([{ cash: "1000" }], [{ symbol: "A", company: "A", qty: "3", avg_cost: "1.5" }]);
+    queue(
+      [{ cash: "1000" }],
+      [{ symbol: "A", company: "A", qty: "3", avg_cost: "1.5" }],
+    );
 
     const portfolio = await loadPortfolio("u1", "2026-08");
 
@@ -205,9 +206,9 @@ describe("ensurePortfolio", () => {
     const portfolio = await ensurePortfolio("u1");
 
     expect(portfolio.cash).toBe(INITIAL_FUND);
-    expect(db.calls.some((c) => c.text.includes("INSERT INTO portfolios"))).toBe(
-      true,
-    );
+    expect(
+      db.calls.some((c) => c.text.includes("INSERT INTO portfolios")),
+    ).toBe(true);
   });
 
   it("leaves an existing month alone", async () => {
@@ -220,9 +221,9 @@ describe("ensurePortfolio", () => {
 
     await ensurePortfolio("u1");
 
-    expect(db.calls.some((c) => c.text.includes("INSERT INTO portfolios"))).toBe(
-      false,
-    );
+    expect(
+      db.calls.some((c) => c.text.includes("INSERT INTO portfolios")),
+    ).toBe(false);
   });
 
   it("archives the previous month the first time it is seen", async () => {
@@ -335,9 +336,10 @@ describe("executeTrade", () => {
     queueEnsure();
     queue([]); // the guarded UPDATE matched no rows
 
-    await expect(
-      executeTrade({ ...buy, side: "sell" }),
-    ).rejects.toMatchObject({ status: 400, message: "Not enough shares" });
+    await expect(executeTrade({ ...buy, side: "sell" })).rejects.toMatchObject({
+      status: 400,
+      message: "Not enough shares",
+    });
   });
 
   it("clears a position that reaches zero in the same statement", async () => {
@@ -468,7 +470,9 @@ describe("getLeagueBoard", () => {
     queue(ARCHIVE_EXISTS, [entryRow], []);
     await getLeagueBoard("2026-08");
 
-    const query = db.calls.find((c) => c.text.includes("FROM league_scores ls"));
+    const query = db.calls.find((c) =>
+      c.text.includes("FROM league_scores ls"),
+    );
     expect(query?.text).toContain("ORDER BY ls.equity DESC");
     expect(query?.text).toContain("LIMIT 100");
   });
@@ -479,14 +483,18 @@ describe("getLeagueBoard", () => {
   });
 
   it("carries the previous winner through", async () => {
-    queue(ARCHIVE_EXISTS, [entryRow], [
-      {
-        winner_user_id: "u2",
-        display_name: "Marta",
-        equity: "12480",
-        pnl_pct: "24.8",
-      },
-    ]);
+    queue(
+      ARCHIVE_EXISTS,
+      [entryRow],
+      [
+        {
+          winner_user_id: "u2",
+          display_name: "Marta",
+          equity: "12480",
+          pnl_pct: "24.8",
+        },
+      ],
+    );
 
     const board = await getLeagueBoard("2026-08");
 

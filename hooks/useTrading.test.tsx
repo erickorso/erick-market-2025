@@ -47,9 +47,7 @@ function stock(over: Partial<EnrichedStock> = {}): EnrichedStock {
 const serverPortfolio = {
   month: "2026-08",
   cash: 5_000,
-  positions: [
-    { symbol: "AAPL", company: "Apple Inc.", qty: 2, avg_cost: 190 },
-  ],
+  positions: [{ symbol: "AAPL", company: "Apple Inc.", qty: 2, avg_cost: 190 }],
 };
 
 beforeEach(() => {

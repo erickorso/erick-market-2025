@@ -1,9 +1,5 @@
 import React, { createContext, useCallback, useContext, useMemo } from "react";
-import {
-  Auth0Provider,
-  useAuth0,
-  type AppState,
-} from "@auth0/auth0-react";
+import { Auth0Provider, useAuth0, type AppState } from "@auth0/auth0-react";
 import {
   auth0Audience,
   auth0ClientId,
@@ -20,7 +16,12 @@ type AuthValue = {
   configured: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
-  user: { name?: string; email?: string; picture?: string; sub?: string } | null;
+  user: {
+    name?: string;
+    email?: string;
+    picture?: string;
+    sub?: string;
+  } | null;
   login: () => void;
   logout: () => void;
   getAccessToken: () => Promise<string | null>;

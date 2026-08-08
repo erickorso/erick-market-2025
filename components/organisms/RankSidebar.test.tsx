@@ -107,7 +107,9 @@ describe("RankSidebar", () => {
     await userEvent.click(screen.getByRole("button", { name: /collapse/i }));
 
     expect(screen.queryByText("Erick")).not.toBeInTheDocument();
-    expect(localStorage.getItem("erick-market.rank-sidebar.collapsed")).toBe("1");
+    expect(localStorage.getItem("erick-market.rank-sidebar.collapsed")).toBe(
+      "1",
+    );
   });
 
   it("expands again", async () => {

@@ -47,7 +47,9 @@ describe("polling", () => {
 
   it("records when the data arrived", async () => {
     const { result } = renderHook(() => useHotStocks());
-    await waitFor(() => expect(result.current.updatedAt).toBe(1_700_000_000_000));
+    await waitFor(() =>
+      expect(result.current.updatedAt).toBe(1_700_000_000_000),
+    );
   });
 
   it("exposes its own refresh cadence", () => {
@@ -99,9 +101,7 @@ describe("degradation", () => {
     fetchMock.mockRejectedValue(new Error("offline"));
     const { result } = renderHook(() => useHotStocks());
 
-    await waitFor(() =>
-      expect(result.current.error).toMatch(/offline/i),
-    );
+    await waitFor(() => expect(result.current.error).toMatch(/offline/i));
   });
 
   it("treats a non-ok response as offline", async () => {
@@ -116,7 +116,9 @@ describe("degradation", () => {
     fetchMock.mockResolvedValue(payload([]));
     const { result } = renderHook(() => useHotStocks());
 
-    await waitFor(() => expect(result.current.stocks.length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(result.current.stocks.length).toBeGreaterThan(0),
+    );
     // The request itself succeeded, so this is not an error state.
     expect(result.current.error).toBeNull();
   });

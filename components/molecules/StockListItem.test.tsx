@@ -91,8 +91,6 @@ describe("StockListItem", () => {
 
     await userEvent.click(screen.getByTestId("sell"));
 
-    expect(navigate).toHaveBeenCalledWith(
-      "/sell/Apple%20Inc.%20(AAPL)",
-    );
+    expect(navigate).toHaveBeenCalledWith("/sell/Apple%20Inc.%20(AAPL)");
   });
 });

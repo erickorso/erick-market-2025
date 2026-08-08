@@ -82,10 +82,9 @@ export function withPublic(
         logRequest(buildLog(req, 503, startedAt));
         return;
       }
-      await (handler as (
-        req: VercelRequest,
-        res: VercelResponse,
-      ) => Promise<void>)(req, res);
+      await (
+        handler as (req: VercelRequest, res: VercelResponse) => Promise<void>
+      )(req, res);
       logRequest(buildLog(req, res.statusCode, startedAt));
     } catch (err) {
       sendError(res, err);

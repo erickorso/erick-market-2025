@@ -64,7 +64,9 @@ class ErrorBoundary extends React.Component<Props, State> {
         <h2 className="mb-2 text-lg font-semibold text-rose-300">
           {labels.title}
         </h2>
-        <p className="mb-4 text-sm text-slate-600 dark:text-gray-400">{labels.body}</p>
+        <p className="mb-4 text-sm text-slate-600 dark:text-gray-400">
+          {labels.body}
+        </p>
         <button
           type="button"
           onClick={() => window.location.reload()}

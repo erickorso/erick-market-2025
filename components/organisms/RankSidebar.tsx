@@ -107,7 +107,10 @@ const RankSidebar: React.FC = () => {
           {top10.length === 0 && (
             <li className="py-3 text-xs text-slate-600 dark:text-gray-400">
               {t("noScoresYet")}{" "}
-              <Link to="/league" className="text-teal-700 dark:text-teal-400 hover:text-teal-300">
+              <Link
+                to="/league"
+                className="text-teal-700 dark:text-teal-400 hover:text-teal-300"
+              >
                 {t("joinPlay")}
               </Link>
             </li>

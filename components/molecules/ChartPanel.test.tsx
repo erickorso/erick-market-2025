@@ -27,14 +27,20 @@ describe("ChartPanel", () => {
 
   it("marks a real series in green", () => {
     renderWithProviders(<ChartPanel {...props} />);
-    expect(screen.getByText(props.sourceLabel)).toHaveClass("text-emerald-700", "dark:text-emerald-400");
+    expect(screen.getByText(props.sourceLabel)).toHaveClass(
+      "text-emerald-700",
+      "dark:text-emerald-400",
+    );
   });
 
   it("warns in amber when the series is simulated", () => {
     renderWithProviders(
       <ChartPanel {...props} simulated sourceLabel="Simulated" />,
     );
-    expect(screen.getByText("Simulated")).toHaveClass("text-amber-700", "dark:text-amber-400");
+    expect(screen.getByText("Simulated")).toHaveClass(
+      "text-amber-700",
+      "dark:text-amber-400",
+    );
   });
 
   it("falls back to a label instead of taking the modal down", () => {

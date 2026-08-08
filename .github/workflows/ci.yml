@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Typecheck, test, build
+    name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,10 +25,17 @@ jobs:
 
       - run: npm ci
 
+      - name: Lint
+        run: npm run lint -- --max-warnings=0
+
+      - name: Formatting
+        run: npm run format:check
+
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Unit and integration-free tests
+      # Fails if coverage drops below the thresholds in vitest.config.ts.
+      - name: Unit tests and coverage gate
         run: npm run test:coverage
 
       - name: Build

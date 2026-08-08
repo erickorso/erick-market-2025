@@ -27,13 +27,14 @@ describe("RankListItem", () => {
 
   it("colours a losing player red", () => {
     renderWithProviders(<RankListItem {...props} pnlPercent={-2.8} />);
-    expect(screen.getByText("-2.8%")).toHaveClass("text-rose-600", "dark:text-rose-400");
+    expect(screen.getByText("-2.8%")).toHaveClass(
+      "text-rose-600",
+      "dark:text-rose-400",
+    );
   });
 
   it("highlights the viewer's own row", () => {
-    const { container } = renderWithProviders(
-      <RankListItem {...props} mine />,
-    );
+    const { container } = renderWithProviders(<RankListItem {...props} mine />);
     expect(container.firstChild).toHaveClass("border-teal-500/50");
   });
 

@@ -200,7 +200,9 @@ export async function joinLeague(
   return player;
 }
 
-export async function submitLeagueScore(entry: LeagueEntry & { pinHash: string }) {
+export async function submitLeagueScore(
+  entry: LeagueEntry & { pinHash: string },
+) {
   upsertLocalScore(entry);
   try {
     await fetch(LEAGUE_API_URL, {

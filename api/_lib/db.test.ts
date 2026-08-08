@@ -52,8 +52,8 @@ describe("getSql", () => {
     process.env.DATABASE_URL = "postgres://user:pass@host/db";
     // The cache lives at module scope and earlier tests may have filled it,
     // so assert on the delta rather than the absolute count.
-    const before = (neon as unknown as { mock: { calls: unknown[] } }).mock.calls
-      .length;
+    const before = (neon as unknown as { mock: { calls: unknown[] } }).mock
+      .calls.length;
 
     getSql();
     getSql();

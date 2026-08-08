@@ -29,8 +29,7 @@ export function parseTradeInput(raw: {
   qty?: unknown;
   price?: unknown;
 }): ValidTrade {
-  const side =
-    raw.side === "buy" || raw.side === "sell" ? raw.side : null;
+  const side = raw.side === "buy" || raw.side === "sell" ? raw.side : null;
   if (!side) {
     throw Object.assign(new Error("side must be buy or sell"), { status: 400 });
   }

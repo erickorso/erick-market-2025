@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  HOT_API_URL,
-  HOT_REFRESH_MS,
-  HOT_WS_PATH,
-} from "../constants";
+import { HOT_API_URL, HOT_REFRESH_MS, HOT_WS_PATH } from "../constants";
 
 export type HotStock = {
   symbol: string;

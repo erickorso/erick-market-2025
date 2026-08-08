@@ -33,19 +33,18 @@ export async function handleAuthApi(
   res: ServerResponse,
   pathname: string,
 ): Promise<boolean> {
-  if (!pathname.startsWith("/api/me") &&
-      !pathname.startsWith("/api/portfolio") &&
-      !pathname.startsWith("/api/trade") &&
-      !pathname.startsWith("/api/league")) {
+  if (
+    !pathname.startsWith("/api/me") &&
+    !pathname.startsWith("/api/portfolio") &&
+    !pathname.startsWith("/api/trade") &&
+    !pathname.startsWith("/api/league")
+  ) {
     return false;
   }
 
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization",
-  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
     res.writeHead(204);

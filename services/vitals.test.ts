@@ -2,9 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { reportWebVitals } from "./vitals";
 import { reportVital } from "./reporter";
 
-const handlers = vi.hoisted(
-  () => ({}) as Record<string, (m: unknown) => void>,
-);
+const handlers = vi.hoisted(() => ({}) as Record<string, (m: unknown) => void>);
 
 vi.mock("web-vitals", () => ({
   onTTFB: (fn: (m: unknown) => void) => (handlers.TTFB = fn),

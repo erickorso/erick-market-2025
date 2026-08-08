@@ -8,9 +8,9 @@ export default withAuth(async (req, res, { user }) => {
     return;
   }
 
-  const body = (typeof req.body === "string"
-    ? JSON.parse(req.body)
-    : req.body) as Record<string, unknown>;
+  const body = (
+    typeof req.body === "string" ? JSON.parse(req.body) : req.body
+  ) as Record<string, unknown>;
 
   const trade = parseTradeInput(body);
   const portfolio = await executeTrade({

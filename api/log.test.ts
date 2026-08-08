@@ -6,8 +6,12 @@ function req(over: Partial<VercelRequest> = {}): VercelRequest {
   return {
     method: "POST",
     url: "/api/log",
-    headers: { "x-forwarded-for": `203.0.113.${Math.floor(Math.random() * 250)}` },
-    body: { events: [{ kind: "error", name: "boundary:chart", message: "boom" }] },
+    headers: {
+      "x-forwarded-for": `203.0.113.${Math.floor(Math.random() * 250)}`,
+    },
+    body: {
+      events: [{ kind: "error", name: "boundary:chart", message: "boom" }],
+    },
     ...over,
   } as unknown as VercelRequest;
 }
@@ -185,9 +189,7 @@ describe("validation", () => {
     handler(
       req({
         body: {
-          events: [
-            { kind: "error", name: "big", stack: "x".repeat(50_000) },
-          ],
+          events: [{ kind: "error", name: "big", stack: "x".repeat(50_000) }],
         },
       }),
       r,
@@ -257,7 +259,10 @@ describe("logging", () => {
   it("never logs a raw client IP", () => {
     const error = vi.spyOn(console, "error");
     const { res: r } = res();
-    handler(req({ headers: { "x-forwarded-for": "203.0.113.5, 70.41.3.18" } }), r);
+    handler(
+      req({ headers: { "x-forwarded-for": "203.0.113.5, 70.41.3.18" } }),
+      r,
+    );
 
     const entry = logged(error)[0];
     expect(JSON.stringify(entry)).not.toContain("203.0.113.5");
@@ -301,7 +306,8 @@ describe("logging", () => {
 describe("rate limiting", () => {
   it("stops a client flooding the drain", () => {
     const ip = "198.51.100.77";
-    for (let i = 0; i < 30; i++) handler(req({ headers: { "x-forwarded-for": ip } }), res().res);
+    for (let i = 0; i < 30; i++)
+      handler(req({ headers: { "x-forwarded-for": ip } }), res().res);
 
     const { res: r, spy, headers } = res();
     handler(req({ headers: { "x-forwarded-for": ip } }), r);

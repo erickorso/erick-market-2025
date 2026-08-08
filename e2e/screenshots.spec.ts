@@ -92,11 +92,29 @@ const league = {
   mode: "shared",
   month: "2026-08",
   entries: [
-    { playerId: "p1", name: "Erick", equity: 11_842, pnl: 1_842, pnlPercent: 18.4 },
-    { playerId: "p2", name: "Marta", equity: 11_190, pnl: 1_190, pnlPercent: 11.9 },
+    {
+      playerId: "p1",
+      name: "Erick",
+      equity: 11_842,
+      pnl: 1_842,
+      pnlPercent: 18.4,
+    },
+    {
+      playerId: "p2",
+      name: "Marta",
+      equity: 11_190,
+      pnl: 1_190,
+      pnlPercent: 11.9,
+    },
     { playerId: "p3", name: "Dani", equity: 10_640, pnl: 640, pnlPercent: 6.4 },
     { playerId: "p4", name: "Ana", equity: 10_105, pnl: 105, pnlPercent: 1.05 },
-    { playerId: "p5", name: "Luis", equity: 9_720, pnl: -280, pnlPercent: -2.8 },
+    {
+      playerId: "p5",
+      name: "Luis",
+      equity: 9_720,
+      pnl: -280,
+      pnlPercent: -2.8,
+    },
   ],
   previousWinner: {
     playerId: "p2",
@@ -182,7 +200,9 @@ async function mockMarket(page: Page) {
     ),
   );
 
-  await page.route("**/api/portfolio", (route) => route.fulfill(json(portfolio)));
+  await page.route("**/api/portfolio", (route) =>
+    route.fulfill(json(portfolio)),
+  );
   await page.route("**/api/league*", (route) => route.fulfill(json(league)));
 }
 
@@ -214,7 +234,12 @@ test("@screenshots stock detail", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await page.goto("/");
   await expect(page.getByTestId("company-name").first()).toBeVisible();
-  await page.getByTestId("company-name").first().locator("button").first().click();
+  await page
+    .getByTestId("company-name")
+    .first()
+    .locator("button")
+    .first()
+    .click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await settle(page);
   await page.screenshot({ path: `${OUT}/detail.png` });

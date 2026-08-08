@@ -19,9 +19,9 @@ const config = vi.hoisted(() => ({
 }));
 
 /** Captures what AuthProvider hands to the SDK, so its config is assertable. */
-const providerProps = vi.hoisted(
-  () => ({ current: null as Record<string, unknown> | null }),
-);
+const providerProps = vi.hoisted(() => ({
+  current: null as Record<string, unknown> | null,
+}));
 
 vi.mock("@auth0/auth0-react", () => ({
   Auth0Provider: ({
@@ -184,7 +184,9 @@ describe("without Auth0 configured", () => {
 
     act(() => result.current.login());
 
-    expect(alert).toHaveBeenCalledWith(expect.stringMatching(/not configured/i));
+    expect(alert).toHaveBeenCalledWith(
+      expect.stringMatching(/not configured/i),
+    );
     expect(auth0.loginWithRedirect).not.toHaveBeenCalled();
   });
 
@@ -237,9 +239,9 @@ describe("redirect callback", () => {
   function redirect(appState?: { returnTo?: string }) {
     renderHook(() => useAuth(), { wrapper });
     (
-      providerProps.current?.onRedirectCallback as (
-        s?: { returnTo?: string },
-      ) => void
+      providerProps.current?.onRedirectCallback as (s?: {
+        returnTo?: string;
+      }) => void
     )(appState);
   }
 

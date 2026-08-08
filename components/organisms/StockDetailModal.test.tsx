@@ -163,7 +163,9 @@ describe("loaded", () => {
   it("offers the trade panel priced off the quote", async () => {
     renderWithProviders(<StockDetailModal />);
 
-    expect(await screen.findByTestId("totalPrice")).toHaveTextContent("$214.32");
+    expect(await screen.findByTestId("totalPrice")).toHaveTextContent(
+      "$214.32",
+    );
   });
 
   it("buys through the context", async () => {

@@ -43,10 +43,9 @@ beforeEach(() => {
 
 describe("resolution", () => {
   it("decodes the company from the route parameter", () => {
-    const { result } = renderHook(
-      () => useSellForm("Apple%20Inc.%20(AAPL)"),
-      { wrapper },
-    );
+    const { result } = renderHook(() => useSellForm("Apple%20Inc.%20(AAPL)"), {
+      wrapper,
+    });
 
     expect(result.current.company).toBe("Apple Inc. (AAPL)");
     expect(result.current.found).toBe(true);

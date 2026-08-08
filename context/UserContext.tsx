@@ -92,6 +92,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     if (isLoading) return;
+    // refreshProfile flips into its loading state before awaiting — the
+    // standard fetch-in-an-effect shape, not a cascading render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshProfile();
   }, [isLoading, isAuthenticated, refreshProfile]);
 
@@ -117,10 +120,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       getAccessToken,
       refreshProfile,
       displayName:
-        profile?.display_name ||
-        authUser?.name ||
-        authUser?.email ||
-        null,
+        profile?.display_name || authUser?.name || authUser?.email || null,
     }),
     [
       configured,
@@ -138,9 +138,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     ],
   );
 
-  return (
-    <UserContext.Provider value={value}>{children}</UserContext.Provider>
-  );
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
 
 export const useUser = () => {

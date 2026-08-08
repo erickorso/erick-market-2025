@@ -16,9 +16,7 @@ describe("TagList", () => {
   });
 
   it("trims to max for the dense card grid", () => {
-    renderWithProviders(
-      <TagList tags={["a", "b", "c", "d", "e"]} max={3} />,
-    );
+    renderWithProviders(<TagList tags={["a", "b", "c", "d", "e"]} max={3} />);
 
     expect(screen.getByText("c")).toBeInTheDocument();
     expect(screen.queryByText("d")).not.toBeInTheDocument();

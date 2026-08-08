@@ -168,9 +168,11 @@ test("the market page is clean in light mode too", async ({ page }) => {
   await page.getByRole("button", { name: /light mode/i }).click();
   // The palette animates over 300ms; scanning mid-transition would measure
   // intermediate colours rather than the ones a user ends up looking at.
-  await page.waitForFunction(() =>
-    getComputedStyle(document.documentElement).getPropertyValue("color-scheme") !==
-      undefined,
+  await page.waitForFunction(
+    () =>
+      getComputedStyle(document.documentElement).getPropertyValue(
+        "color-scheme",
+      ) !== undefined,
   );
   await page.waitForTimeout(500);
 
@@ -182,7 +184,12 @@ test("the open detail modal has no accessibility violations", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByTestId("company-name").first().locator("button").first().click();
+  await page
+    .getByTestId("company-name")
+    .first()
+    .locator("button")
+    .first()
+    .click();
   await expect(page.getByRole("dialog")).toBeVisible();
 
   const { violations } = await scan(page).analyze();
@@ -193,7 +200,12 @@ test("the modal hides the page behind it from assistive tech", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByTestId("company-name").first().locator("button").first().click();
+  await page
+    .getByTestId("company-name")
+    .first()
+    .locator("button")
+    .first()
+    .click();
   await expect(page.getByRole("dialog")).toBeVisible();
 
   // aria-modal alone does not stop virtual-cursor browsing; inert does.
@@ -204,7 +216,12 @@ test("the modal hides the page behind it from assistive tech", async ({
 
 test("the page behind is restored when the modal closes", async ({ page }) => {
   await page.goto("/");
-  await page.getByTestId("company-name").first().locator("button").first().click();
+  await page
+    .getByTestId("company-name")
+    .first()
+    .locator("button")
+    .first()
+    .click();
   await page.getByRole("button", { name: /close detail/i }).click();
 
   await expect(page.locator("header")).not.toHaveAttribute("inert", "");

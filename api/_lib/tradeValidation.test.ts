@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  computeEquityFromBooks,
-  parseTradeInput,
-} from "./tradeValidation";
+import { computeEquityFromBooks, parseTradeInput } from "./tradeValidation";
 
 describe("parseTradeInput", () => {
   it("accepts a valid buy", () => {

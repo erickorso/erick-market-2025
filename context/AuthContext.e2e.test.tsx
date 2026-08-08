@@ -19,7 +19,9 @@ vi.hoisted(() => {
 const useAuth0 = vi.hoisted(() => vi.fn());
 
 vi.mock("@auth0/auth0-react", () => ({
-  Auth0Provider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  Auth0Provider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
   useAuth0,
 }));
 

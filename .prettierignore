@@ -1,0 +1,8 @@
+dist
+coverage
+node_modules
+playwright-report
+playwright/.auth
+test-results
+docs/screenshots
+package-lock.json

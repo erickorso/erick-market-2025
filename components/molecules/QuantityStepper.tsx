@@ -22,7 +22,13 @@ const QuantityStepper: React.FC<{
   onDecrement: () => void;
   disabled?: boolean;
   size?: Size;
-}> = ({ quantity, onIncrement, onDecrement, disabled = false, size = "md" }) => {
+}> = ({
+  quantity,
+  onIncrement,
+  onDecrement,
+  disabled = false,
+  size = "md",
+}) => {
   const { t } = useI18n();
   const s = sizes[size];
 

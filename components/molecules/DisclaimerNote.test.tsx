@@ -7,7 +7,10 @@ describe("DisclaimerNote", () => {
   it("starts collapsed", () => {
     renderWithProviders(<DisclaimerNote />);
 
-    expect(screen.getByRole("button")).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
   });
 

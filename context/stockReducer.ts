@@ -1,8 +1,4 @@
-import type {
-  PortfolioItem,
-  StockAction,
-  StockContextState,
-} from "../types";
+import type { PortfolioItem, StockAction, StockContextState } from "../types";
 import { INITIAL_FUND_AMOUNT } from "../constants";
 import { tickStockPrices } from "../services/stockService";
 
@@ -179,7 +175,9 @@ export const stockReducer = (
 
       let newPortfolio: PortfolioItem[];
       if (remainingQuantity === 0) {
-        newPortfolio = state.portfolio.filter((_, index) => index !== itemIndex);
+        newPortfolio = state.portfolio.filter(
+          (_, index) => index !== itemIndex,
+        );
       } else {
         const newTotalCost =
           (itemToSell.totalCost / itemToSell.quantity) * remainingQuantity;

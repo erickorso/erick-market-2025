@@ -19,23 +19,35 @@ export function useStockDetail(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Updated in an effect rather than during render: a ref mutated mid-render
+  // is not safe under concurrent rendering. The initialiser covers the first
+  // render, and this effect is declared before the one that reads it.
   const catalogRef = useRef(catalog);
-  catalogRef.current = catalog;
+  useEffect(() => {
+    catalogRef.current = catalog;
+  }, [catalog]);
+
+  // Reset during render rather than in an effect — React's documented way to
+  // adjust state when an input changes. Opening a different symbol (or closing
+  // the modal) drops the previous payload immediately, so the skeleton never
+  // renders over stale data for a frame.
+  // Starts at null so a modal that mounts already open still runs the reset
+  // and enters its loading state on the very first render.
+  const [lastSymbol, setLastSymbol] = useState<string | null>(null);
+  if (detailSymbol !== lastSymbol) {
+    setLastSymbol(detailSymbol);
+    setDetail(null);
+    setError(null);
+    setLoading(Boolean(detailSymbol));
+  }
 
   useEffect(() => {
-    if (!detailSymbol) {
-      setDetail(null);
-      setError(null);
-      return;
-    }
+    if (!detailSymbol) return;
     const stocks = catalogRef.current;
     const symbol = resolveDetailSymbol(detailSymbol, stocks);
     const seed = findBySymbol(stocks, symbol);
     let cancelled = false;
 
-    setLoading(true);
-    setDetail(null);
-    setError(null);
     void fetchStockDetail(symbol, {
       company: seed?.company.replace(/\s*\([^)]+\)\s*$/, "") ?? undefined,
       tags: seed?.tags,

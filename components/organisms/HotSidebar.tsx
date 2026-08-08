@@ -43,7 +43,9 @@ const HotSidebar: React.FC = () => {
           </h2>
           <span
             className={`text-[10px] font-medium ${
-              mode === "socket" ? "text-emerald-700 dark:text-emerald-400" : "text-slate-600 dark:text-gray-400"
+              mode === "socket"
+                ? "text-emerald-700 dark:text-emerald-400"
+                : "text-slate-600 dark:text-gray-400"
             }`}
             title={`${Math.round(refreshMs / 60000)}m`}
           >
@@ -74,7 +76,9 @@ const HotSidebar: React.FC = () => {
             </li>
           ))}
           {stocks.length === 0 && (
-            <li className="py-4 text-xs text-slate-600 dark:text-gray-400">{t("hotLoading")}</li>
+            <li className="py-4 text-xs text-slate-600 dark:text-gray-400">
+              {t("hotLoading")}
+            </li>
           )}
         </ol>
         <DisclaimerNote />

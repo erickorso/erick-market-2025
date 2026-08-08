@@ -148,8 +148,9 @@ describe("verifyBearer", () => {
 
   it("caches the JWKS per tenant, so a warm instance does not refetch", async () => {
     const { createRemoteJWKSet } = await import("jose");
-    const calls = (createRemoteJWKSet as unknown as { mock: { calls: unknown[] } })
-      .mock.calls;
+    const calls = (
+      createRemoteJWKSet as unknown as { mock: { calls: unknown[] } }
+    ).mock.calls;
 
     // The cache lives at module scope, so it may already be warm. Either way,
     // three verifications against one tenant must not build it three times.

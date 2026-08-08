@@ -1,7 +1,14 @@
+import React, { useRef, useEffect } from "react";
+import * as THREE from "three";
 
-import React, { useRef, useEffect } from 'react';
-import * as THREE from 'three';
-
+/*
+ * The SVG texture loaders below are declared inside the component but take
+ * everything they need as arguments — they close over no state. The scene is
+ * built once on mount; listing them as dependencies would tear down and
+ * rebuild the whole WebGL scene on every render. Hoisting them to module
+ * scope is the real fix and is worth doing if this file is ever touched again.
+ */
+/* eslint-disable react-hooks/exhaustive-deps */
 const ThreeDBackground: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
   const animationFrameId = useRef<number | null>(null);
@@ -10,13 +17,15 @@ const ThreeDBackground: React.FC = () => {
   const particleGroupRef = useRef<THREE.Group | null>(null);
   const textureLoaderRef = useRef<THREE.TextureLoader | null>(null);
 
-  const tealColor = '#2dd4bf';
-  const lightGrayColor = '#e5e7eb';
-  const darkGrayColor = '#4b5563';
+  const tealColor = "#2dd4bf";
+  const lightGrayColor = "#e5e7eb";
+  const darkGrayColor = "#4b5563";
 
   // --- SVG Chess Piece Texture Creation Functions ---
 
-  const loadPawnChessSVGTexture = (loader: THREE.TextureLoader): Promise<THREE.Texture> => {
+  const loadPawnChessSVGTexture = (
+    loader: THREE.TextureLoader,
+  ): Promise<THREE.Texture> => {
     return new Promise((resolve) => {
       const svgString = `
         <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
@@ -26,18 +35,25 @@ const ThreeDBackground: React.FC = () => {
         </svg>
       `;
       const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
-      loader.load(dataUrl, (texture) => {
-        texture.magFilter = THREE.NearestFilter;
-        texture.minFilter = THREE.NearestFilter;
-        resolve(texture);
-      }, undefined, (error) => {
-        console.error('Error loading Pawn SVG texture:', error);
-        resolve(createFallbackTexture(tealColor, 'P!'));
-      });
+      loader.load(
+        dataUrl,
+        (texture) => {
+          texture.magFilter = THREE.NearestFilter;
+          texture.minFilter = THREE.NearestFilter;
+          resolve(texture);
+        },
+        undefined,
+        (error) => {
+          console.error("Error loading Pawn SVG texture:", error);
+          resolve(createFallbackTexture(tealColor, "P!"));
+        },
+      );
     });
   };
 
-  const loadRookChessSVGTexture = (loader: THREE.TextureLoader): Promise<THREE.Texture> => {
+  const loadRookChessSVGTexture = (
+    loader: THREE.TextureLoader,
+  ): Promise<THREE.Texture> => {
     return new Promise((resolve) => {
       const svgString = `
         <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
@@ -49,18 +65,25 @@ const ThreeDBackground: React.FC = () => {
         </svg>
       `;
       const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
-      loader.load(dataUrl, (texture) => {
-        texture.magFilter = THREE.NearestFilter;
-        texture.minFilter = THREE.NearestFilter;
-        resolve(texture);
-      }, undefined, (error) => {
-        console.error('Error loading Rook SVG texture:', error);
-        resolve(createFallbackTexture(lightGrayColor, 'R!'));
-      });
+      loader.load(
+        dataUrl,
+        (texture) => {
+          texture.magFilter = THREE.NearestFilter;
+          texture.minFilter = THREE.NearestFilter;
+          resolve(texture);
+        },
+        undefined,
+        (error) => {
+          console.error("Error loading Rook SVG texture:", error);
+          resolve(createFallbackTexture(lightGrayColor, "R!"));
+        },
+      );
     });
   };
 
-  const loadKnightChessSVGTexture = (loader: THREE.TextureLoader): Promise<THREE.Texture> => {
+  const loadKnightChessSVGTexture = (
+    loader: THREE.TextureLoader,
+  ): Promise<THREE.Texture> => {
     return new Promise((resolve) => {
       const svgString = `
         <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
@@ -72,18 +95,25 @@ const ThreeDBackground: React.FC = () => {
         </svg>
       `;
       const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
-      loader.load(dataUrl, (texture) => {
-        texture.magFilter = THREE.NearestFilter;
-        texture.minFilter = THREE.NearestFilter;
-        resolve(texture);
-      }, undefined, (error) => {
-        console.error('Error loading Knight SVG texture:', error);
-        resolve(createFallbackTexture(darkGrayColor, 'N!')); // N for kNight
-      });
+      loader.load(
+        dataUrl,
+        (texture) => {
+          texture.magFilter = THREE.NearestFilter;
+          texture.minFilter = THREE.NearestFilter;
+          resolve(texture);
+        },
+        undefined,
+        (error) => {
+          console.error("Error loading Knight SVG texture:", error);
+          resolve(createFallbackTexture(darkGrayColor, "N!")); // N for kNight
+        },
+      );
     });
   };
 
-  const loadBishopChessSVGTexture = (loader: THREE.TextureLoader): Promise<THREE.Texture> => {
+  const loadBishopChessSVGTexture = (
+    loader: THREE.TextureLoader,
+  ): Promise<THREE.Texture> => {
     return new Promise((resolve) => {
       const svgString = `
         <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
@@ -95,18 +125,25 @@ const ThreeDBackground: React.FC = () => {
         </svg>
       `;
       const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
-      loader.load(dataUrl, (texture) => {
-        texture.magFilter = THREE.NearestFilter;
-        texture.minFilter = THREE.NearestFilter;
-        resolve(texture);
-      }, undefined, (error) => {
-        console.error('Error loading Bishop SVG texture:', error);
-        resolve(createFallbackTexture(lightGrayColor, 'B!'));
-      });
+      loader.load(
+        dataUrl,
+        (texture) => {
+          texture.magFilter = THREE.NearestFilter;
+          texture.minFilter = THREE.NearestFilter;
+          resolve(texture);
+        },
+        undefined,
+        (error) => {
+          console.error("Error loading Bishop SVG texture:", error);
+          resolve(createFallbackTexture(lightGrayColor, "B!"));
+        },
+      );
     });
   };
 
-  const loadQueenChessSVGTexture = (loader: THREE.TextureLoader): Promise<THREE.Texture> => {
+  const loadQueenChessSVGTexture = (
+    loader: THREE.TextureLoader,
+  ): Promise<THREE.Texture> => {
     return new Promise((resolve) => {
       const svgString = `
         <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
@@ -120,18 +157,25 @@ const ThreeDBackground: React.FC = () => {
         </svg>
       `;
       const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
-      loader.load(dataUrl, (texture) => {
-        texture.magFilter = THREE.NearestFilter;
-        texture.minFilter = THREE.NearestFilter;
-        resolve(texture);
-      }, undefined, (error) => {
-        console.error('Error loading Queen SVG texture:', error);
-        resolve(createFallbackTexture(tealColor, 'Q!'));
-      });
+      loader.load(
+        dataUrl,
+        (texture) => {
+          texture.magFilter = THREE.NearestFilter;
+          texture.minFilter = THREE.NearestFilter;
+          resolve(texture);
+        },
+        undefined,
+        (error) => {
+          console.error("Error loading Queen SVG texture:", error);
+          resolve(createFallbackTexture(tealColor, "Q!"));
+        },
+      );
     });
   };
 
-  const loadKingChessSVGTexture = (loader: THREE.TextureLoader): Promise<THREE.Texture> => {
+  const loadKingChessSVGTexture = (
+    loader: THREE.TextureLoader,
+  ): Promise<THREE.Texture> => {
     return new Promise((resolve) => {
       const svgString = `
         <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
@@ -144,40 +188,47 @@ const ThreeDBackground: React.FC = () => {
         </svg>
       `;
       const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
-      loader.load(dataUrl, (texture) => {
-        texture.magFilter = THREE.NearestFilter;
-        texture.minFilter = THREE.NearestFilter;
-        resolve(texture);
-      }, undefined, (error) => {
-        console.error('Error loading King SVG texture:', error);
-        resolve(createFallbackTexture(darkGrayColor, 'K!'));
-      });
+      loader.load(
+        dataUrl,
+        (texture) => {
+          texture.magFilter = THREE.NearestFilter;
+          texture.minFilter = THREE.NearestFilter;
+          resolve(texture);
+        },
+        undefined,
+        (error) => {
+          console.error("Error loading King SVG texture:", error);
+          resolve(createFallbackTexture(darkGrayColor, "K!"));
+        },
+      );
     });
   };
 
-
-  const createFallbackTexture = (color: string, text: string): THREE.CanvasTexture => {
-    const canvas = document.createElement('canvas');
+  const createFallbackTexture = (
+    color: string,
+    text: string,
+  ): THREE.CanvasTexture => {
+    const canvas = document.createElement("canvas");
     canvas.width = 64;
     canvas.height = 64;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) { // Should ideally not happen
-        const errorCanvas = document.createElement('canvas'); // Minimal fallback
-        return new THREE.CanvasTexture(errorCanvas);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      // Should ideally not happen
+      const errorCanvas = document.createElement("canvas"); // Minimal fallback
+      return new THREE.CanvasTexture(errorCanvas);
     }
     ctx.fillStyle = color; // Background for the fallback
     ctx.fillRect(0, 0, 64, 64);
-    ctx.font = 'bold 32px monospace'; // Blocky font
-    ctx.fillStyle = '#fff'; // Contrasting text
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.font = "bold 32px monospace"; // Blocky font
+    ctx.fillStyle = "#fff"; // Contrasting text
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     ctx.fillText(text, 32, 32);
     const texture = new THREE.CanvasTexture(canvas);
     texture.magFilter = THREE.NearestFilter;
     texture.minFilter = THREE.NearestFilter;
     return texture;
   };
-
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -199,7 +250,12 @@ const ThreeDBackground: React.FC = () => {
     const loader = textureLoaderRef.current;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      currentMount.clientWidth / currentMount.clientHeight,
+      0.1,
+      1000,
+    );
     camera.position.z = 80;
 
     const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true }); // antialias false for sharper pixels
@@ -217,23 +273,30 @@ const ThreeDBackground: React.FC = () => {
           loadQueenChessSVGTexture(loader),
           loadKingChessSVGTexture(loader),
         ]);
-        particleTexturesRef.current = textures.filter(t => t !== null) as THREE.Texture[];
+        particleTexturesRef.current = textures.filter(
+          (t) => t !== null,
+        ) as THREE.Texture[];
 
         if (particleTexturesRef.current.length === 0) {
-            console.warn("No textures loaded, using only fallbacks or aborting particle creation.");
-            // Create a default set of fallbacks if all failed
-             particleTexturesRef.current = [
-                createFallbackTexture(tealColor, 'P?'),
-                createFallbackTexture(lightGrayColor, 'R?'),
-                createFallbackTexture(darkGrayColor, 'N?'),
-                createFallbackTexture(lightGrayColor, 'B?'),
-                createFallbackTexture(tealColor, 'Q?'),
-                createFallbackTexture(darkGrayColor, 'K?'),
-             ];
-             if (particleTexturesRef.current.length === 0) { // Should not happen with above
-                console.error("Still no textures available. Aborting particle system.");
-                return;
-            }
+          console.warn(
+            "No textures loaded, using only fallbacks or aborting particle creation.",
+          );
+          // Create a default set of fallbacks if all failed
+          particleTexturesRef.current = [
+            createFallbackTexture(tealColor, "P?"),
+            createFallbackTexture(lightGrayColor, "R?"),
+            createFallbackTexture(darkGrayColor, "N?"),
+            createFallbackTexture(lightGrayColor, "B?"),
+            createFallbackTexture(tealColor, "Q?"),
+            createFallbackTexture(darkGrayColor, "K?"),
+          ];
+          if (particleTexturesRef.current.length === 0) {
+            // Should not happen with above
+            console.error(
+              "Still no textures available. Aborting particle system.",
+            );
+            return;
+          }
         }
 
         const particleCount = 200; // Increased slightly for more variety
@@ -243,11 +306,14 @@ const ThreeDBackground: React.FC = () => {
 
         for (let i = 0; i < particleCount; i++) {
           if (particleTexturesRef.current.length === 0) break; // Safety break
-          const texture = particleTexturesRef.current[Math.floor(Math.random() * particleTexturesRef.current.length)];
+          const texture =
+            particleTexturesRef.current[
+              Math.floor(Math.random() * particleTexturesRef.current.length)
+            ];
           const material = new THREE.SpriteMaterial({
             map: texture,
             transparent: true,
-            alphaTest: 0.1, 
+            alphaTest: 0.1,
             blending: THREE.NormalBlending,
             depthWrite: true,
           });
@@ -256,13 +322,13 @@ const ThreeDBackground: React.FC = () => {
           sprite.position.set(
             (Math.random() - 0.5) * 200,
             (Math.random() - 0.5) * 200,
-            (Math.random() - 0.5) * 200
+            (Math.random() - 0.5) * 200,
           );
           sprite.scale.set(spriteScale, spriteScale, spriteScale);
           group.add(sprite);
         }
         scene.add(group);
-        animate(); 
+        animate();
       } catch (error) {
         console.error("Failed to initialize textures and particles:", error);
       }
@@ -272,7 +338,7 @@ const ThreeDBackground: React.FC = () => {
       mouse.current.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse.current.y = -(event.clientY / window.innerHeight) * 2 + 1;
     };
-    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener("mousemove", onMouseMove);
 
     const animate = () => {
       animationFrameId.current = requestAnimationFrame(animate);
@@ -285,7 +351,8 @@ const ThreeDBackground: React.FC = () => {
         particleGroupRef.current.children.forEach((sprite, index) => {
           if (sprite instanceof THREE.Sprite && sprite.position) {
             // Adjust bobbing for visual appeal
-            sprite.position.y += Math.sin(Date.now() * 0.0003 + index * 0.7) * 0.04;
+            sprite.position.y +=
+              Math.sin(Date.now() * 0.0003 + index * 0.7) * 0.04;
           }
         });
       }
@@ -305,21 +372,26 @@ const ThreeDBackground: React.FC = () => {
       camera.updateProjectionMatrix();
       renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("mousemove", onMouseMove);
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
       }
-      if (renderer && renderer.domElement && currentMount && currentMount.contains(renderer.domElement)) {
+      if (
+        renderer &&
+        renderer.domElement &&
+        currentMount &&
+        currentMount.contains(renderer.domElement)
+      ) {
         currentMount.removeChild(renderer.domElement);
       }
-      particleTexturesRef.current.forEach(texture => texture?.dispose());
+      particleTexturesRef.current.forEach((texture) => texture?.dispose());
       particleTexturesRef.current = [];
       if (particleGroupRef.current) {
-        particleGroupRef.current.children.forEach(child => {
+        particleGroupRef.current.children.forEach((child) => {
           if (child instanceof THREE.Sprite) {
             child.material.map?.dispose();
             child.material.dispose();
@@ -332,12 +404,14 @@ const ThreeDBackground: React.FC = () => {
     };
   }, []);
 
-  return <div
-    ref={mountRef}
-    aria-hidden="true"
-    className="pointer-events-none fixed inset-0 -z-10"
-    style={{ width: "100%", height: "100%" }}
-  />;
+  return (
+    <div
+      ref={mountRef}
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 -z-10"
+      style={{ width: "100%", height: "100%" }}
+    />
+  );
 };
 
 export default ThreeDBackground;

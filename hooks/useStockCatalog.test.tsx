@@ -50,10 +50,9 @@ describe("initial load", () => {
 
   it("does not refetch on an unrelated re-render", async () => {
     const dispatch = vi.fn();
-    const { rerender } = renderHook(
-      ({ s }) => useStockCatalog(s, dispatch),
-      { initialProps: { s: state() } },
-    );
+    const { rerender } = renderHook(({ s }) => useStockCatalog(s, dispatch), {
+      initialProps: { s: state() },
+    });
 
     await waitFor(() => expect(fetchStocks).toHaveBeenCalledTimes(1));
     rerender({ s: state({ notice: { type: "info", message: "hi" } }) });
@@ -180,10 +179,9 @@ describe("search", () => {
 
   it("debounces typing into a single request", async () => {
     const dispatch = vi.fn();
-    const { rerender } = renderHook(
-      ({ s }) => useStockCatalog(s, dispatch),
-      { initialProps: { s: state() } },
-    );
+    const { rerender } = renderHook(({ s }) => useStockCatalog(s, dispatch), {
+      initialProps: { s: state() },
+    });
 
     await waitFor(() => expect(fetchStocks).toHaveBeenCalledTimes(1));
     fetchStocks.mockClear();
@@ -210,10 +208,9 @@ describe("search", () => {
 describe("category", () => {
   it("refetches immediately, without the search debounce", async () => {
     const dispatch = vi.fn();
-    const { rerender } = renderHook(
-      ({ s }) => useStockCatalog(s, dispatch),
-      { initialProps: { s: state() } },
-    );
+    const { rerender } = renderHook(({ s }) => useStockCatalog(s, dispatch), {
+      initialProps: { s: state() },
+    });
 
     await waitFor(() => expect(fetchStocks).toHaveBeenCalledTimes(1));
     fetchStocks.mockClear();
@@ -294,9 +291,9 @@ describe("refresh loops", () => {
     });
 
     await waitFor(() =>
-      expect(
-        dispatch.mock.calls.some(([a]) => a.type === "MERGE_STOCKS"),
-      ).toBe(true),
+      expect(dispatch.mock.calls.some(([a]) => a.type === "MERGE_STOCKS")).toBe(
+        true,
+      ),
     );
     // A silent poll must never flip the page back into its loading state.
     expect(

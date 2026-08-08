@@ -55,9 +55,7 @@ describe("CategoryFilter", () => {
     store.category = "blue-chip";
     renderWithProviders(<CategoryFilter />);
 
-    expect(
-      screen.getByText(/Large, established names/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Large, established names/i)).toBeInTheDocument();
   });
 
   it("always repeats that the labels are educational", () => {

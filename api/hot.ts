@@ -22,7 +22,10 @@ function setCors(req: VercelRequest, res: VercelResponse) {
   const origin = Array.isArray(req.headers.origin)
     ? req.headers.origin[0]
     : req.headers.origin;
-  if (origin && (ALLOWED_ORIGINS.includes(origin) || PREVIEW_ORIGIN.test(origin))) {
+  if (
+    origin &&
+    (ALLOWED_ORIGINS.includes(origin) || PREVIEW_ORIGIN.test(origin))
+  ) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
   res.setHeader("Vary", "Origin");
@@ -48,7 +51,9 @@ function rateLimited(req: VercelRequest, res: VercelResponse): boolean {
     res.setHeader("X-RateLimit-Remaining", "0");
     res.setHeader(
       "Retry-After",
-      String(Math.max(1, Math.ceil((hits[0] + RATE_LIMIT.windowMs - now) / 1000))),
+      String(
+        Math.max(1, Math.ceil((hits[0] + RATE_LIMIT.windowMs - now) / 1000)),
+      ),
     );
     res.status(429).json({ error: "rate limit exceeded" });
     return true;
@@ -56,7 +61,10 @@ function rateLimited(req: VercelRequest, res: VercelResponse): boolean {
 
   hits.push(now);
   rateHits.set(key, hits);
-  res.setHeader("X-RateLimit-Remaining", String(RATE_LIMIT.limit - hits.length));
+  res.setHeader(
+    "X-RateLimit-Remaining",
+    String(RATE_LIMIT.limit - hits.length),
+  );
   return false;
 }
 
@@ -73,12 +81,7 @@ function logRequest(req: VercelRequest, status: number, startedAt: number) {
 }
 
 type StyleTag =
-  | "long-term"
-  | "short-term"
-  | "growth"
-  | "dividend"
-  | "blue-chip"
-  | "volatile";
+  "long-term" | "short-term" | "growth" | "dividend" | "blue-chip" | "volatile";
 
 type WatchItem = { symbol: string; company: string; tags: StyleTag[] };
 
@@ -94,46 +97,162 @@ const HOT_LIMIT = 8;
 const HOT_INTERVAL_MS = 5 * 60 * 1000;
 
 const WATCHLIST: WatchItem[] = [
-  { symbol: "AAPL", company: "Apple", tags: ["long-term", "blue-chip", "growth"] },
-  { symbol: "MSFT", company: "Microsoft", tags: ["long-term", "blue-chip", "growth"] },
-  { symbol: "GOOGL", company: "Alphabet", tags: ["long-term", "blue-chip", "growth"] },
-  { symbol: "AMZN", company: "Amazon", tags: ["long-term", "growth", "volatile"] },
-  { symbol: "NVDA", company: "NVIDIA", tags: ["growth", "short-term", "volatile"] },
-  { symbol: "META", company: "Meta", tags: ["growth", "volatile", "short-term"] },
-  { symbol: "TSLA", company: "Tesla", tags: ["short-term", "volatile", "growth"] },
-  { symbol: "JPM", company: "JPMorgan", tags: ["blue-chip", "dividend", "long-term"] },
+  {
+    symbol: "AAPL",
+    company: "Apple",
+    tags: ["long-term", "blue-chip", "growth"],
+  },
+  {
+    symbol: "MSFT",
+    company: "Microsoft",
+    tags: ["long-term", "blue-chip", "growth"],
+  },
+  {
+    symbol: "GOOGL",
+    company: "Alphabet",
+    tags: ["long-term", "blue-chip", "growth"],
+  },
+  {
+    symbol: "AMZN",
+    company: "Amazon",
+    tags: ["long-term", "growth", "volatile"],
+  },
+  {
+    symbol: "NVDA",
+    company: "NVIDIA",
+    tags: ["growth", "short-term", "volatile"],
+  },
+  {
+    symbol: "META",
+    company: "Meta",
+    tags: ["growth", "volatile", "short-term"],
+  },
+  {
+    symbol: "TSLA",
+    company: "Tesla",
+    tags: ["short-term", "volatile", "growth"],
+  },
+  {
+    symbol: "JPM",
+    company: "JPMorgan",
+    tags: ["blue-chip", "dividend", "long-term"],
+  },
   { symbol: "V", company: "Visa", tags: ["long-term", "blue-chip", "growth"] },
-  { symbol: "MA", company: "Mastercard", tags: ["long-term", "blue-chip", "growth"] },
-  { symbol: "JNJ", company: "Johnson & Johnson", tags: ["dividend", "blue-chip", "long-term"] },
-  { symbol: "WMT", company: "Walmart", tags: ["dividend", "blue-chip", "long-term"] },
-  { symbol: "PG", company: "Procter & Gamble", tags: ["dividend", "blue-chip", "long-term"] },
+  {
+    symbol: "MA",
+    company: "Mastercard",
+    tags: ["long-term", "blue-chip", "growth"],
+  },
+  {
+    symbol: "JNJ",
+    company: "Johnson & Johnson",
+    tags: ["dividend", "blue-chip", "long-term"],
+  },
+  {
+    symbol: "WMT",
+    company: "Walmart",
+    tags: ["dividend", "blue-chip", "long-term"],
+  },
+  {
+    symbol: "PG",
+    company: "Procter & Gamble",
+    tags: ["dividend", "blue-chip", "long-term"],
+  },
   { symbol: "XOM", company: "Exxon Mobil", tags: ["dividend", "blue-chip"] },
   { symbol: "CVX", company: "Chevron", tags: ["dividend", "blue-chip"] },
-  { symbol: "HD", company: "Home Depot", tags: ["blue-chip", "dividend", "long-term"] },
-  { symbol: "BAC", company: "Bank of America", tags: ["dividend", "short-term"] },
-  { symbol: "KO", company: "Coca-Cola", tags: ["dividend", "blue-chip", "long-term"] },
-  { symbol: "PEP", company: "PepsiCo", tags: ["dividend", "blue-chip", "long-term"] },
-  { symbol: "COST", company: "Costco", tags: ["long-term", "blue-chip", "growth"] },
-  { symbol: "AVGO", company: "Broadcom", tags: ["growth", "dividend", "volatile"] },
+  {
+    symbol: "HD",
+    company: "Home Depot",
+    tags: ["blue-chip", "dividend", "long-term"],
+  },
+  {
+    symbol: "BAC",
+    company: "Bank of America",
+    tags: ["dividend", "short-term"],
+  },
+  {
+    symbol: "KO",
+    company: "Coca-Cola",
+    tags: ["dividend", "blue-chip", "long-term"],
+  },
+  {
+    symbol: "PEP",
+    company: "PepsiCo",
+    tags: ["dividend", "blue-chip", "long-term"],
+  },
+  {
+    symbol: "COST",
+    company: "Costco",
+    tags: ["long-term", "blue-chip", "growth"],
+  },
+  {
+    symbol: "AVGO",
+    company: "Broadcom",
+    tags: ["growth", "dividend", "volatile"],
+  },
   { symbol: "CRM", company: "Salesforce", tags: ["growth", "short-term"] },
-  { symbol: "NFLX", company: "Netflix", tags: ["growth", "volatile", "short-term"] },
+  {
+    symbol: "NFLX",
+    company: "Netflix",
+    tags: ["growth", "volatile", "short-term"],
+  },
   { symbol: "AMD", company: "AMD", tags: ["growth", "volatile", "short-term"] },
-  { symbol: "INTC", company: "Intel", tags: ["volatile", "short-term", "dividend"] },
-  { symbol: "ORCL", company: "Oracle", tags: ["blue-chip", "growth", "dividend"] },
+  {
+    symbol: "INTC",
+    company: "Intel",
+    tags: ["volatile", "short-term", "dividend"],
+  },
+  {
+    symbol: "ORCL",
+    company: "Oracle",
+    tags: ["blue-chip", "growth", "dividend"],
+  },
   { symbol: "CSCO", company: "Cisco", tags: ["dividend", "blue-chip"] },
   { symbol: "DIS", company: "Disney", tags: ["blue-chip", "volatile"] },
   { symbol: "NKE", company: "Nike", tags: ["blue-chip", "growth"] },
-  { symbol: "MCD", company: "McDonald's", tags: ["dividend", "blue-chip", "long-term"] },
+  {
+    symbol: "MCD",
+    company: "McDonald's",
+    tags: ["dividend", "blue-chip", "long-term"],
+  },
   { symbol: "ADBE", company: "Adobe", tags: ["growth", "volatile"] },
   { symbol: "IBM", company: "IBM", tags: ["dividend", "blue-chip"] },
-  { symbol: "QCOM", company: "Qualcomm", tags: ["growth", "dividend", "volatile"] },
-  { symbol: "TXN", company: "Texas Instruments", tags: ["dividend", "blue-chip", "long-term"] },
-  { symbol: "UBER", company: "Uber", tags: ["growth", "short-term", "volatile"] },
-  { symbol: "ABNB", company: "Airbnb", tags: ["growth", "short-term", "volatile"] },
+  {
+    symbol: "QCOM",
+    company: "Qualcomm",
+    tags: ["growth", "dividend", "volatile"],
+  },
+  {
+    symbol: "TXN",
+    company: "Texas Instruments",
+    tags: ["dividend", "blue-chip", "long-term"],
+  },
+  {
+    symbol: "UBER",
+    company: "Uber",
+    tags: ["growth", "short-term", "volatile"],
+  },
+  {
+    symbol: "ABNB",
+    company: "Airbnb",
+    tags: ["growth", "short-term", "volatile"],
+  },
   { symbol: "PYPL", company: "PayPal", tags: ["volatile", "short-term"] },
-  { symbol: "SQ", company: "Block", tags: ["volatile", "short-term", "growth"] },
-  { symbol: "SHOP", company: "Shopify", tags: ["growth", "volatile", "short-term"] },
-  { symbol: "SPOT", company: "Spotify", tags: ["growth", "volatile", "short-term"] },
+  {
+    symbol: "SQ",
+    company: "Block",
+    tags: ["volatile", "short-term", "growth"],
+  },
+  {
+    symbol: "SHOP",
+    company: "Shopify",
+    tags: ["growth", "volatile", "short-term"],
+  },
+  {
+    symbol: "SPOT",
+    company: "Spotify",
+    tags: ["growth", "volatile", "short-term"],
+  },
 ];
 
 const quoteCache = new Map<string, { at: number; quote: QuoteRow }>();

@@ -60,7 +60,10 @@ describe("catalog actions", () => {
   });
 
   it("MERGE_STOCKS swaps the list without touching loading state", () => {
-    const before = state({ isLoading: false, allStocks: [stock({ price: 1 })] });
+    const before = state({
+      isLoading: false,
+      allStocks: [stock({ price: 1 })],
+    });
     const next = stockReducer(before, {
       type: "MERGE_STOCKS",
       payload: [stock({ price: 2 })],
@@ -71,10 +74,10 @@ describe("catalog actions", () => {
   });
 
   it("SET_ERROR stops both spinners", () => {
-    const next = stockReducer(
-      state({ isLoading: true, isLoadingMore: true }),
-      { type: "SET_ERROR", payload: "network down" },
-    );
+    const next = stockReducer(state({ isLoading: true, isLoadingMore: true }), {
+      type: "SET_ERROR",
+      payload: "network down",
+    });
 
     expect(next.error).toBe("network down");
     expect(next.isLoading).toBe(false);
@@ -82,9 +85,12 @@ describe("catalog actions", () => {
   });
 
   it("TICK_PRICES moves prices but keeps the same companies", () => {
-    const next = stockReducer(state({ allStocks: [stock(), stock({ id: "b" })] }), {
-      type: "TICK_PRICES",
-    });
+    const next = stockReducer(
+      state({ allStocks: [stock(), stock({ id: "b" })] }),
+      {
+        type: "TICK_PRICES",
+      },
+    );
 
     expect(next.allStocks).toHaveLength(2);
     expect(next.allStocks.map((s) => s.id)).toEqual(["aapl", "b"]);
@@ -140,7 +146,9 @@ describe("BUY_STOCK", () => {
     const next = stockReducer(
       state({
         fund: 1000,
-        portfolio: [position({ quantity: 1, purchasePrice: 100, totalCost: 100 })],
+        portfolio: [
+          position({ quantity: 1, purchasePrice: 100, totalCost: 100 }),
+        ],
       }),
       {
         type: "BUY_STOCK",
@@ -182,7 +190,10 @@ describe("BUY_STOCK", () => {
 describe("SELL_STOCK", () => {
   it("credits the proceeds and reduces the position", () => {
     const next = stockReducer(
-      state({ fund: 0, portfolio: [position({ quantity: 10, totalCost: 1000 })] }),
+      state({
+        fund: 0,
+        portfolio: [position({ quantity: 10, totalCost: 1000 })],
+      }),
       {
         type: "SELL_STOCK",
         payload: {
@@ -241,13 +252,10 @@ describe("SELL_STOCK", () => {
 
 describe("HYDRATE_PORTFOLIO", () => {
   it("takes the server as the source of truth", () => {
-    const next = stockReducer(
-      state({ fund: 1, portfolio: [position()] }),
-      {
-        type: "HYDRATE_PORTFOLIO",
-        payload: { portfolio: [], fund: 10_000 },
-      },
-    );
+    const next = stockReducer(state({ fund: 1, portfolio: [position()] }), {
+      type: "HYDRATE_PORTFOLIO",
+      payload: { portfolio: [], fund: 10_000 },
+    });
 
     expect(next.fund).toBe(10_000);
     expect(next.portfolio).toEqual([]);

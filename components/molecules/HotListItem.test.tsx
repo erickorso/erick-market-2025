@@ -24,12 +24,18 @@ describe("HotListItem", () => {
 
   it("colours a gain green", () => {
     renderWithProviders(<HotListItem {...props} />);
-    expect(screen.getByText("+17.43%")).toHaveClass("text-emerald-700", "dark:text-emerald-400");
+    expect(screen.getByText("+17.43%")).toHaveClass(
+      "text-emerald-700",
+      "dark:text-emerald-400",
+    );
   });
 
   it("colours a loss red", () => {
     renderWithProviders(<HotListItem {...props} changePercent={-4.2} />);
-    expect(screen.getByText("-4.20%")).toHaveClass("text-rose-600", "dark:text-rose-400");
+    expect(screen.getByText("-4.20%")).toHaveClass(
+      "text-rose-600",
+      "dark:text-rose-400",
+    );
   });
 
   it("opens the detail on click", async () => {

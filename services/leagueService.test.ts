@@ -57,7 +57,10 @@ describe("month keys", () => {
 describe("portfolioMarketValue", () => {
   it("marks positions to the live price", () => {
     expect(
-      portfolioMarketValue([position({ quantity: 10 })], [stock({ price: 150 })]),
+      portfolioMarketValue(
+        [position({ quantity: 10 })],
+        [stock({ price: 150 })],
+      ),
     ).toBe(1500);
   });
 
@@ -71,9 +74,9 @@ describe("portfolioMarketValue", () => {
   });
 
   it("falls back to the cost basis for unquoted positions", () => {
-    expect(
-      portfolioMarketValue([position({ purchasePrice: 100 })], []),
-    ).toBe(1000);
+    expect(portfolioMarketValue([position({ purchasePrice: 100 })], [])).toBe(
+      1000,
+    );
   });
 
   it("is zero for an empty portfolio", () => {
@@ -114,9 +117,11 @@ describe("computeEquity", () => {
   });
 
   it("reports a negative pnl when the account is down", () => {
-    const result = computeEquity(0, [position({ quantity: 10 })], [
-      stock({ price: 500 }),
-    ]);
+    const result = computeEquity(
+      0,
+      [position({ quantity: 10 })],
+      [stock({ price: 500 })],
+    );
 
     expect(result.pnl).toBeLessThan(0);
     expect(result.pnlPercent).toBeLessThan(0);
@@ -140,7 +145,10 @@ describe("player identity", () => {
   });
 
   it("rejects a stored player missing its fields", () => {
-    localStorage.setItem("erick-market.player.v1", JSON.stringify({ id: "p1" }));
+    localStorage.setItem(
+      "erick-market.player.v1",
+      JSON.stringify({ id: "p1" }),
+    );
     expect(loadPlayer()).toBeNull();
   });
 
@@ -241,12 +249,7 @@ describe("local board", () => {
   });
 });
 
-function entryFor(
-  id: string,
-  name: string,
-  equity: number,
-  month = "2026-08",
-) {
+function entryFor(id: string, name: string, equity: number, month = "2026-08") {
   return {
     playerId: id,
     name,

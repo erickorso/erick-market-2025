@@ -53,7 +53,13 @@ const StockDetailModal: React.FC = () => {
       ref={overlayRef}
       className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4"
       role="presentation"
-      onClick={() => dispatch({ type: "CLOSE_DETAIL" })}
+      // Only a click on the backdrop itself dismisses. Testing the target
+      // beats stopPropagation on the dialog, which would have meant putting a
+      // click handler on a non-interactive element. Keyboard dismissal is
+      // Escape, handled above.
+      onClick={(e) => {
+        if (e.target === e.currentTarget) dispatch({ type: "CLOSE_DETAIL" });
+      }}
     >
       <div
         ref={dialogRef}
@@ -62,7 +68,6 @@ const StockDetailModal: React.FC = () => {
         aria-labelledby={titleId}
         tabIndex={-1}
         className="relative z-[61] grid max-h-[94vh] w-full max-w-4xl grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl outline-none sm:rounded-2xl"
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 border-b border-gray-700 bg-gray-900 px-4 py-3">
           <div className="min-w-0">
@@ -88,8 +93,14 @@ const StockDetailModal: React.FC = () => {
 
         <div className="min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
           <div className="min-w-0 space-y-5">
-            {loading && !detail && <DetailSkeleton label={t("loadingDetail")} />}
-            {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+            {loading && !detail && (
+              <DetailSkeleton label={t("loadingDetail")} />
+            )}
+            {error && (
+              <p className="text-sm text-rose-600 dark:text-rose-400">
+                {error}
+              </p>
+            )}
             {detail && q && (
               <>
                 <div className="flex flex-wrap items-end gap-4">
@@ -100,7 +111,9 @@ const StockDetailModal: React.FC = () => {
                     />
                     <p
                       className={`text-sm font-medium ${
-                        up ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                        up
+                          ? "text-emerald-700 dark:text-emerald-400"
+                          : "text-rose-600 dark:text-rose-400"
                       }`}
                     >
                       {up ? "+" : ""}
@@ -142,7 +155,10 @@ const StockDetailModal: React.FC = () => {
                     {[
                       [t("exchange"), detail.profile.exchange ?? "—"],
                       [t("industry"), detail.profile.industry ?? "—"],
-                      [t("marketCap"), formatMarketCap(detail.profile.marketCap)],
+                      [
+                        t("marketCap"),
+                        formatMarketCap(detail.profile.marketCap),
+                      ],
                       [t("ipo"), detail.profile.ipo ?? "—"],
                       [t("country"), detail.profile.country ?? "—"],
                       [t("currency"), detail.profile.currency ?? "—"],
@@ -151,7 +167,9 @@ const StockDetailModal: React.FC = () => {
                         key={String(label)}
                         className="flex justify-between gap-2 border-b border-gray-800 py-1.5"
                       >
-                        <dt className="text-slate-600 dark:text-gray-400">{label}</dt>
+                        <dt className="text-slate-600 dark:text-gray-400">
+                          {label}
+                        </dt>
                         <dd className="text-right text-gray-200">{value}</dd>
                       </div>
                     ))}

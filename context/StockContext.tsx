@@ -7,10 +7,7 @@ import React, {
 } from "react";
 import type { EnrichedStock, StockAction, StockContextState } from "../types";
 import { initialState, stockReducer } from "./stockReducer";
-import {
-  readQueryFilters,
-  useQueryFilters,
-} from "../hooks/useQueryFilters";
+import { readQueryFilters, useQueryFilters } from "../hooks/useQueryFilters";
 import { useStockCatalog } from "../hooks/useStockCatalog";
 import { useTrading } from "../hooks/useTrading";
 

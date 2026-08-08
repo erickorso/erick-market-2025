@@ -7,7 +7,11 @@ import Skeleton from "../atoms/Skeleton";
  * lands.
  */
 const DetailSkeleton: React.FC<{ label: string }> = ({ label }) => (
-  <div className="space-y-5 motion-safe:animate-pulse" role="status" aria-label={label}>
+  <div
+    className="space-y-5 motion-safe:animate-pulse"
+    role="status"
+    aria-label={label}
+  >
     <div className="space-y-1">
       <Skeleton className="h-9 w-40" />
       <Skeleton className="h-5 w-32" />

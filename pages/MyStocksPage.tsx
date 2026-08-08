@@ -31,7 +31,10 @@ const MyStocksPage: React.FC = () => {
         <h2 className="text-2xl font-semibold text-gray-100">
           {t("portfolioSummary")}
         </h2>
-        <p data-testid="totalPrice" className="mt-2 text-xl text-teal-700 dark:text-teal-400">
+        <p
+          data-testid="totalPrice"
+          className="mt-2 text-xl text-teal-700 dark:text-teal-400"
+        >
           {t("totalNet")} ${totalNetValue.toFixed(2)}
         </p>
       </div>

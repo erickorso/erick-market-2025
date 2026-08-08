@@ -24,7 +24,8 @@ function allowedOrigins(): string[] {
 export function setCors(res: VercelResponse, origin?: string) {
   const allowed = allowedOrigins();
   const isPreview = Boolean(
-    origin && /^https:\/\/erick-market-2025-[a-z0-9-]+\.vercel\.app$/.test(origin),
+    origin &&
+    /^https:\/\/erick-market-2025-[a-z0-9-]+\.vercel\.app$/.test(origin),
   );
 
   if (origin && (allowed.includes(origin) || isPreview)) {
@@ -53,7 +54,10 @@ export function handleOptions(req: VercelRequest, res: VercelResponse) {
 /** Seconds the CDN may serve a cached copy, plus a stale-while-revalidate tail. */
 export function setCdnCache(
   res: VercelResponse,
-  { sMaxAge, staleWhileRevalidate }: { sMaxAge: number; staleWhileRevalidate: number },
+  {
+    sMaxAge,
+    staleWhileRevalidate,
+  }: { sMaxAge: number; staleWhileRevalidate: number },
 ) {
   res.setHeader(
     "Cache-Control",

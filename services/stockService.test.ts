@@ -43,7 +43,11 @@ describe("parseCategory", () => {
 
 describe("mergeLivePrices", () => {
   it("keeps the previous order and length when the poll returns fewer rows", () => {
-    const previous = [stock({ id: "a" }), stock({ id: "b" }), stock({ id: "c" })];
+    const previous = [
+      stock({ id: "a" }),
+      stock({ id: "b" }),
+      stock({ id: "c" }),
+    ];
     const merged = mergeLivePrices(previous, [stock({ id: "b", price: 200 })]);
 
     expect(merged.map((s) => s.id)).toEqual(["a", "b", "c"]);

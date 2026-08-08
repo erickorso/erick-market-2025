@@ -18,7 +18,9 @@ const ChartPanel: React.FC<{
       <h3 className="text-sm font-semibold text-gray-200">{title}</h3>
       <span
         className={`text-[11px] ${
-          simulated ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400"
+          simulated
+            ? "text-amber-700 dark:text-amber-400"
+            : "text-emerald-700 dark:text-emerald-400"
         }`}
       >
         {sourceLabel}

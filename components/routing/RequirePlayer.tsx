@@ -16,7 +16,9 @@ const RequirePlayer: React.FC<{ children: React.ReactNode }> = ({
         <h1 className="mb-2 text-2xl font-bold text-teal-700 dark:text-teal-400">
           {t("privateGames")}
         </h1>
-        <p className="mb-4 text-sm text-slate-600 dark:text-gray-400">{t("privateGamesBody")}</p>
+        <p className="mb-4 text-sm text-slate-600 dark:text-gray-400">
+          {t("privateGamesBody")}
+        </p>
         <Link
           to="/league"
           state={{ from: location.pathname }}

@@ -26,9 +26,16 @@ export function useStockCatalog(
   const stocksRef = useRef(state.allStocks);
   const searchRef = useRef(state.searchTerm);
   const categoryRef = useRef(state.category);
-  stocksRef.current = state.allStocks;
-  searchRef.current = state.searchTerm;
-  categoryRef.current = state.category;
+
+  // Written in an effect, not during render: a ref mutated mid-render is not
+  // safe under concurrent rendering, where a render can be thrown away. The
+  // useRef initialisers above already hold the right values on first render,
+  // and this effect is declared first so it runs before the ones that read it.
+  useEffect(() => {
+    stocksRef.current = state.allStocks;
+    searchRef.current = state.searchTerm;
+    categoryRef.current = state.category;
+  }, [state.allStocks, state.searchTerm, state.category]);
 
   const loadStocks = useCallback(
     async (opts?: LoadOptions) => {

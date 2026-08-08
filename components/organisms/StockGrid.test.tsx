@@ -90,7 +90,12 @@ describe("StockGrid", () => {
 
   it("blocks a second page request while one is in flight", () => {
     render(
-      <StockGrid stocks={[stock("a")]} hasMore isLoadingMore onLoadMore={noop} />,
+      <StockGrid
+        stocks={[stock("a")]}
+        hasMore
+        isLoadingMore
+        onLoadMore={noop}
+      />,
     );
 
     const button = screen.getByRole("button", { name: "Loading…" });

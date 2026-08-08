@@ -39,15 +39,15 @@ they cannot drift from the UI.
 
 ## Product decisions
 
-| Topic | Decision |
-|------|----------|
-| **DB** | [Neon](https://neon.tech) Postgres |
-| **Auth** | Auth0 (Vite SPA + JWT on Vercel API) |
-| **Public** | Home, Hot, detail, quotes |
-| **Private (Auth0)** | buy / sell, portfolio (`/my-stocks`, `/my-fund`), Play / league |
-| **Buy/sell UX** | Buttons stay **visible but disabled** when logged out + login CTA (not hidden) |
-| **Portfolio nav** | *My Stocks* / *My Fund* links only when authenticated |
-| **UI** | Dark/light mode, i18n EN/ES, scroll only in the center column |
+| Topic               | Decision                                                                       |
+| ------------------- | ------------------------------------------------------------------------------ |
+| **DB**              | [Neon](https://neon.tech) Postgres                                             |
+| **Auth**            | Auth0 (Vite SPA + JWT on Vercel API)                                           |
+| **Public**          | Home, Hot, detail, quotes                                                      |
+| **Private (Auth0)** | buy / sell, portfolio (`/my-stocks`, `/my-fund`), Play / league                |
+| **Buy/sell UX**     | Buttons stay **visible but disabled** when logged out + login CTA (not hidden) |
+| **Portfolio nav**   | _My Stocks_ / _My Fund_ links only when authenticated                          |
+| **UI**              | Dark/light mode, i18n EN/ES, scroll only in the center column                  |
 
 ---
 
@@ -85,16 +85,16 @@ components/
 pages/         Home · League · MyStocks · MyFund
 ```
 
-| Hook | Owns |
-|------|------|
+| Hook                                          | Owns                                                                 |
+| --------------------------------------------- | -------------------------------------------------------------------- |
 | [`useStockCatalog`](hooks/useStockCatalog.ts) | initial load, paging, debounced search, the tick and live-poll loops |
-| [`useTrading`](hooks/useTrading.ts) | portfolio hydration and buy/sell through one guarded path |
-| [`useStockDetail`](hooks/useStockDetail.ts) | detail fetch + live quote overlay (no refetch on price polls) |
-| [`useTradePanel`](hooks/useTradePanel.ts) | quantity, affordability, guarded submit — shared by card and modal |
-| [`useSellForm`](hooks/useSellForm.ts) | position lookup and sell validation |
-| [`useQueryFilters`](hooks/useQueryFilters.ts) | filters ↔ URL, so any view is linkable |
-| [`useFocusTrap`](hooks/useFocusTrap.ts) | dialog focus containment and restore |
-| [`useHotStocks`](hooks/useHotStocks.ts) | hot-gainers socket with poll fallback |
+| [`useTrading`](hooks/useTrading.ts)           | portfolio hydration and buy/sell through one guarded path            |
+| [`useStockDetail`](hooks/useStockDetail.ts)   | detail fetch + live quote overlay (no refetch on price polls)        |
+| [`useTradePanel`](hooks/useTradePanel.ts)     | quantity, affordability, guarded submit — shared by card and modal   |
+| [`useSellForm`](hooks/useSellForm.ts)         | position lookup and sell validation                                  |
+| [`useQueryFilters`](hooks/useQueryFilters.ts) | filters ↔ URL, so any view is linkable                               |
+| [`useFocusTrap`](hooks/useFocusTrap.ts)       | dialog focus containment and restore                                 |
+| [`useHotStocks`](hooks/useHotStocks.ts)       | hot-gainers socket with poll fallback                                |
 
 [`StockContext`](context/StockContext.tsx) is only a composition root; the state
 transitions live in [`stockReducer`](context/stockReducer.ts) as a pure,
@@ -115,12 +115,12 @@ components in the unit suite and over the assembled pages in
 [`e2e/a11y.spec.ts`](e2e/a11y.spec.ts) — dark and light, desktop and mobile,
 with the detail modal open. The scan is what surfaced most of what follows.
 
-| Concern | How |
-|---|---|
+| Concern      | How                                                                                                                                                                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Contrast** | Every muted, semantic and CTA colour has a light-mode counterpart. The app was built dark-first and reused dark-only colours on white: `text-gray-500` on the dark panels measured 4.0:1, and white on `bg-teal-500` — the Buy button — measured **2.48:1**. |
-| **Modal** | Focus is trapped, returned to whatever opened it, and the rest of the page is marked `inert` + `aria-hidden`. `aria-modal` alone does not stop virtual-cursor browsing behind a dialog. |
-| **Keyboard** | A skip link is the first tab stop, jumping the nav and both sidebars straight to `<main>`. |
-| **Motion** | `prefers-reduced-motion` skips the Three.js scene entirely — which also spares that visitor the ~475 kB chunk — stops the chart replaying its draw animation, and gates the pulse and spinner behind `motion-safe:`. |
+| **Modal**    | Focus is trapped, returned to whatever opened it, and the rest of the page is marked `inert` + `aria-hidden`. `aria-modal` alone does not stop virtual-cursor browsing behind a dialog.                                                                      |
+| **Keyboard** | A skip link is the first tab stop, jumping the nav and both sidebars straight to `<main>`.                                                                                                                                                                   |
+| **Motion**   | `prefers-reduced-motion` skips the Three.js scene entirely — which also spares that visitor the ~475 kB chunk — stops the chart replaying its draw animation, and gates the pulse and spinner behind `motion-safe:`.                                         |
 
 ### Observability
 
@@ -147,11 +147,11 @@ Swapping in a third party is one line in `index.tsx`:
 
 ### Auth layers
 
-| Layer | Role |
-|------|------|
-| **API `withAuth()`** | [`api/_lib/middleware.ts`](api/_lib/middleware.ts) — CORS, Auth0 JWT, upsert user in Neon |
-| **Client** | `AuthProvider` → `UserProvider` (`useUser()`) — Auth0 identity + Neon `profile` / `portfolio` |
-| **Routes** | `protectedRoute(<Page />)` on Play, portfolio, and sell |
+| Layer                | Role                                                                                          |
+| -------------------- | --------------------------------------------------------------------------------------------- |
+| **API `withAuth()`** | [`api/_lib/middleware.ts`](api/_lib/middleware.ts) — CORS, Auth0 JWT, upsert user in Neon     |
+| **Client**           | `AuthProvider` → `UserProvider` (`useUser()`) — Auth0 identity + Neon `profile` / `portfolio` |
+| **Routes**           | `protectedRoute(<Page />)` on Play, portfolio, and sell                                       |
 
 ```mermaid
 sequenceDiagram
@@ -234,14 +234,14 @@ erDiagram
 
 ### Tables
 
-| Table | Role |
-|-------|------|
-| **users** | Internal profile; `auth0_sub` = JWT `sub` |
-| **portfolios** | Cash per user and month (`YYYY-MM`) |
-| **positions** | Holdings (qty + avg cost) per symbol/month |
-| **trades** | Buy/sell ledger |
-| **league_scores** | Monthly mark-to-market ranking |
-| **league_months** | Month archive + `winner_user_id` |
+| Table             | Role                                       |
+| ----------------- | ------------------------------------------ |
+| **users**         | Internal profile; `auth0_sub` = JWT `sub`  |
+| **portfolios**    | Cash per user and month (`YYYY-MM`)        |
+| **positions**     | Holdings (qty + avg cost) per symbol/month |
+| **trades**        | Buy/sell ledger                            |
+| **league_scores** | Monthly mark-to-market ranking             |
+| **league_months** | Month archive + `winner_user_id`           |
 
 ### Business rules
 
@@ -272,21 +272,21 @@ the board about every 60s.
 
 ## Market (public)
 
-| Feature | Detail |
-|---------|--------|
-| Quotes | `GET /api/quotes?limit=&offset=&q=&category=` → Finnhub, up to 500 US common stocks with pagination |
-| Hot | Sidebar top gainers; local WS `/ws/hot` or poll `/api/hot` |
-| Detail | Modal → `/api/detail?symbol=` (quote + profile + Yahoo/Finnhub candles) |
-| Categories | Educational tags + day gainers/losers |
+| Feature    | Detail                                                                                              |
+| ---------- | --------------------------------------------------------------------------------------------------- |
+| Quotes     | `GET /api/quotes?limit=&offset=&q=&category=` → Finnhub, up to 500 US common stocks with pagination |
+| Hot        | Sidebar top gainers; local WS `/ws/hot` or poll `/api/hot`                                          |
+| Detail     | Modal → `/api/detail?symbol=` (quote + profile + Yahoo/Finnhub candles)                             |
+| Categories | Educational tags + day gainers/losers                                                               |
 
 ### Public API hardening
 
-| Concern | How |
-|---------|-----|
-| **CORS** | Allowlist, not `*`: production, localhost, this project's Vercel preview URLs, plus anything in `ALLOWED_ORIGINS`. Always sends `Vary: Origin`. |
-| **CDN cache** | `s-maxage` 20s on `/api/quotes`, 60s on `/api/hot`, 300s on `/api/detail`, each with a `stale-while-revalidate` tail. This is what actually protects the Finnhub quota — repeats are served by the edge and never reach the function. |
+| Concern        | How                                                                                                                                                                                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **CORS**       | Allowlist, not `*`: production, localhost, this project's Vercel preview URLs, plus anything in `ALLOWED_ORIGINS`. Always sends `Vary: Origin`.                                                                                                                      |
+| **CDN cache**  | `s-maxage` 20s on `/api/quotes`, 60s on `/api/hot`, 300s on `/api/detail`, each with a `stale-while-revalidate` tail. This is what actually protects the Finnhub quota — repeats are served by the edge and never reach the function.                                |
 | **Rate limit** | Sliding window per client IP, 120 req/min public and 60 authed, answering `429` with `Retry-After` and `X-RateLimit-*`. In-process, so it bounds one client against one instance rather than enforcing a global limit — see [`rateLimit.ts`](api/_lib/rateLimit.ts). |
-| **Logging** | One JSON line per request with route, status, duration and a hashed client id, on stdout where Vercel's drains pick it up. |
+| **Logging**    | One JSON line per request with route, status, duration and a hashed client id, on stdout where Vercel's drains pick it up.                                                                                                                                           |
 
 `api/quotes.ts`, `api/hot.ts` and `api/detail.ts` carry an inlined copy of that
 guard: their headers document that relative imports crash Vercel's ESM cold
@@ -317,7 +317,7 @@ No `psql`: Neon → **SQL Editor** → paste [`db/schema.sql`](db/schema.sql) �
 
 ### 2. Auth0
 
-1. **Application** → type *Single Page Application*.
+1. **Application** → type _Single Page Application_.
 2. **API** → Identifier = audience (e.g. `https://erick-market-api`).
 3. On the App:
    - Allowed Callback URLs: `http://localhost:5173`, `https://erick-market-2025.vercel.app`
@@ -325,12 +325,12 @@ No `psql`: Neon → **SQL Editor** → paste [`db/schema.sql`](db/schema.sql) �
    - Allowed Web Origins: same
 4. Fill `.env` (see [`.env.example`](.env.example)):
 
-| Variable | Use |
-|----------|-----|
-| `AUTH0_DOMAIN` / `VITE_AUTH0_DOMAIN` | Auth0 tenant |
-| `VITE_AUTH0_CLIENT_ID` | SPA Client ID |
-| `AUTH0_AUDIENCE` / `VITE_AUTH0_AUDIENCE` | API Identifier |
-| `ALLOWED_ORIGINS` | Optional. Extra CORS origins, comma separated |
+| Variable                                 | Use                                           |
+| ---------------------------------------- | --------------------------------------------- |
+| `AUTH0_DOMAIN` / `VITE_AUTH0_DOMAIN`     | Auth0 tenant                                  |
+| `VITE_AUTH0_CLIENT_ID`                   | SPA Client ID                                 |
+| `AUTH0_AUDIENCE` / `VITE_AUTH0_AUDIENCE` | API Identifier                                |
+| `ALLOWED_ORIGINS`                        | Optional. Extra CORS origins, comma separated |
 
 ### 3. Local
 
@@ -362,20 +362,22 @@ Redeploy after changing `VITE_*` (they are baked into the build).
 
 ## Scripts
 
-| Command | What it does |
-|---------|--------------|
-| `npm run dev` | Vite frontend |
-| `npm run dev:api` | Local BFF (:4010) |
-| `npm run build` | typecheck + Vite build |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Run Vitest unit tests once |
-| `npm run test:coverage` | Same, with a v8 coverage report |
+| Command                    | What it does                                        |
+| -------------------------- | --------------------------------------------------- |
+| `npm run dev`              | Vite frontend                                       |
+| `npm run dev:api`          | Local BFF (:4010)                                   |
+| `npm run build`            | typecheck + Vite build                              |
+| `npm run typecheck`        | `tsc --noEmit`, app and tests                       |
+| `npm run lint`             | ESLint (`lint:fix` autofixes)                       |
+| `npm run format`           | Prettier (`format:check` is what CI runs)           |
+| `npm test`                 | Run Vitest unit tests once                          |
+| `npm run test:coverage`    | Same, with a v8 coverage report                     |
 | `npm run test:integration` | Run Neon integration tests with `DATABASE_URL_TEST` |
-| `npm run test:watch` | Run Vitest in watch mode |
-| `npm run test:e2e` | Run Playwright end-to-end tests |
-| `npm run test:e2e:ui` | Open Playwright UI mode |
-| `npm run screenshots` | Regenerate the README images from the app |
-| `npm run db:schema` | Hint to apply the SQL |
+| `npm run test:watch`       | Run Vitest in watch mode                            |
+| `npm run test:e2e`         | Run Playwright end-to-end tests                     |
+| `npm run test:e2e:ui`      | Open Playwright UI mode                             |
+| `npm run screenshots`      | Regenerate the README images from the app           |
+| `npm run db:schema`        | Hint to apply the SQL                               |
 
 ---
 
@@ -386,8 +388,18 @@ React 19 · TypeScript · Vite · Tailwind · Recharts · Three.js · Vitest · 
 ## Quality checks
 
 Every push and pull request to `main` runs
-[the CI workflow](.github/workflows/ci.yml): typecheck, unit tests with
-coverage, build, and the Playwright suite on Chromium.
+[the CI workflow](.github/workflows/ci.yml): lint with `--max-warnings=0`,
+a Prettier check, typecheck of both app and tests, the unit suite behind a
+**coverage gate**, the build, and Playwright on Chromium.
+
+The gate is the point: [`vitest.config.ts`](vitest.config.ts) sets thresholds a
+couple of points under the current numbers, so ordinary churn passes but a real
+regression fails the build instead of quietly rotting.
+
+ESLint runs typescript-eslint, react-hooks and jsx-a11y. It is not decoration —
+turning it on found refs being written during render (unsafe under concurrent
+rendering), two `setState` calls in effects that had better patterns available,
+a `stopPropagation` on a non-interactive element, and a dead import.
 
 **770 unit tests in 68 files — one test file per source file** — plus 29
 Playwright specs, of which 9 are a full WCAG 2.1 AA axe scan. Vitest runs
@@ -395,14 +407,14 @@ everything under `jsdom` with Testing Library; components render against the
 real i18n and theme providers, so tests assert on the strings users actually
 see.
 
-| Layer | Coverage | Notable cases |
-|-------|---------:|---------------|
-| api/_lib | **100%** | the trade CTE's guards, JWT claims, rate-limit window edges, CORS allowlist |
-| atoms · molecules · templates | **100%** | formatting, variants, disabled states, aria wiring |
-| organisms | **99%** | the detail modal end to end, sidebars, route guards, the sell form |
-| services | **99%** | quote merging, detail mapping, API errors, the offline league fallback |
-| context | **98%** | every reducer action, the Auth0 bridge and its redirect callback |
-| hooks | **96%** | debounced search, refresh loops, guest routing, focus trap |
+| Layer                         | Coverage | Notable cases                                                               |
+| ----------------------------- | -------: | --------------------------------------------------------------------------- |
+| api/_lib                      | **100%** | the trade CTE's guards, JWT claims, rate-limit window edges, CORS allowlist |
+| atoms · molecules · templates | **100%** | formatting, variants, disabled states, aria wiring                          |
+| organisms                     |  **99%** | the detail modal end to end, sidebars, route guards, the sell form          |
+| services                      |  **99%** | quote merging, detail mapping, API errors, the offline league fallback      |
+| context                       |  **98%** | every reducer action, the Auth0 bridge and its redirect callback            |
+| hooks                         |  **96%** | debounced search, refresh loops, guest routing, focus trap                  |
 
 `store.ts` is unit-tested against a stubbed Neon tagged template — the mapping
 and the money guards, including that a buy the cash cannot cover and a sell of

@@ -8,9 +8,7 @@ const portfolio = {
   positions: [],
 };
 
-async function mockAuthenticatedApi(
-  page: Parameters<typeof test>[0]["page"],
-) {
+async function mockAuthenticatedApi(page: Parameters<typeof test>[0]["page"]) {
   await page.route("**/api/quotes*", async (route) => {
     await route.fulfill({
       status: 200,
@@ -136,12 +134,14 @@ test("authenticated user can buy and sends the expected trade", async ({
   await page.goto("/");
   await page.getByTestId("addCart-Apple Inc. (AAPL)").click();
 
-  await expect.poll(() => tradeBody).toEqual({
-    side: "buy",
-    symbol: "AAPL",
-    company: "Apple Inc. (AAPL)",
-    qty: 1,
-    price: 190,
-  });
+  await expect
+    .poll(() => tradeBody)
+    .toEqual({
+      side: "buy",
+      symbol: "AAPL",
+      company: "Apple Inc. (AAPL)",
+      qty: 1,
+      price: 190,
+    });
   await expect(page.getByTestId("company-name")).toHaveCount(1);
 });

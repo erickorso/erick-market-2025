@@ -32,7 +32,9 @@ const StockChart: React.FC<StockChartProps> = ({
 
   if (formattedData.length === 0) {
     return (
-      <div className="p-4 text-center text-slate-600 dark:text-gray-400">No chart data available.</div>
+      <div className="p-4 text-center text-slate-600 dark:text-gray-400">
+        No chart data available.
+      </div>
     );
   }
 
@@ -47,7 +49,12 @@ const StockChart: React.FC<StockChartProps> = ({
           margin={{ top: 5, right: 10, left: -25, bottom: 5 }}
         >
           <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
-          <XAxis dataKey="name" stroke="#9ca3af" fontSize={10} minTickGap={24} />
+          <XAxis
+            dataKey="name"
+            stroke="#9ca3af"
+            fontSize={10}
+            minTickGap={24}
+          />
           <YAxis
             stroke="#9ca3af"
             fontSize={10}

@@ -103,7 +103,8 @@ function enqueue(event: ClientEvent) {
 
 /** Default destination: batched to /api/log, plus a console line for devtools. */
 export const defaultSink: Sink = (event) => {
-  if (event.kind === "error") console.error("[client-error]", JSON.stringify(event));
+  if (event.kind === "error")
+    console.error("[client-error]", JSON.stringify(event));
   enqueue(event);
 };
 

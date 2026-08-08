@@ -58,12 +58,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
         </button>
 
         {stock.tags && (
-          <TagList
-            tags={stock.tags}
-            max={3}
-            size="xs"
-            className="mb-2 gap-1"
-          />
+          <TagList tags={stock.tags} max={3} size="xs" className="mb-2 gap-1" />
         )}
 
         <p className="mb-1 text-xs text-slate-600 dark:text-gray-400">
@@ -106,7 +101,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
         </button>
       </div>
 
-      <div className="mt-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="mt-auto">
         <TradePanel
           stock={stock}
           tipId={`buy-tip-${symbol}`}

@@ -92,8 +92,12 @@ describe("while the session is still resolving", () => {
     user.isLoading = true;
     renderWithProviders(<Navbar />);
 
-    expect(screen.queryByRole("button", { name: "Log in" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Log out" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Log in" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Log out" }),
+    ).not.toBeInTheDocument();
   });
 });
 

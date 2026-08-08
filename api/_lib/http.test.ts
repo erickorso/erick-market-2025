@@ -31,12 +31,17 @@ describe("setCors", () => {
   it("echoes the local dev origin", () => {
     const { res, headers } = mockRes();
     setCors(res, "http://localhost:5173");
-    expect(headers["Access-Control-Allow-Origin"]).toBe("http://localhost:5173");
+    expect(headers["Access-Control-Allow-Origin"]).toBe(
+      "http://localhost:5173",
+    );
   });
 
   it("echoes Vercel preview deployments of this project", () => {
     const { res, headers } = mockRes();
-    setCors(res, "https://erick-market-2025-abc123-erickorsos-projects.vercel.app");
+    setCors(
+      res,
+      "https://erick-market-2025-abc123-erickorsos-projects.vercel.app",
+    );
 
     expect(headers["Access-Control-Allow-Origin"]).toBe(
       "https://erick-market-2025-abc123-erickorsos-projects.vercel.app",
@@ -58,7 +63,8 @@ describe("setCors", () => {
   });
 
   it("honours extra origins from the environment", () => {
-    process.env.ALLOWED_ORIGINS = "https://staging.example, https://demo.example";
+    process.env.ALLOWED_ORIGINS =
+      "https://staging.example, https://demo.example";
     const { res, headers } = mockRes();
     setCors(res, "https://demo.example");
 
@@ -110,7 +116,9 @@ describe("setCdnCache", () => {
 
 describe("statusOf", () => {
   it("uses the status carried on the error", () => {
-    expect(statusOf(Object.assign(new Error("nope"), { status: 401 }))).toBe(401);
+    expect(statusOf(Object.assign(new Error("nope"), { status: 401 }))).toBe(
+      401,
+    );
   });
 
   it("defaults to 500", () => {

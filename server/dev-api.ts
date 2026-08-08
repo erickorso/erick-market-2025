@@ -34,14 +34,21 @@ const PORT = Number(process.env.MARKET_API_PORT || 4010);
 
 const server = http.createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization",
+  );
 
   if (req.method === "OPTIONS") {
     res.writeHead(204);
     res.end();
     return;
   }
+
+  const pathname = (req.url || "/").split("?")[0];
+  const { handleAuthApi } = await import("./authRoutes");
+  if (await handleAuthApi(req, res, pathname)) return;
 
   if (req.url?.startsWith("/api/quotes") && req.method === "GET") {
     try {

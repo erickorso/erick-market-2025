@@ -7,31 +7,21 @@ import React, {
   useState,
 } from "react";
 import { useStockContext } from "./StockContext";
+import { useAuth } from "./AuthContext";
+import { computeEquity, currentMonthKey } from "../services/leagueService";
 import {
-  archiveLocalMonth,
-  computeEquity,
-  currentMonthKey,
   fetchLeagueBoard,
-  joinLeague,
-  loadPlayer,
-  clearPlayer,
-  previousMonthKey,
-  submitLeagueScore,
-  type LeagueEntry,
-  type LeaguePlayer,
-} from "../services/leagueService";
-import { INITIAL_FUND_AMOUNT } from "../constants";
+  postLeagueScore,
+} from "../services/portfolioApi";
+import type { LeagueEntry } from "../services/leagueService";
 
 type LeagueContextValue = {
-  player: LeaguePlayer | null;
+  player: { id: string; name: string } | null;
   month: string;
   entries: LeagueEntry[];
   previousWinner: LeagueEntry | null;
   mode: "shared" | "local" | "ephemeral";
   equity: ReturnType<typeof computeEquity>;
-  joining: boolean;
-  join: (name: string, pin: string) => Promise<void>;
-  logout: () => void;
   refresh: () => Promise<void>;
   pushScore: () => Promise<void>;
 };
@@ -41,103 +31,95 @@ const LeagueContext = createContext<LeagueContextValue | null>(null);
 export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { state, dispatch } = useStockContext();
-  const [player, setPlayer] = useState<LeaguePlayer | null>(() => loadPlayer());
+  const { state } = useStockContext();
+  const { isAuthenticated, user, getAccessToken } = useAuth();
   const [month] = useState(() => currentMonthKey());
   const [entries, setEntries] = useState<LeagueEntry[]>([]);
-  const [previousWinner, setPreviousWinner] = useState<LeagueEntry | null>(null);
-  const [mode, setMode] = useState<"shared" | "local" | "ephemeral">("local");
-  const [joining, setJoining] = useState(false);
+  const [previousWinner, setPreviousWinner] = useState<LeagueEntry | null>(
+    null,
+  );
+  const [mode, setMode] = useState<"shared" | "local" | "ephemeral">("shared");
+  const [dbUserId, setDbUserId] = useState<string | null>(null);
 
   const equity = useMemo(
     () => computeEquity(state.fund, state.portfolio, state.allStocks),
     [state.fund, state.portfolio, state.allStocks],
   );
 
+  const player = useMemo(() => {
+    if (!isAuthenticated || !user) return null;
+    return {
+      id: dbUserId || user.sub || "me",
+      name: user.name || user.email || "Trader",
+    };
+  }, [isAuthenticated, user, dbUserId]);
+
   const refresh = useCallback(async () => {
-    const board = await fetchLeagueBoard(month);
-    setEntries(board.entries);
-    setPreviousWinner(board.previousWinner);
-    setMode(board.mode);
-  }, [month]);
+    try {
+      const board = await fetchLeagueBoard(month);
+      setEntries(board.entries);
+      setPreviousWinner(
+        board.previousWinner
+          ? {
+              playerId: board.previousWinner.playerId,
+              name: board.previousWinner.name,
+              month: month,
+              equity: board.previousWinner.equity,
+              cash: 0,
+              invested: 0,
+              pnl: 0,
+              pnlPercent: board.previousWinner.pnlPercent,
+              updatedAt: new Date().toISOString(),
+            }
+          : null,
+      );
+      setMode(board.mode === "shared" ? "shared" : "ephemeral");
+      if (dbUserId) {
+        /* keep */
+      } else if (isAuthenticated && user?.sub) {
+        const mine = board.entries.find(
+          (e) => e.name === (user.name || user.email),
+        );
+        if (mine) setDbUserId(mine.playerId);
+      }
+    } catch {
+      setEntries([]);
+      setMode("local");
+    }
+  }, [month, dbUserId, isAuthenticated, user]);
 
   const pushScore = useCallback(async () => {
-    if (!player) return;
-    const entry: LeagueEntry & { pinHash: string } = {
-      playerId: player.id,
-      name: player.name,
-      month,
+    if (!isAuthenticated) return;
+    const token = await getAccessToken();
+    if (!token) return;
+    await postLeagueScore(token, {
       equity: equity.equity,
       cash: equity.cash,
       invested: equity.invested,
       pnl: equity.pnl,
       pnlPercent: equity.pnlPercent,
-      updatedAt: new Date().toISOString(),
-      pinHash: player.pinHash,
-    };
-    await submitLeagueScore(entry);
+    });
     await refresh();
-  }, [player, month, equity, refresh]);
-
-  const join = useCallback(
-    async (name: string, pin: string) => {
-      setJoining(true);
-      try {
-        const p = await joinLeague(name, pin);
-        setPlayer(p);
-        dispatch({
-          type: "SET_NOTICE",
-          payload: {
-            type: "success",
-            message: `Joined monthly training as ${p.name}. Start fund $${INITIAL_FUND_AMOUNT}.`,
-          },
-        });
-        await refresh();
-      } finally {
-        setJoining(false);
-      }
-    },
-    [dispatch, refresh],
-  );
-
-  const logout = useCallback(() => {
-    clearPlayer();
-    setPlayer(null);
-  }, []);
+  }, [isAuthenticated, getAccessToken, equity, refresh]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  // Push score when portfolio changes (debounced)
   useEffect(() => {
-    if (!player || state.isLoading) return;
+    if (!isAuthenticated || state.isLoading) return;
     const id = window.setTimeout(() => {
       void pushScore();
-    }, 800);
+    }, 1000);
     return () => window.clearTimeout(id);
   }, [
-    player,
+    isAuthenticated,
     state.fund,
     state.portfolio,
     state.allStocks,
     state.isLoading,
     pushScore,
   ]);
-
-  // Soft-close previous month locally once per session when we see an archive gap
-  useEffect(() => {
-    const prev = previousMonthKey();
-    try {
-      const flag = sessionStorage.getItem(`league-archived-${prev}`);
-      if (flag) return;
-      archiveLocalMonth(prev);
-      sessionStorage.setItem(`league-archived-${prev}`, "1");
-      void refresh();
-    } catch {
-      /* ignore */
-    }
-  }, [refresh]);
 
   const value = useMemo(
     () => ({
@@ -147,25 +129,10 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       previousWinner,
       mode,
       equity,
-      joining,
-      join,
-      logout,
       refresh,
       pushScore,
     }),
-    [
-      player,
-      month,
-      entries,
-      previousWinner,
-      mode,
-      equity,
-      joining,
-      join,
-      logout,
-      refresh,
-      pushScore,
-    ],
+    [player, month, entries, previousWinner, mode, equity, refresh, pushScore],
   );
 
   return (

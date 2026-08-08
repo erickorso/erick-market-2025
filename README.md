@@ -1,65 +1,88 @@
 # Stock Market Simulator
 
-Interactive **stock trading simulator** with optional **live US quotes** via a small BFF (Finnhub), buy/sell into a virtual portfolio, and Three.js background.
+Interactive **stock trading simulator** with live US quotes (Finnhub), **Auth0** accounts, and portfolio/league persisted in **Neon Postgres**.
 
 By [Erick Vargas](https://github.com/erickorso) · Live: [erick-market-2025.vercel.app](https://erick-market-2025.vercel.app)
 
-## How data works
+## Architecture
 
 ```text
-Browser  →  GET /api/quotes?limit=10&offset=0&q=  →  Finnhub
-                ↓ fail / no key
-              client mock watchlist (same paging)
+Browser (Vite SPA + Auth0)
+   │  public: quotes / hot / detail
+   │  auth:   me / portfolio / trade / league score
+   ▼
+Vercel serverless  ──►  Finnhub
+                   ──►  Neon Postgres (users, trades, positions, league)
 ```
 
-| Source | When | Updates |
-|--------|------|---------|
-| **live** | `FINNHUB_API_KEY` set on BFF | Poll every 15s (loaded window) |
-| **mock** | BFF fails / no key | Simulated tick 3s |
+| Area | Auth |
+|------|------|
+| Home, Hot, stock detail | Public |
+| Buy / sell (buttons disabled + login CTA) | Auth0 |
+| My Stocks, My Fund, Play | Auth0 |
 
-**Paging / search / categories:** first page is 10 symbols (`PAGE_SIZE`). UI “Load more” appends `offset+=10`. Navbar search → `?q=`. Category chips → `?category=` (`long-term`, `short-term`, `growth`, `dividend`, `blue-chip`, `volatile`, plus live `gainers` / `losers`). Curated tags are educational, not advice.
+## Data model
 
-**Hot sidebar:** left rail shows top day gainers. Local BFF pushes over WebSocket `ws://…/ws/hot` every **5 min** (and on connect). On Vercel (no persistent WS) the client falls back to `GET /api/hot` poll every 5 min.
+See [`db/schema.sql`](db/schema.sql): `users`, `portfolios`, `positions`, `trades`, `league_scores`, `league_months`.
 
-**Detail modal:** click a card or Hot row → `GET /api/detail?symbol=` (quote + profile2 + history). Charts prefer Finnhub daily candles; if blocked on free tier, fall back to **Yahoo Finance** daily closes (cards: ~1mo sparkline, detail: ~3mo).
+Month key `YYYY-MM`. New month → fresh `$10,000` cash; previous month winner archived.
 
-**Monthly training league (private play):** `/#/league` — nickname + PIN unlocks trading, portfolio and ranking. Market browse (home / Hot / detail) stays public. Scores sync to `GET/POST /api/league` (shared with Upstash env vars; otherwise local/ephemeral). Month change archives a winner and resets the portfolio.
+## Setup
 
-Buy/sell is **still simulated** (local state + `localStorage`) — not a real broker.
+### 1. Neon
 
-## Stack
-
-- React 19 · TypeScript · Vite · Tailwind · Recharts · Three.js
-- BFF: `server/quotes.ts` + local `server/dev-api.ts` · Vercel `api/quotes.ts`
-
-## Setup (live quotes)
-
-1. Free key: [finnhub.io/register](https://finnhub.io/register)
-2. `cp .env.example .env` → set `FINNHUB_API_KEY=...`
-3. Two terminals:
+1. Create a free project at [neon.tech](https://neon.tech)
+2. Copy the connection string → `DATABASE_URL`
+3. Apply schema:
 
 ```bash
+psql "$DATABASE_URL" -f db/schema.sql
+```
+
+### 2. Auth0
+
+1. Create an **Application** (type: Single Page Application)
+2. Create an **API** (Identifier = audience, e.g. `https://erick-market-api`)
+3. Application settings:
+   - Allowed Callback URLs: `http://localhost:5173`, `https://erick-market-2025.vercel.app`
+   - Allowed Logout URLs: same
+   - Allowed Web Origins: same
+4. Copy Domain, Client ID, Audience into `.env` (see `.env.example`)
+
+### 3. Local
+
+```bash
+cp .env.example .env
+# fill FINNHUB_API_KEY, DATABASE_URL, AUTH0_*, VITE_AUTH0_*
 npm install
-npm run dev:api    # :4010
+npm run dev:api    # :4010 — quotes + auth APIs
 npm run dev        # Vite proxies /api → :4010
 ```
 
-## Deploy (Vercel)
+### 4. Vercel
 
-1. Project → Settings → Environment Variables → `FINNHUB_API_KEY`
-2. Redeploy — `/api/quotes` is the serverless function
+Environment variables (Production + Preview):
 
-Without the key, the site still works (legacy/mock fallback).
+- `FINNHUB_API_KEY`
+- `DATABASE_URL`
+- `AUTH0_DOMAIN`
+- `AUTH0_AUDIENCE`
+- `VITE_AUTH0_DOMAIN`
+- `VITE_AUTH0_CLIENT_ID`
+- `VITE_AUTH0_AUDIENCE`
+
+Redeploy after setting vars (Vite embeds `VITE_*` at build time).
 
 ## Scripts
 
 | Command | What |
 |---------|------|
-| `npm run dev` | Frontend only |
-| `npm run dev:api` | Local quotes BFF |
+| `npm run dev` | Frontend |
+| `npm run dev:api` | Local BFF |
 | `npm run build` | typecheck + Vite build |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm run db:schema` | Print schema apply hint |
 
 ## Note
 
-Educational demo — not financial advice. Finnhub free tier is rate-limited (BFF caches ~20s).
+Educational demo — not financial advice. Finnhub free tier is rate-limited.

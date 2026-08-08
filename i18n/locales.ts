@@ -50,7 +50,7 @@ const en = {
   fullLeague: "Full league →",
   playTitle: "Play · monthly training",
   playIntro:
-    "Private games seat for month {month}. Market data stays public; trading & ranking need nickname + PIN. Everyone starts with ${fund}. Highest equity wins the month — then a fresh start. Demo only.",
+    "Auth0 seat for month {month}. Market data stays public; trading & ranking need login. Everyone starts with ${fund}. Highest equity wins the month — then a fresh start. Demo only.",
   joinMonth: "Join this month",
   joinHint:
     "Nickname + PIN (4–6 digits). Not bank-grade auth — enough to keep your seat on the board.",
@@ -67,7 +67,7 @@ const en = {
   leaveSeat: "Leave seat",
   tradeArrow: "Trade →",
   leaderboard: "Leaderboard",
-  modeShared: "Shared board (Upstash)",
+  modeShared: "Shared board (Neon)",
   modeEphemeral: "Server ephemeral + local backup",
   modeLocal: "This device (local)",
   noScoresMonth: "No scores yet this month.",
@@ -130,6 +130,15 @@ const en = {
   hint_losers: "Worst % change today (live)",
   langToggle: "ES",
   langAria: "Switch language to Spanish",
+  login: "Log in",
+  logout: "Log out",
+  loginRequiredTitle: "Sign in to continue",
+  loginRequiredBody:
+    "Portfolio, fund and Play need an Auth0 account. Market browse stays public.",
+  authNotConfigured:
+    "Auth0 env vars are missing. Add VITE_AUTH0_* and DATABASE_URL to enable Play.",
+  loginToTrade: "Sign in to buy and sell.",
+  tradingLocked: "Trading locked until you sign in.",
   avgBuyPrice: "Avg. Buy Price:",
   currentPrice: "Current Price:",
   currentValue: "Current Value:",
@@ -202,7 +211,7 @@ const es: Dict = {
   fullLeague: "Liga completa →",
   playTitle: "Jugar · entrenamiento mensual",
   playIntro:
-    "Área de juego privada del mes {month}. El mercado es público; operar y el ranking piden nick + PIN. Todos empiezan con ${fund}. Gana quien tenga más equity al cerrar el mes. Solo demo.",
+    "Área Auth0 del mes {month}. El mercado es público; operar y el ranking piden login. Todos empiezan con ${fund}. Gana quien tenga más equity al cerrar el mes. Solo demo.",
   joinMonth: "Unirse a este mes",
   joinHint:
     "Nick + PIN (4–6 dígitos). No es auth bancaria — alcanza para tu lugar en el tablero.",
@@ -219,7 +228,7 @@ const es: Dict = {
   leaveSeat: "Salir",
   tradeArrow: "Operar →",
   leaderboard: "Ranking",
-  modeShared: "Tablero compartido (Upstash)",
+  modeShared: "Tablero compartido (Neon)",
   modeEphemeral: "Servidor efímero + backup local",
   modeLocal: "Este dispositivo (local)",
   noScoresMonth: "Sin puntajes este mes.",
@@ -282,6 +291,15 @@ const es: Dict = {
   hint_losers: "Peor % del día (live)",
   langToggle: "EN",
   langAria: "Cambiar idioma a inglés",
+  login: "Iniciar sesión",
+  logout: "Cerrar sesión",
+  loginRequiredTitle: "Iniciá sesión para continuar",
+  loginRequiredBody:
+    "Portfolio, fondo y Jugar necesitan cuenta Auth0. El mercado sigue público.",
+  authNotConfigured:
+    "Faltan vars Auth0. Agregá VITE_AUTH0_* y DATABASE_URL para habilitar Play.",
+  loginToTrade: "Iniciá sesión para comprar y vender.",
+  tradingLocked: "Trading bloqueado hasta que inicies sesión.",
   avgBuyPrice: "Precio prom. compra:",
   currentPrice: "Precio actual:",
   currentValue: "Valor actual:",

@@ -25,6 +25,7 @@
     "vite-env.d.ts",
     "types.ts",
     "constants.ts",
+    "auth/**/*.ts",
     "components/**/*.tsx",
     "pages/**/*.tsx",
     "context/**/*.tsx",

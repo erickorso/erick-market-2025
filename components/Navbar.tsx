@@ -1,12 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useStockContext } from "../context/StockContext";
-import { useLeague } from "../context/LeagueContext";
+import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
 
 const Navbar: React.FC = () => {
   const { state, dispatch } = useStockContext();
-  const { player } = useLeague();
+  const { isAuthenticated, user, login, logout, isLoading } = useAuth();
   const { t, toggleLang, lang } = useI18n();
 
   return (
@@ -48,10 +48,19 @@ const Navbar: React.FC = () => {
             >
               {t("navPlay")}
             </Link>
-            {player && (
-              <span className="hidden text-xs text-gray-500 sm:inline">
-                {player.name}
+            {!isLoading && isAuthenticated && user && (
+              <span className="hidden max-w-[8rem] truncate text-xs text-gray-500 sm:inline">
+                {user.name || user.email}
               </span>
+            )}
+            {!isLoading && (
+              <button
+                type="button"
+                onClick={isAuthenticated ? logout : login}
+                className="rounded-md border border-gray-600 px-2.5 py-1.5 text-xs font-semibold text-gray-300 hover:border-teal-500 hover:text-teal-300"
+              >
+                {isAuthenticated ? t("logout") : t("login")}
+              </button>
             )}
             <button
               type="button"

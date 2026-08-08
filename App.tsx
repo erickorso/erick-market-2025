@@ -10,9 +10,11 @@ import NoticeBanner from "./components/NoticeBanner";
 import HotSidebar from "./components/HotSidebar";
 import RankSidebar from "./components/RankSidebar";
 import StockDetailModal from "./components/StockDetailModal";
+import RequireAuth from "./components/RequireAuth";
 import { StockProvider } from "./context/StockContext";
 import { LeagueProvider } from "./context/LeagueContext";
 import { I18nProvider, useI18n } from "./context/I18nContext";
+import { AuthProvider } from "./context/AuthContext";
 
 const AppShell: React.FC = () => {
   const year = new Date().getFullYear();
@@ -30,10 +32,38 @@ const AppShell: React.FC = () => {
           <main className="container relative z-10 mx-auto min-w-0 flex-grow px-2 py-8 sm:px-4">
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/league" element={<LeaguePage />} />
-              <Route path="/my-stocks" element={<MyStocksPage />} />
-              <Route path="/my-fund" element={<MyFundPage />} />
-              <Route path="/sell/:stockCompany" element={<SellStockForm />} />
+              <Route
+                path="/league"
+                element={
+                  <RequireAuth>
+                    <LeaguePage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/my-stocks"
+                element={
+                  <RequireAuth>
+                    <MyStocksPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/my-fund"
+                element={
+                  <RequireAuth>
+                    <MyFundPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/sell/:stockCompany"
+                element={
+                  <RequireAuth>
+                    <SellStockForm />
+                  </RequireAuth>
+                }
+              />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
@@ -52,11 +82,13 @@ const AppShell: React.FC = () => {
 
 const App: React.FC = () => (
   <I18nProvider>
-    <StockProvider>
-      <LeagueProvider>
-        <AppShell />
-      </LeagueProvider>
-    </StockProvider>
+    <AuthProvider>
+      <StockProvider>
+        <LeagueProvider>
+          <AppShell />
+        </LeagueProvider>
+      </StockProvider>
+    </AuthProvider>
   </I18nProvider>
 );
 

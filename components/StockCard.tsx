@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { EnrichedStock } from "../types";
 import { useStockContext } from "../context/StockContext";
+import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
 import StockChart from "./Chart";
 
@@ -9,24 +10,33 @@ interface StockCardProps {
 }
 
 const StockCard: React.FC<StockCardProps> = ({ stock }) => {
-  const { dispatch, state } = useStockContext();
+  const { buyStock, state, dispatch } = useStockContext();
+  const { isAuthenticated, login } = useAuth();
   const { t } = useI18n();
   const [quantity, setQuantity] = useState(1);
+  const [busy, setBusy] = useState(false);
 
   const symbol =
     stock.symbol ??
     (/\(([A-Z.]+)\)\s*$/.exec(stock.company)?.[1] ?? stock.id.toUpperCase());
 
-  const openDetail = () => {
+  const openDetailModal = () => {
     dispatch({ type: "OPEN_DETAIL", payload: symbol });
   };
 
-  const handleBuyStock = () => {
-    dispatch({ type: "BUY_STOCK", payload: { stock, quantity } });
+  const handleBuyStock = async () => {
+    if (!isAuthenticated || busy) return;
+    setBusy(true);
+    try {
+      await buyStock(stock, quantity);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const totalPrice = stock.price * quantity;
   const canAfford = state.fund >= totalPrice;
+  const locked = !isAuthenticated;
 
   return (
     <div
@@ -36,7 +46,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
       <div>
         <button
           type="button"
-          onClick={openDetail}
+          onClick={openDetailModal}
           className="mb-2 w-full text-left"
           aria-label={`${t("openDetail")} ${stock.company}`}
         >
@@ -83,7 +93,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
         </p>
         <button
           type="button"
-          onClick={openDetail}
+          onClick={openDetailModal}
           className="mb-4 h-48 w-full text-left"
           aria-label={`${t("viewChartDetail")} ${symbol}`}
         >
@@ -91,7 +101,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
         </button>
         <button
           type="button"
-          onClick={openDetail}
+          onClick={openDetailModal}
           className="mb-4 text-xs font-medium text-teal-400 hover:text-teal-300"
         >
           {t("viewDetails")}
@@ -99,15 +109,28 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
       </div>
 
       <div className="mt-auto" onClick={(e) => e.stopPropagation()}>
+        {locked && (
+          <p className="mb-2 text-center text-xs text-amber-300/90">
+            {t("loginToTrade")}{" "}
+            <button
+              type="button"
+              onClick={login}
+              className="font-semibold text-teal-400 underline hover:text-teal-300"
+            >
+              {t("login")}
+            </button>
+          </p>
+        )}
         <div className="mb-3 flex items-center justify-between">
           <span className="text-sm text-gray-400">{t("quantity")}</span>
           <div className="flex items-center">
             <button
               data-testid="decrement"
               type="button"
+              disabled={locked}
               onClick={() => setQuantity((p) => Math.max(1, p - 1))}
               aria-label={t("decAria")}
-              className="rounded-l bg-red-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-red-700"
+              className="rounded-l bg-red-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
               -
             </button>
@@ -120,9 +143,10 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
             <button
               data-testid="increment"
               type="button"
+              disabled={locked}
               onClick={() => setQuantity((p) => p + 1)}
               aria-label={t("incAria")}
-              className="rounded-r bg-green-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-green-700"
+              className="rounded-r bg-green-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
               +
             </button>
@@ -134,15 +158,17 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
         <button
           data-testid={`addCart-${stock.company}`}
           type="button"
-          onClick={handleBuyStock}
-          disabled={!canAfford || quantity <= 0}
+          onClick={() => void handleBuyStock()}
+          disabled={locked || busy || !canAfford || quantity <= 0}
+          title={locked ? t("tradingLocked") : undefined}
           className={`w-full rounded-lg px-4 py-2 text-sm font-semibold transition duration-300 ${
-            canAfford && quantity > 0
+            !locked && canAfford && quantity > 0 && !busy
               ? "bg-teal-500 text-white hover:bg-teal-600"
               : "cursor-not-allowed bg-gray-600 text-gray-400"
           }`}
         >
-          {t("buy")} {canAfford ? "" : t("insufficientFunds")}
+          {t("buy")}{" "}
+          {!locked && !canAfford ? t("insufficientFunds") : ""}
         </button>
       </div>
     </div>

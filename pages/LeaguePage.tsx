@@ -1,6 +1,7 @@
-﻿import React, { useState } from "react";
+﻿import React from "react";
 import { Link } from "react-router-dom";
 import { useLeague } from "../context/LeagueContext";
+import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
 import { INITIAL_FUND_AMOUNT } from "../constants";
 
@@ -12,25 +13,10 @@ const LeaguePage: React.FC = () => {
     previousWinner,
     mode,
     equity,
-    joining,
-    join,
-    logout,
     pushScore,
   } = useLeague();
+  const { logout } = useAuth();
   const { t } = useI18n();
-  const [name, setName] = useState("");
-  const [pin, setPin] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  const onJoin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    try {
-      await join(name, pin);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("joinFailed"));
-    }
-  };
 
   const modeLabel =
     mode === "shared"
@@ -67,48 +53,7 @@ const LeaguePage: React.FC = () => {
         </div>
       )}
 
-      {!player ? (
-        <form
-          onSubmit={onJoin}
-          className="mb-8 space-y-4 rounded-xl border border-gray-700 bg-gray-800/80 p-5"
-        >
-          <h2 className="text-lg font-semibold text-gray-100">{t("joinMonth")}</h2>
-          <p className="text-xs text-gray-500">{t("joinHint")}</p>
-          <label className="block text-sm text-gray-300">
-            {t("displayName")}
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
-              maxLength={24}
-              required
-              autoComplete="username"
-            />
-          </label>
-          <label className="block text-sm text-gray-300">
-            {t("pin")}
-            <input
-              value={pin}
-              onChange={(e) =>
-                setPin(e.target.value.replace(/\D/g, "").slice(0, 6))
-              }
-              className="mt-1 w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
-              inputMode="numeric"
-              pattern="\d{4,6}"
-              required
-              autoComplete="current-password"
-            />
-          </label>
-          {error && <p className="text-sm text-rose-400">{error}</p>}
-          <button
-            type="submit"
-            disabled={joining}
-            className="rounded-lg bg-teal-500 px-4 py-2 font-semibold text-white hover:bg-teal-600 disabled:opacity-60"
-          >
-            {joining ? t("joining") : t("joinLeague")}
-          </button>
-        </form>
-      ) : (
+      {player && (
         <div className="mb-8 rounded-xl border border-gray-700 bg-gray-800/80 p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -148,7 +93,7 @@ const LeaguePage: React.FC = () => {
                 onClick={logout}
                 className="rounded-md border border-gray-600 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200"
               >
-                {t("leaveSeat")}
+                {t("logout")}
               </button>
               <Link
                 to="/"

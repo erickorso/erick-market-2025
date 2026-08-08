@@ -6,10 +6,11 @@ import { useI18n } from "../context/I18nContext";
 const SellStockForm: React.FC = () => {
   const { stockCompany } = useParams<{ stockCompany: string }>();
   const navigate = useNavigate();
-  const { state, dispatch } = useStockContext();
+  const { state, sellStock } = useStockContext();
   const { t } = useI18n();
   const [quantity, setQuantity] = useState<number>(1);
   const [error, setError] = useState<string>("");
+  const [busy, setBusy] = useState(false);
 
   const decodedStockCompany = stockCompany
     ? decodeURIComponent(stockCompany)
@@ -46,7 +47,7 @@ const SellStockForm: React.FC = () => {
   const currentPrice = stockDetails.price;
   const maxQuantity = portfolioItem.quantity;
 
-  const handleSell = () => {
+  const handleSell = async () => {
     setError("");
     if (quantity <= 0) {
       setError(t("qtyMustBePositive"));
@@ -57,15 +58,15 @@ const SellStockForm: React.FC = () => {
       return;
     }
 
-    dispatch({
-      type: "SELL_STOCK",
-      payload: {
-        stockCompany: decodedStockCompany,
-        quantity,
-        sellPrice: currentPrice,
-      },
-    });
-    navigate("/my-stocks");
+    setBusy(true);
+    try {
+      await sellStock(decodedStockCompany, quantity, currentPrice);
+      navigate("/my-stocks");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("error"));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -114,8 +115,9 @@ const SellStockForm: React.FC = () => {
         <div className="flex items-center justify-between">
           <button
             data-testid="sell"
-            onClick={handleSell}
-            className="w-full rounded-lg bg-red-500 px-4 py-3 font-bold text-white transition duration-300 hover:bg-red-600 focus:outline-none focus:shadow-outline"
+            onClick={() => void handleSell()}
+            disabled={busy}
+            className="w-full rounded-lg bg-red-500 px-4 py-3 font-bold text-white transition duration-300 hover:bg-red-600 focus:outline-none focus:shadow-outline disabled:opacity-60"
           >
             {t("confirmSell")}
           </button>

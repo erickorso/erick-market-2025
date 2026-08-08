@@ -35,6 +35,7 @@ export interface PortfolioItem {
   quantity: number;
   purchasePrice: number;
   totalCost: number;
+  symbol?: string;
 }
 
 export type Notice = {

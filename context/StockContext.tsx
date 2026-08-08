@@ -6,9 +6,11 @@ import React, {
   useMemo,
   useReducer,
   useRef,
+  useState,
 } from "react";
 import {
   CategoryId,
+  EnrichedStock,
   PortfolioItem,
   StockAction,
   StockContextState,
@@ -17,7 +19,6 @@ import {
   INITIAL_FUND_AMOUNT,
   LIVE_POLL_MS,
   PRICE_TICK_MS,
-  STORAGE_KEY,
 } from "../constants";
 import {
   fetchStocks,
@@ -27,10 +28,11 @@ import {
   tickStockPrices,
 } from "../services/stockService";
 import {
-  archiveLocalMonth,
-  currentMonthKey,
-  getLocalArchive,
-} from "../services/leagueService";
+  fetchMe,
+  portfolioToState,
+  postTrade,
+} from "../services/portfolioApi";
+import { useAuth } from "./AuthContext";
 
 const initialState: StockContextState = {
   allStocks: [],
@@ -73,41 +75,11 @@ function writeQueryFilters(q: string, category: CategoryId) {
   }
 }
 
-function loadPersisted(): {
-  portfolio: PortfolioItem[];
-  fund: number;
-  month: string;
-} | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as {
-      portfolio?: PortfolioItem[];
-      fund?: number;
-      month?: string;
-    };
-    if (!Array.isArray(parsed.portfolio) || typeof parsed.fund !== "number") {
-      return null;
-    }
-    return {
-      portfolio: parsed.portfolio,
-      fund: parsed.fund,
-      month: parsed.month || currentMonthKey(),
-    };
-  } catch {
-    return null;
-  }
-}
-
-function persist(portfolio: PortfolioItem[], fund: number, month: string) {
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ portfolio, fund, month }),
-    );
-  } catch {
-    /* ignore quota */
-  }
+function extractSymbol(stock: { symbol?: string; company: string; id: string }) {
+  if (stock.symbol) return stock.symbol.toUpperCase();
+  const m = /\(([A-Z.]+)\)\s*$/.exec(stock.company);
+  if (m) return m[1];
+  return stock.id.replace(/-\d+$/, "").toUpperCase();
 }
 
 const stockReducer = (
@@ -294,6 +266,13 @@ type StockContextValue = {
   dispatch: React.Dispatch<StockAction>;
   fetchStocks: () => Promise<void>;
   loadMore: () => Promise<void>;
+  buyStock: (stock: EnrichedStock, quantity: number) => Promise<void>;
+  sellStock: (
+    stockCompany: string,
+    quantity: number,
+    sellPrice: number,
+  ) => Promise<void>;
+  portfolioSynced: boolean;
 };
 
 const StockContext = createContext<StockContextValue | null>(null);
@@ -301,6 +280,8 @@ const StockContext = createContext<StockContextValue | null>(null);
 export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const { isAuthenticated, getAccessToken, isLoading: authLoading } = useAuth();
+  const [portfolioSynced, setPortfolioSynced] = useState(false);
   const [state, dispatch] = useReducer(stockReducer, null, () => {
     const { q, category } = readQueryFilters();
     return { ...initialState, searchTerm: q, category };
@@ -395,40 +376,153 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (hydrated.current) return;
     hydrated.current = true;
-    const month = currentMonthKey();
-    const saved = loadPersisted();
-    if (saved) {
-      if (saved.month !== month) {
-        archiveLocalMonth(saved.month);
-        const winner = getLocalArchive(saved.month)?.winner;
-        dispatch({
-          type: "HYDRATE_PORTFOLIO",
-          payload: { portfolio: [], fund: INITIAL_FUND_AMOUNT },
-        });
-        persist([], INITIAL_FUND_AMOUNT, month);
-        dispatch({
-          type: "SET_NOTICE",
-          payload: {
-            type: "info",
-            message: winner
-              ? `New month ${month}. Last winner: ${winner.name} ($${winner.equity.toFixed(0)}). Fresh $${INITIAL_FUND_AMOUNT} training start.`
-              : `New month ${month}. Portfolio reset to $${INITIAL_FUND_AMOUNT} for the training league.`,
-          },
-        });
-      } else {
-        dispatch({
-          type: "HYDRATE_PORTFOLIO",
-          payload: { portfolio: saved.portfolio, fund: saved.fund },
-        });
-      }
-    } else {
-      persist([], INITIAL_FUND_AMOUNT, month);
-    }
     void loadStocks({
       q: searchRef.current,
       category: categoryRef.current,
     });
   }, [loadStocks]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      setPortfolioSynced(false);
+      dispatch({
+        type: "HYDRATE_PORTFOLIO",
+        payload: { portfolio: [], fund: INITIAL_FUND_AMOUNT },
+      });
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const token = await getAccessToken();
+        if (!token || cancelled) return;
+        const { portfolio } = await fetchMe(token);
+        if (cancelled) return;
+        const mapped = portfolioToState(portfolio);
+        dispatch({
+          type: "HYDRATE_PORTFOLIO",
+          payload: { portfolio: mapped.portfolio, fund: mapped.fund },
+        });
+        setPortfolioSynced(true);
+      } catch (err) {
+        if (cancelled) return;
+        dispatch({
+          type: "SET_NOTICE",
+          payload: {
+            type: "error",
+            message:
+              err instanceof Error
+                ? err.message
+                : "Could not load portfolio from server",
+          },
+        });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, isAuthenticated, getAccessToken]);
+
+  const buyStock = useCallback(
+    async (stock: EnrichedStock, quantity: number) => {
+      if (!isAuthenticated) {
+        dispatch({
+          type: "SET_NOTICE",
+          payload: { type: "info", message: "Sign in to trade." },
+        });
+        return;
+      }
+      const token = await getAccessToken();
+      if (!token) {
+        dispatch({
+          type: "SET_NOTICE",
+          payload: { type: "error", message: "Auth token unavailable." },
+        });
+        return;
+      }
+      try {
+        const symbol = extractSymbol(stock);
+        const portfolio = await postTrade(token, {
+          side: "buy",
+          symbol,
+          company: stock.company,
+          qty: quantity,
+          price: stock.price,
+        });
+        const mapped = portfolioToState(portfolio);
+        dispatch({
+          type: "HYDRATE_PORTFOLIO",
+          payload: { portfolio: mapped.portfolio, fund: mapped.fund },
+        });
+        dispatch({
+          type: "SET_NOTICE",
+          payload: {
+            type: "success",
+            message: `Bought ${quantity} share(s) of ${stock.company}.`,
+          },
+        });
+      } catch (err) {
+        dispatch({
+          type: "SET_NOTICE",
+          payload: {
+            type: "error",
+            message: err instanceof Error ? err.message : "Buy failed",
+          },
+        });
+      }
+    },
+    [isAuthenticated, getAccessToken],
+  );
+
+  const sellStock = useCallback(
+    async (stockCompany: string, quantity: number, sellPrice: number) => {
+      if (!isAuthenticated) {
+        dispatch({
+          type: "SET_NOTICE",
+          payload: { type: "info", message: "Sign in to trade." },
+        });
+        return;
+      }
+      const token = await getAccessToken();
+      if (!token) return;
+      const item = state.portfolio.find((p) => p.company === stockCompany);
+      const symbol =
+        item?.symbol ||
+        /\(([A-Z.]+)\)\s*$/.exec(stockCompany)?.[1] ||
+        stockCompany;
+      try {
+        const portfolio = await postTrade(token, {
+          side: "sell",
+          symbol,
+          company: stockCompany,
+          qty: quantity,
+          price: sellPrice,
+        });
+        const mapped = portfolioToState(portfolio);
+        dispatch({
+          type: "HYDRATE_PORTFOLIO",
+          payload: { portfolio: mapped.portfolio, fund: mapped.fund },
+        });
+        dispatch({
+          type: "SET_NOTICE",
+          payload: {
+            type: "success",
+            message: `Sold ${quantity} share(s) of ${stockCompany}.`,
+          },
+        });
+      } catch (err) {
+        dispatch({
+          type: "SET_NOTICE",
+          payload: {
+            type: "error",
+            message: err instanceof Error ? err.message : "Sell failed",
+          },
+        });
+      }
+    },
+    [isAuthenticated, getAccessToken, state.portfolio],
+  );
 
   useEffect(() => {
     writeQueryFilters(state.searchTerm, state.category);
@@ -462,11 +556,6 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [state.category, loadStocks]);
 
   useEffect(() => {
-    if (state.isLoading) return;
-    persist(state.portfolio, state.fund, currentMonthKey());
-  }, [state.portfolio, state.fund, state.isLoading]);
-
-  useEffect(() => {
     if (state.isLoading || state.allStocks.length === 0) return;
     if (state.dataSource === "live") return;
     const id = window.setInterval(() => {
@@ -497,8 +586,11 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({
       dispatch,
       fetchStocks: () => loadStocks(),
       loadMore,
+      buyStock,
+      sellStock,
+      portfolioSynced,
     }),
-    [state, loadStocks, loadMore],
+    [state, loadStocks, loadMore, buyStock, sellStock, portfolioSynced],
   );
 
   return (

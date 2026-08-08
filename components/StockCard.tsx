@@ -181,18 +181,6 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
                 : t("buyTooltipOk")}
           </ComicTooltip>
         </div>
-        {locked && (
-          <p className="mt-2 text-center text-xs text-amber-300/90">
-            {t("loginToTrade")}{" "}
-            <button
-              type="button"
-              onClick={login}
-              className="font-semibold text-teal-400 underline hover:text-teal-300"
-            >
-              {t("login")}
-            </button>
-          </p>
-        )}
       </div>
     </div>
   );

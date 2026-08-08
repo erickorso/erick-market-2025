@@ -32,10 +32,19 @@ const yahooCache = new Map<
   string,
   { at: number; chart: { name: string; price: number }[] }
 >();
-  quoteSource?: "live" | "simulated";
 const YAHOO_TTL_MS = 30 * 60 * 1000;
 
 const CATEGORIES: { id: CategoryId; label: string; hint: string }[] = [
+  { id: "all", label: "All", hint: "Full watchlist" },
+  { id: "long-term", label: "Long-term", hint: "Compounders / quality holds (curated)" },
+  { id: "short-term", label: "Short-term", hint: "Higher beta / tactical names (curated)" },
+  { id: "growth", label: "Growth", hint: "Growth-oriented names (curated)" },
+  { id: "dividend", label: "Dividend", hint: "Income / staples tilt (curated)" },
+  { id: "blue-chip", label: "Blue chip", hint: "Large, established names (curated)" },
+  { id: "volatile", label: "Volatile", hint: "Higher swing names (curated)" },
+  { id: "gainers", label: "Day gainers", hint: "Best % change today (live)" },
+  { id: "losers", label: "Day losers", hint: "Worst % change today (live)" },
+];
 
 function fallbackQuote(symbol: string, company: string): QuoteRow {
   const seed = [...symbol].reduce(
@@ -54,25 +63,9 @@ function fallbackQuote(symbol: string, company: string): QuoteRow {
     quoteSource: "simulated",
   };
 }
-  { id: "all", label: "All", hint: "Full watchlist" },
-  { id: "long-term", label: "Long-term", hint: "Compounders / quality holds (curated)" },
-  { id: "short-term", label: "Short-term", hint: "Higher beta / tactical names (curated)" },
-  { id: "growth", label: "Growth", hint: "Growth-oriented names (curated)" },
-  { id: "dividend", label: "Dividend", hint: "Income / staples tilt (curated)" },
-  { id: "blue-chip", label: "Blue chip", hint: "Large, established names (curated)" },
-  { id: "volatile", label: "Volatile", hint: "Higher swing names (curated)" },
-  { id: "gainers", label: "Day gainers", hint: "Best % change today (live)" },
-  { id: "losers", label: "Day losers", hint: "Worst % change today (live)" },
-  let res: Response;
-  try {
-    res = await fetch(url);
-  } catch {
-    return fallbackQuote(symbol, company);
-  }
-  if (!res.ok) return fallbackQuote(symbol, company);
-  const data = (await res.json()) as FinnhubQuote;
+
+const WATCHLIST: WatchItem[] = [
   { symbol: "AAPL", company: "Apple", tags: ["long-term", "blue-chip", "growth"] },
-  if (!price || price <= 0) return fallbackQuote(symbol, company);
   { symbol: "GOOGL", company: "Alphabet", tags: ["long-term", "blue-chip", "growth"] },
   { symbol: "AMZN", company: "Amazon", tags: ["long-term", "growth", "volatile"] },
   { symbol: "NVDA", company: "NVIDIA", tags: ["growth", "short-term", "volatile"] },
@@ -81,7 +74,6 @@ function fallbackQuote(symbol: string, company: string): QuoteRow {
   { symbol: "JPM", company: "JPMorgan", tags: ["blue-chip", "dividend", "long-term"] },
   { symbol: "V", company: "Visa", tags: ["long-term", "blue-chip", "growth"] },
   { symbol: "MA", company: "Mastercard", tags: ["long-term", "blue-chip", "growth"] },
-    quoteSource: "live",
   { symbol: "JNJ", company: "Johnson & Johnson", tags: ["dividend", "blue-chip", "long-term"] },
   { symbol: "WMT", company: "Walmart", tags: ["dividend", "blue-chip", "long-term"] },
   { symbol: "PG", company: "Procter & Gamble", tags: ["dividend", "blue-chip", "long-term"] },
@@ -94,7 +86,6 @@ function fallbackQuote(symbol: string, company: string): QuoteRow {
   { symbol: "COST", company: "Costco", tags: ["long-term", "blue-chip", "growth"] },
   { symbol: "AVGO", company: "Broadcom", tags: ["growth", "dividend", "volatile"] },
   { symbol: "CRM", company: "Salesforce", tags: ["growth", "short-term"] },
-    out.push(...settled.filter((x): x is QuoteRow => x !== null));
   { symbol: "AMD", company: "AMD", tags: ["growth", "volatile", "short-term"] },
   { symbol: "INTC", company: "Intel", tags: ["volatile", "short-term", "dividend"] },
   { symbol: "ORCL", company: "Oracle", tags: ["blue-chip", "growth", "dividend"] },
@@ -159,11 +150,16 @@ async function fetchOne(
   const cached = quoteCache.get(symbol);
   if (cached && Date.now() - cached.at < QUOTE_TTL_MS) return cached.quote;
   const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(token)}`;
-  const res = await fetch(url);
-  if (!res.ok) return null;
+  let res: Response;
+  try {
+    res = await fetch(url);
+  } catch {
+    return fallbackQuote(symbol, company);
+  }
+  if (!res.ok) return fallbackQuote(symbol, company);
   const data = (await res.json()) as FinnhubQuote;
   const price = typeof data.c === "number" ? data.c : 0;
-  if (!price || price <= 0) return null;
+  if (!price || price <= 0) return fallbackQuote(symbol, company);
   const item = WATCHLIST.find((w) => w.symbol === symbol);
   const quote: QuoteRow = {
     symbol,
@@ -172,6 +168,7 @@ async function fetchOne(
     change: typeof data.d === "number" ? data.d : 0,
     changePercent: typeof data.dp === "number" ? data.dp : 0,
     tags: item?.tags ?? [],
+    quoteSource: "live",
   };
   quoteCache.set(symbol, { at: Date.now(), quote });
   return quote;
@@ -184,7 +181,7 @@ async function fetchMany(items: WatchItem[], token: string, concurrency = 5) {
     const settled = await Promise.all(
       chunk.map((w) => fetchOne(w.symbol, w.company, token)),
     );
-    for (const row of settled) if (row) out.push(row);
+    out.push(...settled.filter((row): row is QuoteRow => row !== null));
   }
   return out;
 }

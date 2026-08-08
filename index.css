@@ -19,3 +19,61 @@ html.dark body {
   background-color: #111827;
   color: #f3f4f6;
 }
+
+/* Scrollbars — Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 transparent;
+}
+
+html.dark * {
+  scrollbar-color: #2dd4bf55 transparent;
+}
+
+/* Scrollbars — Chromium / Safari */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 999px;
+  margin-block: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #64748b 0%, #475569 100%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+html.dark *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html.dark *::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #2dd4bf66 0%, #0d948866 100%);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow: inset 0 0 0 1px #2dd4bf33;
+}
+
+html.dark *::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #2dd4bf99 0%, #14b8a699 100%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow: inset 0 0 0 1px #5eead433;
+}

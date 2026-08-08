@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { dbConfigured } from "./_lib/db";
-import { handleOptions, sendError, setCors } from "./_lib/http";
-import { withAuth } from "./_lib/middleware";
-import { currentMonthKey } from "./_lib/month";
-import { getLeagueBoard, upsertLeagueScore } from "./_lib/store";
+import { dbConfigured } from "./_lib/db.js";
+import { handleOptions, sendError, setCors } from "./_lib/http.js";
+import { withAuth } from "./_lib/middleware.js";
+import { currentMonthKey } from "./_lib/month.js";
+import { getLeagueBoard, upsertLeagueScore } from "./_lib/store.js";
 
 async function getHandler(req: VercelRequest, res: VercelResponse) {
   setCors(res);

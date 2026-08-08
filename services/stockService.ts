@@ -129,10 +129,11 @@ export function mergeLivePrices(
   previous: EnrichedStock[],
   next: EnrichedStock[],
 ): EnrichedStock[] {
-  const prevById = new Map(previous.map((s) => [s.id, s]));
-  return next.map((stock) => {
-    const old = prevById.get(stock.id);
-    if (!old) return stock;
+  const nextById = new Map(next.map((s) => [s.id, s]));
+  // Keep previous order/length — silent polls may return a shorter page.
+  return previous.map((old) => {
+    const stock = nextById.get(old.id);
+    if (!stock) return old;
     const chartData = [
       ...old.chartData.slice(-9).map((p, i, arr) => ({
         ...p,

@@ -1,6 +1,7 @@
 import {
   CATEGORIES,
   PAGE_SIZE,
+  WATCHLIST,
   filterWatchlist,
   parseCategory,
   tagsForSymbol,
@@ -67,7 +68,10 @@ export async function getMarketQuotesPage(
 ) {
   const category = parseCategory(opts.category);
   const q = (opts.q ?? "").trim().toLowerCase();
-  const limit = Math.min(Math.max(1, opts.limit ?? PAGE_SIZE), 25);
+  const limit = Math.min(
+    Math.max(1, opts.limit ?? PAGE_SIZE),
+    WATCHLIST.length,
+  );
   const offset = Math.max(0, opts.offset ?? 0);
 
   if (!apiKey) {

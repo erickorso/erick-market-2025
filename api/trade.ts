@@ -1,5 +1,5 @@
-import { withAuth } from "./_lib/middleware";
-import { executeTrade } from "./_lib/store";
+import { withAuth } from "./_lib/middleware.js";
+import { executeTrade } from "./_lib/store.js";
 
 export default withAuth(async (req, res, { user }) => {
   if (req.method !== "POST") {

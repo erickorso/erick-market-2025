@@ -4,6 +4,7 @@ import { useStockContext } from "../context/StockContext";
 import { useUser } from "../context/UserContext";
 import { useI18n } from "../context/I18nContext";
 import StockChart from "./Chart";
+import ComicTooltip from "./ComicTooltip";
 
 interface StockCardProps {
   stock: EnrichedStock;
@@ -167,17 +168,13 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
             {t("buy")}{" "}
             {!locked && !canAfford ? t("insufficientFunds") : ""}
           </button>
-          <div
-            id={`buy-tip-${symbol}`}
-            role="tooltip"
-            className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-56 -translate-x-1/2 rounded-md border border-gray-600 bg-gray-950 px-2.5 py-2 text-left text-[11px] leading-snug text-gray-200 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
-          >
+          <ComicTooltip id={`buy-tip-${symbol}`}>
             {locked
               ? t("buyTooltipGuest")
               : !canAfford
                 ? t("buyTooltipFunds")
                 : t("buyTooltipOk")}
-          </div>
+          </ComicTooltip>
         </div>
         {locked && (
           <p className="mt-2 text-center text-xs text-amber-300/90">

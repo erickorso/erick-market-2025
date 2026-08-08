@@ -16,7 +16,17 @@
     />
     <meta property="og:type" content="website" />
   </head>
-  <body class="bg-gray-900 text-gray-100">
+  <body>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("erick-market.theme");
+          if (t !== "light") document.documentElement.classList.add("dark");
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

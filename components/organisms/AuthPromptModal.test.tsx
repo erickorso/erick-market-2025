@@ -62,6 +62,18 @@ describe("asking to sign in before trading", () => {
   });
 });
 
+describe("asking to sign in before the league", () => {
+  it("explains what the league needs an account for", () => {
+    prompt.reason = "league";
+    renderWithProviders(<AuthPromptModal />);
+
+    expect(
+      screen.getByText(/monthly league ranks players/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading")).toHaveTextContent(/sign in/i);
+  });
+});
+
 describe("after a session ends", () => {
   beforeEach(() => {
     prompt.reason = "sessionExpired";

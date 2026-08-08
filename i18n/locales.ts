@@ -161,6 +161,8 @@ const en = {
   sessionExpiredNotice: "Your session ended.",
   authPromptTradeBody:
     "Trading uses a virtual $10,000 fund tied to your account. Signing in takes you to Auth0 and brings you straight back here.",
+  authPromptLeagueBody:
+    "The monthly league ranks players by equity, so it needs an account to rank you. Signing in takes you to Auth0 and brings you straight back here.",
   notNow: "Not now",
 } as const;
 
@@ -325,6 +327,8 @@ const es: Dict = {
   sessionExpiredNotice: "Tu sesión terminó.",
   authPromptTradeBody:
     "Operar usa un fondo virtual de $10.000 ligado a tu cuenta. Al entrar pasás por Auth0 y volvés justo acá.",
+  authPromptLeagueBody:
+    "La liga mensual ordena por equity, así que necesita una cuenta para rankearte. Al entrar pasás por Auth0 y volvés justo acá.",
   notNow: "Ahora no",
 };
 

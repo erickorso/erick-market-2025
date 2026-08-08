@@ -8,7 +8,7 @@ import React, {
 import { useUser } from "./UserContext";
 
 /** Why we are asking, so the dialog can explain itself. */
-export type AuthPromptReason = "trade" | "sessionExpired";
+export type AuthPromptReason = "trade" | "league" | "sessionExpired";
 
 type AuthPromptValue = {
   /** The open request, or null when nothing is being asked. */

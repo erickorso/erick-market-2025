@@ -8,6 +8,7 @@ const navigate = vi.hoisted(() => vi.fn());
 const store = vi.hoisted(() => ({ searchTerm: "" }));
 const login = vi.hoisted(() => vi.fn());
 const logout = vi.hoisted(() => vi.fn());
+const requestLogin = vi.hoisted(() => vi.fn());
 const user = vi.hoisted(() => ({
   isAuthenticated: false,
   isLoading: false,
@@ -37,12 +38,17 @@ vi.mock("../../context/UserContext", () => ({
   }),
 }));
 
+vi.mock("../../context/AuthPromptContext", () => ({
+  useAuthPrompt: () => ({ requestLogin }),
+}));
+
 beforeEach(() => {
   dispatch.mockReset();
   navigate.mockReset();
   store.searchTerm = "";
   login.mockReset();
   logout.mockReset();
+  requestLogin.mockReset();
   localStorage.clear();
   user.isAuthenticated = false;
   user.isLoading = false;
@@ -65,6 +71,16 @@ describe("as a guest", () => {
     await userEvent.click(screen.getByRole("button", { name: "Log in" }));
     expect(login).toHaveBeenCalledTimes(1);
   });
+
+  // The league needs an account, so the link used to land guests on a bare
+  // "sign in to continue" wall. Now it asks first.
+  it("asks about signing in instead of walking into the league guard", async () => {
+    renderWithProviders(<Navbar />);
+
+    await userEvent.click(screen.getByTestId("League"));
+
+    expect(requestLogin).toHaveBeenCalledWith("league");
+  });
 });
 
 describe("when signed in", () => {
@@ -78,6 +94,14 @@ describe("when signed in", () => {
 
     expect(screen.getByTestId("My_Stocks")).toBeInTheDocument();
     expect(screen.getByTestId("My_Fund")).toBeInTheDocument();
+  });
+
+  it("lets the league link through without asking", async () => {
+    renderWithProviders(<Navbar />);
+
+    await userEvent.click(screen.getByTestId("League"));
+
+    expect(requestLogin).not.toHaveBeenCalled();
   });
 
   it("shows who is signed in", () => {

@@ -4,6 +4,8 @@ import { renderWithProviders, screen } from "../../test/render";
 import RankSidebar from "./RankSidebar";
 
 const refresh = vi.hoisted(() => vi.fn());
+const requestLogin = vi.hoisted(() => vi.fn());
+const user = vi.hoisted(() => ({ isAuthenticated: false }));
 const league = vi.hoisted(() => ({
   entries: [] as {
     playerId: string;
@@ -21,6 +23,14 @@ vi.mock("../../context/LeagueContext", () => ({
   useLeague: () => ({ ...league, refresh }),
 }));
 
+vi.mock("../../context/UserContext", () => ({
+  useUser: () => ({ isAuthenticated: user.isAuthenticated }),
+}));
+
+vi.mock("../../context/AuthPromptContext", () => ({
+  useAuthPrompt: () => ({ requestLogin }),
+}));
+
 function entry(id: string, name: string, pnlPercent: number) {
   return {
     playerId: id,
@@ -33,6 +43,8 @@ function entry(id: string, name: string, pnlPercent: number) {
 
 beforeEach(() => {
   refresh.mockReset();
+  requestLogin.mockReset();
+  user.isAuthenticated = false;
   localStorage.clear();
   league.entries = [
     entry("p1", "Erick", 18.4),
@@ -99,6 +111,34 @@ describe("RankSidebar", () => {
 
     const links = screen.getAllByRole("link");
     expect(links.some((l) => l.getAttribute("href") === "/league")).toBe(true);
+  });
+
+  // Guests used to land on a bare "sign in to continue" page. The link now
+  // asks first, and keeps its href so a new tab still works.
+  it("asks a guest about signing in instead of following the link", async () => {
+    renderWithProviders(<RankSidebar />);
+
+    await userEvent.click(screen.getByText(/full league/i));
+
+    expect(requestLogin).toHaveBeenCalledWith("league");
+  });
+
+  it("does not ask a signed-in player", async () => {
+    user.isAuthenticated = true;
+    renderWithProviders(<RankSidebar />);
+
+    await userEvent.click(screen.getByText(/full league/i));
+
+    expect(requestLogin).not.toHaveBeenCalled();
+  });
+
+  it("asks a guest from the empty-board invitation too", async () => {
+    league.entries = [];
+    renderWithProviders(<RankSidebar />);
+
+    await userEvent.click(screen.getByText(/join/i));
+
+    expect(requestLogin).toHaveBeenCalledWith("league");
   });
 
   it("collapses and remembers the choice", async () => {

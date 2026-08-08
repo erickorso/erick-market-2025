@@ -78,6 +78,7 @@ components/
   atoms/       Chart · Badge · Price · ChangePercent · Skeleton
   molecules/   TradePanel · QuantityStepper · StatCard · TagList · ChartPanel
                ComicTooltip · DetailSkeleton · Hot/Rank/StockListItem
+               ProtectedLink
   organisms/   StockCard · StockDetailModal · StockGrid · HotSidebar
                RankSidebar · Navbar · SellStockForm · CategoryFilter
                NoticeBanner · MarketBackground · AuthPromptModal
@@ -156,6 +157,15 @@ Swapping in a third party is one line in `index.tsx`:
 | **API `withAuth()`** | [`api/_lib/middleware.ts`](api/_lib/middleware.ts) — CORS, Auth0 JWT, upsert user in Neon     |
 | **Client**           | `AuthProvider` → `UserProvider` (`useUser()`) — Auth0 identity + Neon `profile` / `portfolio` |
 | **Routes**           | `protectedRoute(<Page />)` on Play, portfolio, and sell                                       |
+| **Prompt**           | [`AuthPromptContext`](context/AuthPromptContext.tsx) — every auth-gated action asks first     |
+
+Nothing redirects to Auth0 on its own. Buying as a guest, or clicking through
+to the league, opens a dialog explaining what the account is for, with **Not
+now** as a real option — a redirect mid-task throws people out of the app with
+no way back if they change their mind. Links use
+[`ProtectedLink`](components/molecules/ProtectedLink.tsx), which keeps its real
+`href` so middle-click and "open in new tab" still work; those land on
+`protectedRoute`, which remains the guard for direct navigation.
 
 ```mermaid
 sequenceDiagram

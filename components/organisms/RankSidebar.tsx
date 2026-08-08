@@ -1,8 +1,8 @@
 ﻿import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { useLeague } from "../../context/LeagueContext";
 import { useI18n } from "../../context/I18nContext";
 import RankListItem from "../molecules/RankListItem";
+import ProtectedLink from "../molecules/ProtectedLink";
 
 const COLLAPSE_KEY = "erick-market.rank-sidebar.collapsed";
 
@@ -110,22 +110,24 @@ const RankSidebar: React.FC = () => {
           {top10.length === 0 && (
             <li className="py-3 text-xs text-slate-600 dark:text-gray-400">
               {t("noScoresYet")}{" "}
-              <Link
+              <ProtectedLink
                 to="/league"
+                reason="league"
                 className="text-teal-700 dark:text-teal-400 hover:text-teal-300"
               >
                 {t("joinPlay")}
-              </Link>
+              </ProtectedLink>
             </li>
           )}
         </ol>
 
-        <Link
+        <ProtectedLink
           to="/league"
+          reason="league"
           className="mt-4 inline-block text-[11px] font-medium text-teal-700 dark:text-teal-400 hover:text-teal-300"
         >
           {t("fullLeague")}
-        </Link>
+        </ProtectedLink>
       </div>
     </aside>
   );

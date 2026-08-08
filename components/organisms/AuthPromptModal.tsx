@@ -32,6 +32,11 @@ const AuthPromptModal: React.FC = () => {
   if (!open) return null;
 
   const expired = reason === "sessionExpired";
+  const body = expired
+    ? t("sessionExpiredBody")
+    : reason === "league"
+      ? t("authPromptLeagueBody")
+      : t("authPromptTradeBody");
 
   return (
     <div
@@ -55,7 +60,7 @@ const AuthPromptModal: React.FC = () => {
           {expired ? t("sessionExpiredTitle") : t("loginRequiredTitle")}
         </h2>
         <p id={bodyId} className="mb-5 text-sm text-slate-300">
-          {expired ? t("sessionExpiredBody") : t("authPromptTradeBody")}
+          {body}
         </p>
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
           <button

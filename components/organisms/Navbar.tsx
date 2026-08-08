@@ -4,6 +4,7 @@ import { useStockContext } from "../../context/StockContext";
 import { useUser } from "../../context/UserContext";
 import { useI18n } from "../../context/I18nContext";
 import ThemeToggle from "../molecules/ThemeToggle";
+import ProtectedLink from "../molecules/ProtectedLink";
 
 const Navbar: React.FC = () => {
   const { state, dispatch } = useStockContext();
@@ -52,13 +53,14 @@ const Navbar: React.FC = () => {
                 </Link>
               </>
             )}
-            <Link
+            <ProtectedLink
               data-testid="League"
               to="/league"
+              reason="league"
               className="rounded-md px-3 py-2 text-sm font-medium text-teal-700 transition duration-300 hover:text-teal-500 dark:text-teal-300 dark:hover:text-teal-200"
             >
               {t("navPlay")}
-            </Link>
+            </ProtectedLink>
             {!isLoading && isAuthenticated && (
               <span className="hidden max-w-[8rem] truncate text-xs text-slate-600 dark:text-gray-400 sm:inline">
                 {displayName || auth?.email}

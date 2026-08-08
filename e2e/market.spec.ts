@@ -154,6 +154,27 @@ test("protects the league route for unauthenticated users", async ({
   ).toBeVisible();
 });
 
+// Clicking through to the league used to dump guests on the guard page with
+// no explanation. The guard still exists for direct navigation, but the link
+// asks first and leaves them where they were if they say no.
+test("asks before sending a guest to log in for the league", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  await page.getByTestId("League").click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(
+    dialog.getByRole("heading", { name: "Sign in to continue" }),
+  ).toBeVisible();
+
+  await dialog.getByRole("button", { name: "Not now" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page).toHaveURL(/#\/$|\/$/);
+});
+
 test("toggles theme and keeps the market usable on mobile", async ({
   page,
 }) => {

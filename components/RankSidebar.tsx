@@ -36,7 +36,7 @@ const RankSidebar: React.FC = () => {
   if (collapsed) {
     return (
       <aside
-        className="relative z-20 flex w-full shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 py-2 lg:w-10 lg:flex-col lg:justify-start lg:gap-3 lg:border-b-0 lg:border-l lg:border-slate-200 lg:px-1 lg:py-4 dark:border-gray-700 dark:bg-gray-900"
+        className="relative z-20 flex w-full shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 py-2 lg:h-full lg:w-10 lg:flex-col lg:justify-start lg:gap-3 lg:overflow-y-auto lg:border-b-0 lg:border-l lg:border-slate-200 lg:px-1 lg:py-4 dark:border-gray-700 dark:bg-gray-900"
         aria-label={t("top10")}
       >
         <button
@@ -62,10 +62,10 @@ const RankSidebar: React.FC = () => {
 
   return (
     <aside
-      className="relative z-20 w-full shrink-0 border-b border-slate-200 bg-white lg:w-56 lg:border-b-0 lg:border-l lg:border-slate-200 dark:border-gray-700 dark:bg-gray-900 lg:dark:border-gray-700"
+      className="relative z-20 w-full shrink-0 border-b border-slate-200 bg-white lg:flex lg:h-full lg:w-56 lg:flex-col lg:overflow-y-auto lg:border-b-0 lg:border-l lg:border-slate-200 dark:border-gray-700 dark:bg-gray-900 lg:dark:border-gray-700"
       aria-label={t("top10")}
     >
-      <div className="sticky top-16 p-3 sm:p-4">
+      <div className="p-3 sm:p-4">
         <div className="mb-3 flex items-baseline justify-between gap-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-400">
             {t("top10")}

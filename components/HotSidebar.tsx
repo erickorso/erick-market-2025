@@ -30,10 +30,10 @@ const HotSidebar: React.FC = () => {
 
   return (
     <aside
-      className="relative z-20 w-full shrink-0 border-b border-slate-200 bg-white lg:w-56 lg:border-b-0 lg:border-r lg:border-slate-200 dark:border-gray-700 dark:bg-gray-900 lg:dark:border-gray-700"
+      className="relative z-20 w-full shrink-0 border-b border-slate-200 bg-white lg:flex lg:h-full lg:w-56 lg:flex-col lg:overflow-y-auto lg:border-b-0 lg:border-r lg:border-slate-200 dark:border-gray-700 dark:bg-gray-900 lg:dark:border-gray-700"
       aria-label={t("hotNow")}
     >
-      <div className="sticky top-16 p-3 sm:p-4">
+      <div className="p-3 sm:p-4">
         <div className="mb-3 flex items-baseline justify-between gap-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-teal-400">
             {t("hotNow")}

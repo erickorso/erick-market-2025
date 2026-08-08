@@ -62,9 +62,6 @@ const AppShell: React.FC = () => {
           <RankSidebar />
         </div>
         <footer className="relative z-10 mt-auto border-t border-gray-700 bg-gray-800 px-4 py-5 text-center text-sm text-gray-500">
-          <p className="mx-auto mb-3 max-w-3xl text-left text-xs leading-relaxed text-gray-400 sm:text-center">
-            {t("disclaimer")}
-          </p>
           <p>
             © {year} Erick Stocks Simulator. {t("footerDemo")}
           </p>

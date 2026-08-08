@@ -85,12 +85,26 @@ const HotSidebar: React.FC = () => {
             <li className="py-4 text-xs text-gray-500">{t("hotLoading")}</li>
           )}
         </ol>
-        <p
-          className="mt-4 hidden border-t border-gray-800 pt-3 text-[10px] leading-relaxed text-gray-500 lg:block"
+        <div
+          className="mt-4 hidden items-start gap-2 border-t border-gray-800 pt-3 text-[10px] leading-relaxed text-gray-500 lg:flex"
           role="note"
         >
-          {t("disclaimer")}
-        </p>
+          <svg
+            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-500/80"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4" />
+            <path d="M12 8h.01" />
+          </svg>
+          <p>{t("disclaimer")}</p>
+        </div>
       </div>
     </aside>
   );

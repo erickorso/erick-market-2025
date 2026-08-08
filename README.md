@@ -353,19 +353,30 @@ Every push and pull request to `main` runs
 [the CI workflow](.github/workflows/ci.yml): typecheck, unit tests with
 coverage, build, and the Playwright suite on Chromium.
 
-Vitest runs two projects — API and service code in `node`, anything touching
-React in `jsdom` with Testing Library. 169 tests across:
+**589 unit tests in 60 files — one test file per source file**, and 88% line
+coverage. Vitest runs everything under `jsdom` with Testing Library; components
+render against the real i18n and theme providers, so tests assert on the
+strings users actually see.
 
-| Area | Covers |
-|------|--------|
-| [`stockReducer`](context/stockReducer.test.ts) | every action, including cost-basis averaging and the insufficient-funds guard |
-| [`useStockDetail`](hooks/useStockDetail.test.tsx) | that a polled catalog never retriggers the detail fetch |
-| [`useTradePanel`](hooks/useTradePanel.test.tsx) | quantity clamping, affordability, guest routing |
-| [`useFocusTrap`](hooks/useFocusTrap.test.tsx) | Tab containment and focus restore |
-| [`rateLimit`](api/_lib/rateLimit.test.ts) / [`http`](api/_lib/http.test.ts) | window edges, the CORS allowlist, lookalike hosts |
-| [`tradeValidation`](api/_lib/tradeValidation.test.ts) | trade input validation and mark-to-market equity |
-| services | quote merging, category parsing, detail mapping, month keys, ticker extraction |
-| components | TradePanel, StockCard, StockGrid, ErrorBoundary, the atoms |
+| Layer | Coverage | Notable cases |
+|-------|---------:|---------------|
+| atoms · molecules · templates | **100%** | formatting, variants, disabled states, aria wiring |
+| organisms | **99%** | the detail modal end to end, sidebars, guards, the sell form |
+| hooks | **96%** | debounced search, refresh loops, guest routing, focus trap |
+| context | **92%** | every reducer action, provider composition, token fallbacks |
+| services | **78%** | quote merging, detail mapping, API errors, ticker extraction |
+| api/_lib | **63%** | rate-limit window edges, CORS allowlist, middleware, logging |
+
+Three files are deliberately uncovered here: `api/_lib/store.ts` is SQL,
+exercised by the Neon integration suite; `ThreeDBackground.tsx` is a WebGL
+scene jsdom cannot render; and `pages/` are thin compositions covered by the
+Playwright specs.
+
+Some tests exist because a bug got through once —
+[`useStockDetail`](hooks/useStockDetail.test.tsx) asserts that a polled catalog
+never retriggers the detail fetch, and
+[`LeagueContext`](context/LeagueContext.test.tsx) asserts that a winner missing
+its figures cannot take the league page down.
 
 Run the full local verification with:
 

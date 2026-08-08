@@ -1,5 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { mergeLivePrices, parseCategory, tickStockPrices } from "./stockService";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  fetchStocks,
+  generateChartData,
+  mergeLivePrices,
+  parseCategory,
+  tickStockPrices,
+} from "./stockService";
 import type { EnrichedStock } from "../types";
 
 function stock(over: Partial<EnrichedStock> = {}): EnrichedStock {
@@ -122,5 +128,131 @@ describe("tickStockPrices", () => {
   it("moves prices by a small amount, not wildly", () => {
     const ticked = tickStockPrices([stock({ price: 100 })]);
     expect(Math.abs(ticked[0].price - 100)).toBeLessThan(20);
+  });
+});
+
+describe("generateChartData", () => {
+  it("produces a plottable series around the current price", () => {
+    const series = generateChartData(100);
+
+    expect(series.length).toBeGreaterThan(1);
+    series.forEach((p) => {
+      expect(p.price).toBeGreaterThan(0);
+      expect(typeof p.name).toBe("string");
+    });
+  });
+
+  it("ends at the price it was given", () => {
+    const series = generateChartData(123.45);
+    expect(series.at(-1)?.price).toBeCloseTo(123.45, 1);
+  });
+});
+
+describe("fetchStocks", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function ok(body: unknown) {
+    return { ok: true, json: async () => body } as Response;
+  }
+
+  const liveRow = {
+    symbol: "AAPL",
+    company: "Apple Inc.",
+    price: 190,
+    change: 2,
+    changePercent: 1.1,
+    tags: ["growth"],
+    chart: [{ name: "5/1", price: 188 }],
+    chartSource: "yahoo",
+  };
+
+  it("passes paging and filters to the API", async () => {
+    fetchMock.mockResolvedValue(ok({ stocks: [liveRow], source: "live" }));
+
+    await fetchStocks({ q: "aapl", category: "growth", offset: 20, limit: 5 });
+
+    const url = String(fetchMock.mock.calls[0][0]);
+    expect(url).toContain("q=aapl");
+    expect(url).toContain("category=growth");
+    expect(url).toContain("offset=20");
+    expect(url).toContain("limit=5");
+  });
+
+  it("omits an empty search and the default category", async () => {
+    fetchMock.mockResolvedValue(ok({ stocks: [liveRow], source: "live" }));
+
+    await fetchStocks({});
+
+    const url = String(fetchMock.mock.calls[0][0]);
+    expect(url).not.toContain("q=");
+    expect(url).not.toContain("category=");
+  });
+
+  it("normalises the live rows", async () => {
+    fetchMock.mockResolvedValue(
+      ok({ stocks: [liveRow], source: "live", total: 40, hasMore: true }),
+    );
+
+    const result = await fetchStocks({});
+
+    expect(result.source).toBe("live");
+    expect(result.total).toBe(40);
+    expect(result.hasMore).toBe(true);
+    expect(result.stocks[0].symbol).toBe("AAPL");
+    expect(result.stocks[0].price).toBe(190);
+  });
+
+  it("falls back to mock data when the API is unreachable", async () => {
+    fetchMock.mockRejectedValue(new Error("offline"));
+
+    const result = await fetchStocks({});
+
+    expect(result.source).toBe("mock");
+    expect(result.stocks.length).toBeGreaterThan(0);
+  });
+
+  it("falls back to mock data on an empty non-live response", async () => {
+    fetchMock.mockResolvedValue(ok({ stocks: [], source: "unavailable" }));
+
+    const result = await fetchStocks({});
+    expect(result.source).toBe("mock");
+  });
+
+  it("trusts an empty page that the API says is live", async () => {
+    fetchMock.mockResolvedValue(ok({ stocks: [], source: "live", total: 0 }));
+
+    const result = await fetchStocks({});
+    expect(result.source).toBe("live");
+    expect(result.stocks).toEqual([]);
+  });
+
+  it("filters the mock catalog by search term", async () => {
+    fetchMock.mockRejectedValue(new Error("offline"));
+
+    const result = await fetchStocks({ q: "AAPL" });
+
+    expect(result.stocks.length).toBeGreaterThan(0);
+    result.stocks.forEach((s) =>
+      expect(`${s.symbol} ${s.company}`.toLowerCase()).toContain("aapl"),
+    );
+  });
+
+  it("pages the mock catalog", async () => {
+    fetchMock.mockRejectedValue(new Error("offline"));
+
+    const first = await fetchStocks({ offset: 0, limit: 2 });
+    const second = await fetchStocks({ offset: 2, limit: 2 });
+
+    expect(first.stocks).toHaveLength(2);
+    expect(second.stocks[0].id).not.toBe(first.stocks[0].id);
   });
 });

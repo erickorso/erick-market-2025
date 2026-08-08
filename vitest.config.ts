@@ -1,43 +1,40 @@
 import { defineConfig } from "vitest/config";
 
 /**
- * Two projects: API/service code runs in node, everything that touches React
- * runs in jsdom with Testing Library's cleanup wired up.
+ * One project, jsdom everywhere.
+ *
+ * Splitting node and jsdom into two projects made each of them instrument the
+ * whole `coverage.include` set, so every file was reported twice — once with
+ * its real numbers and once at 0% from the project that never loaded it. The
+ * API and service suites are pure functions plus stubbed fetch, so they run
+ * happily under jsdom and the report comes out correct.
  */
 export default defineConfig({
   test: {
+    environment: "jsdom",
+    setupFiles: ["./test/setup.ts"],
+    include: [
+      "api/**/*.test.ts",
+      "services/**/*.test.ts",
+      "context/**/*.test.{ts,tsx}",
+      "hooks/**/*.test.{ts,tsx}",
+      "components/**/*.test.tsx",
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
       include: [
-        "components/**/*.tsx",
-        "context/**/*.ts",
-        "hooks/**/*.ts",
+        "components/**/*.{ts,tsx}",
+        "context/**/*.{ts,tsx}",
+        "hooks/**/*.{ts,tsx}",
         "services/**/*.ts",
         "api/_lib/**/*.ts",
       ],
-      exclude: ["**/*.test.*", "components/organisms/ThreeDBackground.tsx"],
+      exclude: [
+        "**/*.test.*",
+        // Three.js scene: no logic worth asserting, and jsdom has no WebGL.
+        "components/organisms/ThreeDBackground.tsx",
+      ],
     },
-    projects: [
-      {
-        test: {
-          name: "node",
-          environment: "node",
-          include: ["api/**/*.test.ts", "services/**/*.test.ts"],
-        },
-      },
-      {
-        test: {
-          name: "dom",
-          environment: "jsdom",
-          setupFiles: ["./test/setup.ts"],
-          include: [
-            "components/**/*.test.tsx",
-            "hooks/**/*.test.{ts,tsx}",
-            "context/**/*.test.{ts,tsx}",
-          ],
-        },
-      },
-    ],
   },
 });

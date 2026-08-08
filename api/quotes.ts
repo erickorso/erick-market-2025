@@ -66,6 +66,7 @@ function fallbackQuote(symbol: string, company: string): QuoteRow {
 
 const WATCHLIST: WatchItem[] = [
   { symbol: "AAPL", company: "Apple", tags: ["long-term", "blue-chip", "growth"] },
+  { symbol: "MSFT", company: "Microsoft", tags: ["long-term", "blue-chip", "growth"] },
   { symbol: "GOOGL", company: "Alphabet", tags: ["long-term", "blue-chip", "growth"] },
   { symbol: "AMZN", company: "Amazon", tags: ["long-term", "growth", "volatile"] },
   { symbol: "NVDA", company: "NVIDIA", tags: ["growth", "short-term", "volatile"] },
@@ -86,6 +87,7 @@ const WATCHLIST: WatchItem[] = [
   { symbol: "COST", company: "Costco", tags: ["long-term", "blue-chip", "growth"] },
   { symbol: "AVGO", company: "Broadcom", tags: ["growth", "dividend", "volatile"] },
   { symbol: "CRM", company: "Salesforce", tags: ["growth", "short-term"] },
+  { symbol: "NFLX", company: "Netflix", tags: ["growth", "volatile", "short-term"] },
   { symbol: "AMD", company: "AMD", tags: ["growth", "volatile", "short-term"] },
   { symbol: "INTC", company: "Intel", tags: ["volatile", "short-term", "dividend"] },
   { symbol: "ORCL", company: "Oracle", tags: ["blue-chip", "growth", "dividend"] },
@@ -315,7 +317,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ? b.changePercent - a.changePercent
           : a.changePercent - b.changePercent,
       );
-      const total = quotes.length;
+      const total = filtered.length;
       const page = await withCharts(quotes.slice(offset, offset + limit));
       res.status(200).json({
         stocks: page.map(mapStock),

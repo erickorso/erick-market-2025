@@ -31,3 +31,4 @@ dist-ssr
 test-results
 playwright-report
 playwright/.auth
+coverage

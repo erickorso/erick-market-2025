@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { useI18n } from "../../context/I18nContext";
 
@@ -74,18 +74,5 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({
 export function protectedRoute(element: React.ReactNode) {
   return <RequireAuth>{element}</RequireAuth>;
 }
-
-/** Optional: redirect guests to home instead of login panel */
-export const RequireAuthRedirect: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const { isLoading, isAuthenticated } = useUser();
-  const location = useLocation();
-  if (isLoading) return null;
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace state={{ from: location }} />;
-  }
-  return <>{children}</>;
-};
 
 export default RequireAuth;

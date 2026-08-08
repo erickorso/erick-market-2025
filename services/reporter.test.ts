@@ -65,6 +65,21 @@ describe("setErrorSink", () => {
     expect(sink).not.toHaveBeenCalled();
     expect(second).toHaveBeenCalledTimes(1);
   });
+
+  it("defaults to one parseable console line, which devtools and drains read", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    // Re-import so the module-level default sink is the one in play.
+    vi.resetModules();
+    const fresh = await import("./reporter");
+
+    fresh.reportError(new Error("boom"), "boundary:root");
+
+    expect(error).toHaveBeenCalledWith(
+      "[client-error]",
+      expect.stringContaining("boundary:root"),
+    );
+    expect(() => JSON.parse(error.mock.calls[0][1] as string)).not.toThrow();
+  });
 });
 
 describe("installGlobalErrorHandlers", () => {

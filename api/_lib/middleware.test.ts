@@ -204,4 +204,49 @@ describe("withPublic", () => {
 
     expect(spy.status).toHaveBeenCalledWith(500);
   });
+
+  it("refuses to run without a database", async () => {
+    dbConfigured.mockReturnValue(false);
+    const handler = vi.fn();
+    const { res, spy } = mockRes();
+
+    await withPublic(handler)(mockReq(), res);
+
+    expect(spy.status).toHaveBeenCalledWith(503);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("rejects once the public budget is spent", async () => {
+    const handler = vi.fn();
+    const wrapped = withPublic(handler);
+
+    for (let i = 0; i < 120; i++) await wrapped(mockReq(), mockRes().res);
+    handler.mockClear();
+
+    const { res, spy } = mockRes();
+    await wrapped(mockReq(), res);
+
+    expect(spy.status).toHaveBeenCalledWith(429);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("logs each request", async () => {
+    const { res } = mockRes();
+    await withPublic(vi.fn())(mockReq(), res);
+
+    expect(console.log).toHaveBeenCalledTimes(1);
+  });
+
+  it("carries the CORS headers too", async () => {
+    const { res, headers } = mockRes();
+
+    await withPublic(vi.fn())(
+      mockReq({ headers: { origin: "http://localhost:5173" } }),
+      res,
+    );
+
+    expect(headers["Access-Control-Allow-Origin"]).toBe(
+      "http://localhost:5173",
+    );
+  });
 });

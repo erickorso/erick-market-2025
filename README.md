@@ -353,24 +353,27 @@ Every push and pull request to `main` runs
 [the CI workflow](.github/workflows/ci.yml): typecheck, unit tests with
 coverage, build, and the Playwright suite on Chromium.
 
-**589 unit tests in 60 files — one test file per source file**, and 88% line
-coverage. Vitest runs everything under `jsdom` with Testing Library; components
-render against the real i18n and theme providers, so tests assert on the
-strings users actually see.
+**686 unit tests in 61 files — one test file per source file**, at **97.5% line
+coverage**. Vitest runs everything under `jsdom` with Testing Library;
+components render against the real i18n and theme providers, so tests assert on
+the strings users actually see.
 
 | Layer | Coverage | Notable cases |
 |-------|---------:|---------------|
+| api/_lib | **100%** | the trade CTE's guards, JWT claims, rate-limit window edges, CORS allowlist |
 | atoms · molecules · templates | **100%** | formatting, variants, disabled states, aria wiring |
-| organisms | **99%** | the detail modal end to end, sidebars, guards, the sell form |
+| organisms | **99%** | the detail modal end to end, sidebars, route guards, the sell form |
+| services | **99%** | quote merging, detail mapping, API errors, the offline league fallback |
 | hooks | **96%** | debounced search, refresh loops, guest routing, focus trap |
 | context | **92%** | every reducer action, provider composition, token fallbacks |
-| services | **78%** | quote merging, detail mapping, API errors, ticker extraction |
-| api/_lib | **63%** | rate-limit window edges, CORS allowlist, middleware, logging |
 
-Three files are deliberately uncovered here: `api/_lib/store.ts` is SQL,
-exercised by the Neon integration suite; `ThreeDBackground.tsx` is a WebGL
-scene jsdom cannot render; and `pages/` are thin compositions covered by the
-Playwright specs.
+`store.ts` is unit-tested against a stubbed Neon tagged template — the mapping
+and the money guards, including that a buy the cash cannot cover and a sell of
+more shares than are held both fail — while the Neon integration suite covers
+the SQL itself, concurrency included.
+
+Two things stay out: `ThreeDBackground.tsx` is a WebGL scene jsdom cannot
+render, and `pages/` are thin compositions covered by the Playwright specs.
 
 Some tests exist because a bug got through once —
 [`useStockDetail`](hooks/useStockDetail.test.tsx) asserts that a polled catalog

@@ -149,4 +149,116 @@ describe("fetchStockDetail", () => {
     const detail = await fetchStockDetail("AAPL");
     expect(detail.source).toBe("mock");
   });
+
+  it("keeps finnhub candles labelled as such", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse({
+          symbol: "AAPL",
+          chartSource: "finnhub",
+          chart: [{ name: "5/1", price: 190 }],
+          quote: { price: 190, change: 0, changePercent: 0 },
+        }),
+      ),
+    );
+
+    const detail = await fetchStockDetail("AAPL");
+    expect(detail.chartSource).toBe("finnhub");
+  });
+
+  it("normalises the provider's live label to yahoo", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse({
+          symbol: "AAPL",
+          chartSource: "live",
+          chart: [{ name: "5/1", price: 190 }],
+          quote: { price: 190, change: 0, changePercent: 0 },
+        }),
+      ),
+    );
+
+    const detail = await fetchStockDetail("AAPL");
+    expect(detail.chartSource).toBe("yahoo");
+  });
+
+  it("synthesises a quote when the payload omits one", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse({ symbol: "AAPL", company: "Apple" })),
+    );
+
+    const detail = await fetchStockDetail("AAPL");
+
+    expect(detail.quote.price).toBe(0);
+    expect(detail.quote.high).toBeNull();
+    expect(detail.quote.previousClose).toBeNull();
+  });
+
+  it("falls back to the requested symbol when the payload omits it", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse({ quote: { price: 1, change: 0, changePercent: 0 } }),
+      ),
+    );
+
+    const detail = await fetchStockDetail("aapl");
+
+    expect(detail.symbol).toBe("AAPL");
+    expect(detail.company).toBe("AAPL");
+  });
+
+  it("defaults an absent profile to nulls rather than undefined", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse({
+          symbol: "ZZZZ",
+          quote: { price: 1, change: 0, changePercent: 0 },
+        }),
+      ),
+    );
+
+    const detail = await fetchStockDetail("ZZZZ");
+
+    expect(detail.profile.exchange).toBeNull();
+    expect(detail.profile.marketCap).toBeNull();
+    expect(detail.profile.currency).toBe("USD");
+    // Not on the watchlist, so there is no site to backfill either.
+    expect(detail.profile.weburl).toBeNull();
+  });
+
+  it("defaults the tags to an empty list", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse({
+          symbol: "AAPL",
+          quote: { price: 1, change: 0, changePercent: 0 },
+        }),
+      ),
+    );
+
+    expect((await fetchStockDetail("AAPL")).tags).toEqual([]);
+  });
+
+  it("seeds the mock company and tags from the catalog row", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("offline");
+      }),
+    );
+
+    const detail = await fetchStockDetail("ZZZZ", {
+      company: "Mystery Co",
+      tags: ["growth"],
+    });
+
+    expect(detail.company).toBe("Mystery Co");
+    expect(detail.tags).toEqual(["growth"]);
+  });
 });

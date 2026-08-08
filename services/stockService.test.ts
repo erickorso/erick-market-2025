@@ -255,4 +255,147 @@ describe("fetchStocks", () => {
     expect(first.stocks).toHaveLength(2);
     expect(second.stocks[0].id).not.toBe(first.stocks[0].id);
   });
+
+  it("filters the mock catalog by category", async () => {
+    fetchMock.mockRejectedValue(new Error("offline"));
+
+    const result = await fetchStocks({ category: "dividend", limit: 50 });
+
+    expect(result.stocks.length).toBeGreaterThan(0);
+    result.stocks.forEach((s) => expect(s.tags).toContain("dividend"));
+  });
+
+  it("sorts day gainers best first", async () => {
+    fetchMock.mockRejectedValue(new Error("offline"));
+
+    const { stocks } = await fetchStocks({ category: "gainers", limit: 10 });
+    const changes = stocks.map((s) => s.changePercent ?? 0);
+
+    expect([...changes].sort((a, b) => b - a)).toEqual(changes);
+  });
+
+  it("sorts day losers worst first", async () => {
+    fetchMock.mockRejectedValue(new Error("offline"));
+
+    const { stocks } = await fetchStocks({ category: "losers", limit: 10 });
+    const changes = stocks.map((s) => s.changePercent ?? 0);
+
+    expect([...changes].sort((a, b) => a - b)).toEqual(changes);
+  });
+
+  it("labels the mock rows as simulated", async () => {
+    fetchMock.mockRejectedValue(new Error("offline"));
+
+    const { stocks } = await fetchStocks({ limit: 3 });
+    stocks.forEach((s) => expect(s.chartSource).toBe("simulated"));
+  });
+});
+
+describe("row normalisation", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function live(row: Record<string, unknown>) {
+    return {
+      ok: true,
+      json: async () => ({ stocks: [row], source: "live" }),
+    } as Response;
+  }
+
+  it("appends the ticker to the company label", async () => {
+    fetchMock.mockResolvedValue(
+      live({ symbol: "AAPL", company: "Apple Inc.", price: 190 }),
+    );
+
+    const { stocks } = await fetchStocks({});
+    expect(stocks[0].company).toBe("Apple Inc. (AAPL)");
+  });
+
+  it("leaves the label alone when there is no ticker", async () => {
+    fetchMock.mockResolvedValue(live({ company: "Mystery Co", price: 1 }));
+
+    const { stocks } = await fetchStocks({});
+    expect(stocks[0].company).toBe("Mystery Co");
+  });
+
+  it("coerces a price sent as a string", async () => {
+    fetchMock.mockResolvedValue(
+      live({ symbol: "AAPL", company: "Apple", price: "190.50" }),
+    );
+
+    expect((await fetchStocks({})).stocks[0].price).toBe(190.5);
+  });
+
+  it("keeps a real series and its provenance", async () => {
+    fetchMock.mockResolvedValue(
+      live({
+        symbol: "AAPL",
+        company: "Apple",
+        price: 190,
+        chart: [
+          { name: "5/1", price: 188 },
+          { name: "5/2", price: 190 },
+        ],
+        chartSource: "yahoo",
+      }),
+    );
+
+    const { stocks } = await fetchStocks({});
+
+    expect(stocks[0].chartSource).toBe("yahoo");
+    expect(stocks[0].chartData).toHaveLength(2);
+  });
+
+  it("normalises a live-labelled series to yahoo", async () => {
+    fetchMock.mockResolvedValue(
+      live({
+        symbol: "AAPL",
+        company: "Apple",
+        price: 190,
+        chart: [
+          { name: "5/1", price: 188 },
+          { name: "5/2", price: 190 },
+        ],
+        chartSource: "live",
+      }),
+    );
+
+    expect((await fetchStocks({})).stocks[0].chartSource).toBe("yahoo");
+  });
+
+  it("simulates a series when the row carries only one point", async () => {
+    fetchMock.mockResolvedValue(
+      live({
+        symbol: "AAPL",
+        company: "Apple",
+        price: 190,
+        chart: [{ name: "5/1", price: 188 }],
+        chartSource: "yahoo",
+      }),
+    );
+
+    const { stocks } = await fetchStocks({});
+
+    expect(stocks[0].chartSource).toBe("simulated");
+    expect(stocks[0].chartData.length).toBeGreaterThan(1);
+  });
+
+  it("simulates a series when the row carries none", async () => {
+    fetchMock.mockResolvedValue(
+      live({ symbol: "AAPL", company: "Apple", price: 190 }),
+    );
+
+    const { stocks } = await fetchStocks({});
+
+    expect(stocks[0].chartSource).toBe("simulated");
+    expect(stocks[0].chartData.length).toBeGreaterThan(1);
+  });
 });

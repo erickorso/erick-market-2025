@@ -150,28 +150,27 @@ async function fetchOne(
   const cached = quoteCache.get(symbol);
   if (cached && Date.now() - cached.at < QUOTE_TTL_MS) return cached.quote;
   const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(token)}`;
-  let res: Response;
   try {
-    res = await fetch(url);
+    const res = await fetch(url);
+    if (!res.ok) return fallbackQuote(symbol, company);
+    const data = (await res.json()) as FinnhubQuote;
+    const price = typeof data.c === "number" ? data.c : 0;
+    if (!price || price <= 0) return fallbackQuote(symbol, company);
+    const item = WATCHLIST.find((w) => w.symbol === symbol);
+    const quote: QuoteRow = {
+      symbol,
+      company,
+      price,
+      change: typeof data.d === "number" ? data.d : 0,
+      changePercent: typeof data.dp === "number" ? data.dp : 0,
+      tags: item?.tags ?? [],
+      quoteSource: "live",
+    };
+    quoteCache.set(symbol, { at: Date.now(), quote });
+    return quote;
   } catch {
     return fallbackQuote(symbol, company);
   }
-  if (!res.ok) return fallbackQuote(symbol, company);
-  const data = (await res.json()) as FinnhubQuote;
-  const price = typeof data.c === "number" ? data.c : 0;
-  if (!price || price <= 0) return fallbackQuote(symbol, company);
-  const item = WATCHLIST.find((w) => w.symbol === symbol);
-  const quote: QuoteRow = {
-    symbol,
-    company,
-    price,
-    change: typeof data.d === "number" ? data.d : 0,
-    changePercent: typeof data.dp === "number" ? data.dp : 0,
-    tags: item?.tags ?? [],
-    quoteSource: "live",
-  };
-  quoteCache.set(symbol, { at: Date.now(), quote });
-  return quote;
 }
 
 async function fetchMany(items: WatchItem[], token: string, concurrency = 5) {

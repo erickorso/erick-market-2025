@@ -25,23 +25,8 @@ async function getHandler(req: VercelRequest, res: VercelResponse) {
 }
 
 const postHandler = withAuth(async (req, res, { user }) => {
-  const body = (typeof req.body === "string"
-    ? JSON.parse(req.body)
-    : req.body) as {
-    equity?: number;
-    cash?: number;
-    invested?: number;
-    pnl?: number;
-    pnlPercent?: number;
-  };
-  await upsertLeagueScore({
-    userId: user.id,
-    equity: Number(body.equity ?? 0),
-    cash: Number(body.cash ?? 0),
-    invested: Number(body.invested ?? 0),
-    pnl: Number(body.pnl ?? 0),
-    pnlPct: Number(body.pnlPercent ?? 0),
-  });
+  // Body ignored — score is recalculated server-side from portfolio + live prices.
+  await upsertLeagueScore({ userId: user.id });
   const board = await getLeagueBoard();
   res.status(200).json(board);
 });

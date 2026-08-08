@@ -1,5 +1,6 @@
 import { withAuth } from "./_lib/middleware.js";
 import { executeTrade } from "./_lib/store.js";
+import { parseTradeInput } from "./_lib/tradeValidation.js";
 
 export default withAuth(async (req, res, { user }) => {
   if (req.method !== "POST") {
@@ -9,28 +10,12 @@ export default withAuth(async (req, res, { user }) => {
 
   const body = (typeof req.body === "string"
     ? JSON.parse(req.body)
-    : req.body) as {
-    side?: string;
-    symbol?: string;
-    company?: string;
-    qty?: number;
-    price?: number;
-  };
+    : req.body) as Record<string, unknown>;
 
-  const side =
-    body.side === "sell" ? "sell" : body.side === "buy" ? "buy" : null;
-  if (!side || !body.symbol) {
-    res.status(400).json({ error: "side and symbol required" });
-    return;
-  }
-
+  const trade = parseTradeInput(body);
   const portfolio = await executeTrade({
     userId: user.id,
-    side,
-    symbol: body.symbol,
-    company: body.company?.trim() || body.symbol,
-    qty: Number(body.qty),
-    price: Number(body.price),
+    ...trade,
   });
   res.status(200).json(portfolio);
 });

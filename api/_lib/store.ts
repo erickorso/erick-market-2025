@@ -1,6 +1,11 @@
 import type { AuthUser } from "./auth.js";
 import { getSql } from "./db.js";
 import { INITIAL_FUND, currentMonthKey, previousMonthKey } from "./month.js";
+import { fetchLivePrices } from "./prices.js";
+import {
+  computeEquityFromBooks,
+  parseTradeInput,
+} from "./tradeValidation.js";
 
 export type DbUser = {
   id: string;
@@ -131,91 +136,113 @@ export async function executeTrade(input: {
   qty: number;
   price: number;
 }): Promise<PortfolioPayload> {
+  const trade = parseTradeInput(input);
   const sql = getSql();
   const month = currentMonthKey();
   await ensurePortfolio(input.userId);
 
-  const symbol = input.symbol.toUpperCase().trim();
-  const qty = input.qty;
-  const price = input.price;
-  if (!symbol || !Number.isFinite(qty) || qty <= 0) {
-    throw Object.assign(new Error("Invalid quantity"), { status: 400 });
-  }
-  if (!Number.isFinite(price) || price <= 0) {
-    throw Object.assign(new Error("Invalid price"), { status: 400 });
-  }
-
-  const portfolio = await loadPortfolio(input.userId, month);
+  const { symbol, company, qty, price, side } = trade;
   const cost = qty * price;
 
-  if (input.side === "buy") {
-    if (portfolio.cash < cost) {
+  if (side === "buy") {
+    // Single statement: if cash UPDATE matches 0 rows, CTE chain inserts nothing.
+    const rows = await sql`
+      WITH paid AS (
+        UPDATE portfolios
+        SET cash = cash - ${cost}, updated_at = now()
+        WHERE user_id = ${input.userId}
+          AND month = ${month}
+          AND cash >= ${cost}
+        RETURNING user_id
+      ),
+      pos AS (
+        INSERT INTO positions (user_id, symbol, month, company, qty, avg_cost)
+        SELECT ${input.userId}, ${symbol}, ${month}, ${company}, ${qty}, ${price}
+        FROM paid
+        ON CONFLICT (user_id, symbol, month) DO UPDATE SET
+          company = EXCLUDED.company,
+          qty = positions.qty + EXCLUDED.qty,
+          avg_cost = (
+            (positions.avg_cost * positions.qty)
+            + (EXCLUDED.avg_cost * EXCLUDED.qty)
+          ) / NULLIF(positions.qty + EXCLUDED.qty, 0)
+        RETURNING user_id
+      ),
+      led AS (
+        INSERT INTO trades (user_id, month, symbol, side, qty, price)
+        SELECT ${input.userId}, ${month}, ${symbol}, ${side}, ${qty}, ${price}
+        FROM paid
+        RETURNING id
+      )
+      SELECT user_id FROM paid
+    `;
+    if (!rows.length) {
       throw Object.assign(new Error("Insufficient funds"), { status: 400 });
     }
-    const existing = portfolio.positions.find((p) => p.symbol === symbol);
-    const newQty = (existing?.qty ?? 0) + qty;
-    const newAvg = existing
-      ? (existing.avg_cost * existing.qty + cost) / newQty
-      : price;
-
-    await sql`
-      UPDATE portfolios SET cash = cash - ${cost}, updated_at = now()
-      WHERE user_id = ${input.userId} AND month = ${month}
-    `;
-    await sql`
-      INSERT INTO positions (user_id, symbol, month, company, qty, avg_cost)
-      VALUES (${input.userId}, ${symbol}, ${month}, ${input.company}, ${newQty}, ${newAvg})
-      ON CONFLICT (user_id, symbol, month) DO UPDATE SET
-        company = EXCLUDED.company,
-        qty = EXCLUDED.qty,
-        avg_cost = EXCLUDED.avg_cost
-    `;
   } else {
-    const existing = portfolio.positions.find((p) => p.symbol === symbol);
-    if (!existing || existing.qty < qty) {
+    const rows = await sql`
+      WITH sold AS (
+        UPDATE positions
+        SET qty = qty - ${qty}
+        WHERE user_id = ${input.userId}
+          AND symbol = ${symbol}
+          AND month = ${month}
+          AND qty >= ${qty}
+        RETURNING user_id, qty
+      ),
+      cleaned AS (
+        DELETE FROM positions
+        WHERE user_id = ${input.userId}
+          AND symbol = ${symbol}
+          AND month = ${month}
+          AND qty <= 1e-9
+          AND EXISTS (SELECT 1 FROM sold)
+        RETURNING user_id
+      ),
+      paid AS (
+        UPDATE portfolios
+        SET cash = cash + ${cost}, updated_at = now()
+        WHERE user_id = ${input.userId}
+          AND month = ${month}
+          AND EXISTS (SELECT 1 FROM sold)
+        RETURNING user_id
+      ),
+      led AS (
+        INSERT INTO trades (user_id, month, symbol, side, qty, price)
+        SELECT ${input.userId}, ${month}, ${symbol}, ${side}, ${qty}, ${price}
+        FROM sold
+        RETURNING id
+      )
+      SELECT user_id FROM sold
+    `;
+    if (!rows.length) {
       throw Object.assign(new Error("Not enough shares"), { status: 400 });
     }
-    const remaining = existing.qty - qty;
-    await sql`
-      UPDATE portfolios SET cash = cash + ${cost}, updated_at = now()
-      WHERE user_id = ${input.userId} AND month = ${month}
-    `;
-    if (remaining <= 1e-9) {
-      await sql`
-        DELETE FROM positions
-        WHERE user_id = ${input.userId} AND symbol = ${symbol} AND month = ${month}
-      `;
-    } else {
-      await sql`
-        UPDATE positions SET qty = ${remaining}
-        WHERE user_id = ${input.userId} AND symbol = ${symbol} AND month = ${month}
-      `;
-    }
   }
-
-  await sql`
-    INSERT INTO trades (user_id, month, symbol, side, qty, price)
-    VALUES (${input.userId}, ${month}, ${symbol}, ${input.side}, ${qty}, ${price})
-  `;
 
   return loadPortfolio(input.userId, month);
 }
 
-export async function upsertLeagueScore(input: {
-  userId: string;
-  equity: number;
-  cash: number;
-  invested: number;
-  pnl: number;
-  pnlPct: number;
-}) {
+export async function syncLeagueScoreFromPortfolio(userId: string) {
   const sql = getSql();
   const month = currentMonthKey();
+  const portfolio = await ensurePortfolio(userId);
+  const prices = await fetchLivePrices(
+    portfolio.positions.map((p) => p.symbol),
+    process.env.FINNHUB_API_KEY,
+  );
+
+  const marked = portfolio.positions.map((p) => ({
+    qty: p.qty,
+    price: prices.get(p.symbol.toUpperCase()) ?? p.avg_cost,
+  }));
+  const score = computeEquityFromBooks(portfolio.cash, marked, INITIAL_FUND);
+
   await sql`
     INSERT INTO league_scores (user_id, month, equity, cash, invested, pnl, pnl_pct, updated_at)
     VALUES (
-      ${input.userId}, ${month}, ${input.equity}, ${input.cash},
-      ${input.invested}, ${input.pnl}, ${input.pnlPct}, now()
+      ${userId}, ${month}, ${score.equity}, ${score.cash},
+      ${score.invested}, ${score.pnl}, ${score.pnlPct}, now()
     )
     ON CONFLICT (user_id, month) DO UPDATE SET
       equity = EXCLUDED.equity,
@@ -225,6 +252,19 @@ export async function upsertLeagueScore(input: {
       pnl_pct = EXCLUDED.pnl_pct,
       updated_at = now()
   `;
+  return score;
+}
+
+/** @deprecated Prefer syncLeagueScoreFromPortfolio — ignores client numbers. */
+export async function upsertLeagueScore(input: {
+  userId: string;
+  equity?: number;
+  cash?: number;
+  invested?: number;
+  pnl?: number;
+  pnlPct?: number;
+}) {
+  return syncLeagueScoreFromPortfolio(input.userId);
 }
 
 export async function getLeagueBoard(month = currentMonthKey()) {

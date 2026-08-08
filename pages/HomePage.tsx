@@ -2,7 +2,8 @@ import React, { Suspense } from "react";
 import StockCard from "../components/StockCard";
 import CategoryFilter from "../components/CategoryFilter";
 import { useStockContext } from "../context/StockContext";
-import { CATEGORIES } from "../services/stockService";
+import { useI18n } from "../context/I18nContext";
+import type { MsgKey } from "../i18n/locales";
 
 const ThreeDBackground = React.lazy(
   () => import("../components/ThreeDBackground"),
@@ -10,6 +11,7 @@ const ThreeDBackground = React.lazy(
 
 const HomePage: React.FC = () => {
   const { state, fetchStocks, loadMore } = useStockContext();
+  const { t } = useI18n();
   const {
     allStocks,
     isLoading,
@@ -22,8 +24,10 @@ const HomePage: React.FC = () => {
     total,
   } = state;
 
-  const categoryLabel =
-    CATEGORIES.find((c) => c.id === category)?.label ?? "All";
+  const catLabel =
+    category === "all"
+      ? ""
+      : t(`cat_${category.replace(/-/g, "_")}` as MsgKey);
 
   if (isLoading) {
     return (
@@ -31,7 +35,7 @@ const HomePage: React.FC = () => {
         <div
           className="h-16 w-16 animate-spin rounded-full border-t-2 border-b-2 border-teal-500"
           role="status"
-          aria-label="Loading stocks"
+          aria-label={t("loading")}
         />
       </div>
     );
@@ -44,13 +48,15 @@ const HomePage: React.FC = () => {
           <ThreeDBackground />
         </Suspense>
         <div className="relative z-10 p-8 text-center">
-          <p className="mb-4 text-xl text-red-400">Error loading stocks: {error}</p>
+          <p className="mb-4 text-xl text-red-400">
+            {t("errorLoading")} {error}
+          </p>
           <button
             type="button"
             onClick={() => void fetchStocks()}
             className="rounded-lg bg-teal-500 px-4 py-2 font-semibold text-white hover:bg-teal-600"
           >
-            Retry
+            {t("retry")}
           </button>
         </div>
       </>
@@ -66,23 +72,23 @@ const HomePage: React.FC = () => {
         <div className="mb-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-teal-400 sm:text-4xl">
-              Available Stocks
+              {t("availableStocks")}
             </h1>
             <p className="mt-1 text-sm text-gray-400">
-              Showing {allStocks.length}
-              {total > 0 ? ` of ${total}` : ""}
-              {category !== "all" ? ` · ${categoryLabel}` : ""}
+              {t("showing")} {allStocks.length}
+              {total > 0 ? ` ${t("of")} ${total}` : ""}
+              {catLabel ? ` · ${catLabel}` : ""}
               {searchTerm ? ` · “${searchTerm}”` : ""}
             </p>
           </div>
           {dataSource === "live" && (
             <span className="rounded-full bg-teal-500/20 px-3 py-1 text-xs font-medium text-teal-300">
-              Finnhub · live · page 10
+              {t("liveBadge")}
             </span>
           )}
           {dataSource === "mock" && (
             <span className="rounded-full bg-slate-500/20 px-3 py-1 text-xs font-medium text-slate-300">
-              Mock data · page 10
+              {t("mockBadge")}
             </span>
           )}
         </div>
@@ -91,7 +97,7 @@ const HomePage: React.FC = () => {
 
         {allStocks.length === 0 ? (
           <div className="p-8 text-center text-xl text-gray-400">
-            No stocks found matching your criteria.
+            {t("noStocks")}
           </div>
         ) : (
           <>
@@ -109,7 +115,7 @@ const HomePage: React.FC = () => {
                   className="rounded-lg bg-teal-500 px-6 py-2.5 font-semibold text-white hover:bg-teal-600 disabled:cursor-wait disabled:opacity-60"
                   aria-busy={isLoadingMore}
                 >
-                  {isLoadingMore ? "Loading…" : "Load more"}
+                  {isLoadingMore ? t("loading") : t("loadMore")}
                 </button>
               </div>
             )}

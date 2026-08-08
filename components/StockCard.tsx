@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { EnrichedStock } from "../types";
 import { useStockContext } from "../context/StockContext";
 import { useLeague } from "../context/LeagueContext";
+import { useI18n } from "../context/I18nContext";
 import StockChart from "./Chart";
-import { UI } from "../constants";
 
 interface StockCardProps {
   stock: EnrichedStock;
@@ -13,7 +13,8 @@ interface StockCardProps {
 const StockCard: React.FC<StockCardProps> = ({ stock }) => {
   const { dispatch, state } = useStockContext();
   const { player } = useLeague();
-  const [quantity, setQuantity] = useState<number>(1);
+  const { t } = useI18n();
+  const [quantity, setQuantity] = useState(1);
 
   const symbol =
     stock.symbol ??
@@ -41,7 +42,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
           type="button"
           onClick={openDetail}
           className="mb-2 w-full text-left"
-          aria-label={`Open detail for ${stock.company}`}
+          aria-label={`${t("openDetail")} ${stock.company}`}
         >
           <h3
             data-testid={stock.company}
@@ -50,7 +51,9 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
           >
             {stock.company}
           </h3>
-          <p className="text-2xl font-bold text-gray-100">${stock.price.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-gray-100">
+            ${stock.price.toFixed(2)}
+          </p>
           {typeof stock.changePercent === "number" && (
             <p
               className={`text-sm font-medium ${
@@ -58,7 +61,8 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
               }`}
             >
               {stock.changePercent >= 0 ? "+" : ""}
-              {stock.changePercent.toFixed(2)}% today
+              {stock.changePercent.toFixed(2)}
+              {t("todayPct")}
             </p>
           )}
         </button>
@@ -78,14 +82,14 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
 
         <p className="mb-1 text-xs text-gray-500">
           {stock.chartSource === "yahoo" || stock.chartSource === "finnhub"
-            ? "Daily closes · live history"
-            : "Sparkline · simulated"}
+            ? t("chartLive")
+            : t("chartSim")}
         </p>
         <button
           type="button"
           onClick={openDetail}
           className="mb-4 h-48 w-full text-left"
-          aria-label={`View chart detail for ${symbol}`}
+          aria-label={`${t("viewChartDetail")} ${symbol}`}
         >
           <StockChart data={stock.chartData} lineColor="#2dd4bf" height={180} />
         </button>
@@ -94,33 +98,31 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
           onClick={openDetail}
           className="mb-4 text-xs font-medium text-teal-400 hover:text-teal-300"
         >
-          View details →
+          {t("viewDetails")}
         </button>
       </div>
 
       <div className="mt-auto" onClick={(e) => e.stopPropagation()}>
         {!player ? (
           <div className="rounded-lg border border-gray-600 bg-gray-900/50 p-3 text-center">
-            <p className="mb-2 text-xs text-gray-400">
-              Public view — join Play to trade in the monthly game.
-            </p>
+            <p className="mb-2 text-xs text-gray-400">{t("publicViewTrade")}</p>
             <Link
               to="/league"
               className="inline-block rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600"
             >
-              Join to play
+              {t("joinToPlay")}
             </Link>
           </div>
         ) : (
           <>
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm text-gray-400">Quantity:</span>
+              <span className="text-sm text-gray-400">{t("quantity")}</span>
               <div className="flex items-center">
                 <button
                   data-testid="decrement"
                   type="button"
                   onClick={() => setQuantity((p) => Math.max(1, p - 1))}
-                  aria-label={UI.DECREMENT_ARIA}
+                  aria-label={t("decAria")}
                   className="rounded-l bg-red-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-red-700"
                 >
                   -
@@ -135,7 +137,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
                   data-testid="increment"
                   type="button"
                   onClick={() => setQuantity((p) => p + 1)}
-                  aria-label={UI.INCREMENT_ARIA}
+                  aria-label={t("incAria")}
                   className="rounded-r bg-green-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-green-700"
                 >
                   +
@@ -143,7 +145,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
               </div>
             </div>
             <div data-testid="totalPrice" className="mb-3 text-sm text-gray-300">
-              Total: ${totalPrice.toFixed(2)}
+              {t("total")} ${totalPrice.toFixed(2)}
             </div>
             <button
               data-testid={`addCart-${stock.company}`}
@@ -156,7 +158,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
                   : "cursor-not-allowed bg-gray-600 text-gray-400"
               }`}
             >
-              {UI.BUY_BUTTON} {canAfford ? "" : "(Insufficient Funds)"}
+              {t("buy")} {canAfford ? "" : t("insufficientFunds")}
             </button>
           </>
         )}

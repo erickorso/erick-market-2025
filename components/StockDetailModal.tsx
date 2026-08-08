@@ -1,8 +1,15 @@
-﻿import React, { useEffect, useId, useState } from "react";
+﻿import React, { useEffect, useId, useMemo, useState } from "react";
 import { useStockContext } from "../context/StockContext";
+import { useUser } from "../context/UserContext";
 import { useI18n } from "../context/I18nContext";
-import { fetchStockDetail, formatMarketCap, type StockDetail } from "../services/detailService";
+import {
+  fetchStockDetail,
+  formatMarketCap,
+  type StockDetail,
+} from "../services/detailService";
+import type { EnrichedStock } from "../types";
 import StockChart from "./Chart";
+import ComicTooltip from "./ComicTooltip";
 import { WATCHLIST } from "../server/watchlist";
 
 function extractSymbol(detailSymbol: string, allCompanies: { company: string; symbol?: string }[]) {
@@ -16,14 +23,21 @@ function extractSymbol(detailSymbol: string, allCompanies: { company: string; sy
 }
 
 const StockDetailModal: React.FC = () => {
-  const { state, dispatch } = useStockContext();
+  const { state, dispatch, buyStock } = useStockContext();
+  const { isAuthenticated, login } = useUser();
   const { t } = useI18n();
   const titleId = useId();
   const [detail, setDetail] = useState<StockDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [busy, setBusy] = useState(false);
 
   const open = Boolean(state.detailSymbol);
+
+  useEffect(() => {
+    setQuantity(1);
+  }, [state.detailSymbol]);
 
   useEffect(() => {
     if (!state.detailSymbol) {
@@ -75,6 +89,32 @@ const StockDetailModal: React.FC = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, dispatch]);
 
+  const tradeStock = useMemo((): EnrichedStock | null => {
+    if (!detail) return null;
+    const fromList = state.allStocks.find(
+      (s) =>
+        s.symbol === detail.symbol ||
+        s.company.includes(`(${detail.symbol})`),
+    );
+    if (fromList) {
+      return { ...fromList, price: detail.quote.price };
+    }
+    return {
+      id: detail.symbol.toLowerCase(),
+      company: `${detail.company} (${detail.symbol})`,
+      price: detail.quote.price,
+      symbol: detail.symbol,
+      chartData: detail.chart,
+      chartSource:
+        detail.chartSource === "yahoo" || detail.chartSource === "finnhub"
+          ? detail.chartSource
+          : "simulated",
+      tags: detail.tags,
+      change: detail.quote.change,
+      changePercent: detail.quote.changePercent,
+    };
+  }, [detail, state.allStocks]);
+
   if (!open) return null;
 
   const q = detail?.quote;
@@ -85,6 +125,20 @@ const StockDetailModal: React.FC = () => {
       : detail?.chartSource === "yahoo"
         ? t("chartYahoo")
         : t("chartSimDetail");
+  const locked = !isAuthenticated;
+  const totalPrice = tradeStock ? tradeStock.price * quantity : 0;
+  const canAfford = state.fund >= totalPrice;
+  const symbol = detail?.symbol ?? state.detailSymbol ?? "stock";
+
+  const handleBuy = async () => {
+    if (!tradeStock || !isAuthenticated || busy) return;
+    setBusy(true);
+    try {
+      await buyStock(tradeStock, quantity);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div
@@ -96,15 +150,18 @@ const StockDetailModal: React.FC = () => {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-[61] max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl sm:rounded-2xl"
+        className="relative z-[61] flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-gray-700 bg-gray-900/95 px-4 py-3 backdrop-blur">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-700 bg-gray-900 px-4 py-3">
           <div className="min-w-0">
             <p className="text-xs font-medium uppercase tracking-wide text-teal-400">
               {detail?.symbol ?? state.detailSymbol}
             </p>
-            <h2 id={titleId} className="truncate text-xl font-semibold text-gray-100">
+            <h2
+              id={titleId}
+              className="truncate text-xl font-semibold text-gray-100"
+            >
               {detail?.company ?? t("stockDetail")}
             </h2>
           </div>
@@ -118,9 +175,13 @@ const StockDetailModal: React.FC = () => {
           </button>
         </div>
 
-        <div className="space-y-5 p-4 sm:p-6">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
           {loading && (
-            <div className="flex justify-center py-12" role="status" aria-label={t("loadingDetail")}>
+            <div
+              className="flex justify-center py-12"
+              role="status"
+              aria-label={t("loadingDetail")}
+            >
               <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-teal-500" />
             </div>
           )}
@@ -154,7 +215,10 @@ const StockDetailModal: React.FC = () => {
                   [t("low"), detail.quote.low],
                   [t("prevClose"), detail.quote.previousClose],
                 ].map(([label, val]) => (
-                  <div key={String(label)} className="rounded-md border border-gray-700 bg-gray-800/50 p-2.5">
+                  <div
+                    key={String(label)}
+                    className="rounded-md border border-gray-700 bg-gray-800/50 p-2.5"
+                  >
                     <dt className="text-[11px] uppercase tracking-wide text-gray-500">
                       {label}
                     </dt>
@@ -192,11 +256,15 @@ const StockDetailModal: React.FC = () => {
               </div>
 
               <div>
-                <h3 className="mb-2 text-sm font-semibold text-gray-200">{t("company")}</h3>
+                <h3 className="mb-2 text-sm font-semibold text-gray-200">
+                  {t("company")}
+                </h3>
                 <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                   <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
                     <dt className="text-gray-500">{t("exchange")}</dt>
-                    <dd className="text-gray-200">{detail.profile.exchange ?? "—"}</dd>
+                    <dd className="text-gray-200">
+                      {detail.profile.exchange ?? "—"}
+                    </dd>
                   </div>
                   <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
                     <dt className="text-gray-500">{t("industry")}</dt>
@@ -212,15 +280,21 @@ const StockDetailModal: React.FC = () => {
                   </div>
                   <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
                     <dt className="text-gray-500">{t("ipo")}</dt>
-                    <dd className="text-gray-200">{detail.profile.ipo ?? "—"}</dd>
+                    <dd className="text-gray-200">
+                      {detail.profile.ipo ?? "—"}
+                    </dd>
                   </div>
                   <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
                     <dt className="text-gray-500">{t("country")}</dt>
-                    <dd className="text-gray-200">{detail.profile.country ?? "—"}</dd>
+                    <dd className="text-gray-200">
+                      {detail.profile.country ?? "—"}
+                    </dd>
                   </div>
                   <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
                     <dt className="text-gray-500">{t("currency")}</dt>
-                    <dd className="text-gray-200">{detail.profile.currency ?? "—"}</dd>
+                    <dd className="text-gray-200">
+                      {detail.profile.currency ?? "—"}
+                    </dd>
                   </div>
                 </dl>
                 {detail.profile.weburl && (
@@ -250,6 +324,83 @@ const StockDetailModal: React.FC = () => {
             </>
           )}
         </div>
+
+        {!loading && tradeStock && (
+          <div className="shrink-0 border-t border-gray-700 bg-gray-900 px-4 py-4 sm:px-6">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="text-sm text-gray-400">{t("quantity")}</span>
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  disabled={locked}
+                  onClick={() => setQuantity((p) => Math.max(1, p - 1))}
+                  aria-label={t("decAria")}
+                  className="rounded-l bg-red-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  -
+                </button>
+                <span className="bg-gray-700 px-4 py-1 text-gray-100">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  disabled={locked}
+                  onClick={() => setQuantity((p) => p + 1)}
+                  aria-label={t("incAria")}
+                  className="rounded-r bg-green-600 px-3 py-1 font-bold text-white transition duration-150 hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <p className="mb-3 text-sm text-gray-300">
+              {t("total")} ${totalPrice.toFixed(2)}
+            </p>
+            <div className="group relative">
+              <button
+                type="button"
+                onClick={() => {
+                  if (locked) {
+                    login();
+                    return;
+                  }
+                  void handleBuy();
+                }}
+                disabled={busy || (!locked && (!canAfford || quantity <= 0))}
+                aria-describedby={`buy-tip-detail-${symbol}`}
+                className={`w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition duration-300 ${
+                  !locked && canAfford && quantity > 0 && !busy
+                    ? "bg-teal-500 text-white hover:bg-teal-600"
+                    : locked
+                      ? "cursor-pointer bg-gray-600 text-gray-200 hover:bg-gray-500"
+                      : "cursor-not-allowed bg-gray-600 text-gray-400"
+                }`}
+              >
+                {t("buy")}{" "}
+                {!locked && !canAfford ? t("insufficientFunds") : ""}
+              </button>
+              <ComicTooltip id={`buy-tip-detail-${symbol}`}>
+                {locked
+                  ? t("buyTooltipGuest")
+                  : !canAfford
+                    ? t("buyTooltipFunds")
+                    : t("buyTooltipOk")}
+              </ComicTooltip>
+            </div>
+            {locked && (
+              <p className="mt-2 text-center text-xs text-amber-300/90">
+                {t("loginToTrade")}{" "}
+                <button
+                  type="button"
+                  onClick={login}
+                  className="font-semibold text-teal-400 underline hover:text-teal-300"
+                >
+                  {t("login")}
+                </button>
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

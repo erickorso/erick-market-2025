@@ -28,20 +28,24 @@ const Navbar: React.FC = () => {
             >
               {t("navHome")}
             </Link>
-            <Link
-              data-testid="My_Stocks"
-              to="/my-stocks"
-              className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 transition duration-300 hover:text-white"
-            >
-              {t("navStocks")}
-            </Link>
-            <Link
-              data-testid="My_Fund"
-              to="/my-fund"
-              className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 transition duration-300 hover:text-white"
-            >
-              {t("navFund")}
-            </Link>
+            {isAuthenticated && (
+              <>
+                <Link
+                  data-testid="My_Stocks"
+                  to="/my-stocks"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 transition duration-300 hover:text-white"
+                >
+                  {t("navStocks")}
+                </Link>
+                <Link
+                  data-testid="My_Fund"
+                  to="/my-fund"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 transition duration-300 hover:text-white"
+                >
+                  {t("navFund")}
+                </Link>
+              </>
+            )}
             <Link
               data-testid="League"
               to="/league"

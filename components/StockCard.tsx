@@ -109,18 +109,6 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
       </div>
 
       <div className="mt-auto" onClick={(e) => e.stopPropagation()}>
-        {locked && (
-          <p className="mb-2 text-center text-xs text-amber-300/90">
-            {t("loginToTrade")}{" "}
-            <button
-              type="button"
-              onClick={login}
-              className="font-semibold text-teal-400 underline hover:text-teal-300"
-            >
-              {t("login")}
-            </button>
-          </p>
-        )}
         <div className="mb-3 flex items-center justify-between">
           <span className="text-sm text-gray-400">{t("quantity")}</span>
           <div className="flex items-center">
@@ -155,21 +143,54 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
         <div data-testid="totalPrice" className="mb-3 text-sm text-gray-300">
           {t("total")} ${totalPrice.toFixed(2)}
         </div>
-        <button
-          data-testid={`addCart-${stock.company}`}
-          type="button"
-          onClick={() => void handleBuyStock()}
-          disabled={locked || busy || !canAfford || quantity <= 0}
-          title={locked ? t("tradingLocked") : undefined}
-          className={`w-full rounded-lg px-4 py-2 text-sm font-semibold transition duration-300 ${
-            !locked && canAfford && quantity > 0 && !busy
-              ? "bg-teal-500 text-white hover:bg-teal-600"
-              : "cursor-not-allowed bg-gray-600 text-gray-400"
-          }`}
-        >
-          {t("buy")}{" "}
-          {!locked && !canAfford ? t("insufficientFunds") : ""}
-        </button>
+        <div className="group relative">
+          <button
+            data-testid={`addCart-${stock.company}`}
+            type="button"
+            onClick={() => {
+              if (locked) {
+                login();
+                return;
+              }
+              void handleBuyStock();
+            }}
+            disabled={busy || (!locked && (!canAfford || quantity <= 0))}
+            aria-describedby={`buy-tip-${symbol}`}
+            className={`w-full rounded-lg px-4 py-2 text-sm font-semibold transition duration-300 ${
+              !locked && canAfford && quantity > 0 && !busy
+                ? "bg-teal-500 text-white hover:bg-teal-600"
+                : locked
+                  ? "cursor-pointer bg-gray-600 text-gray-200 hover:bg-gray-500"
+                  : "cursor-not-allowed bg-gray-600 text-gray-400"
+            }`}
+          >
+            {t("buy")}{" "}
+            {!locked && !canAfford ? t("insufficientFunds") : ""}
+          </button>
+          <div
+            id={`buy-tip-${symbol}`}
+            role="tooltip"
+            className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-56 -translate-x-1/2 rounded-md border border-gray-600 bg-gray-950 px-2.5 py-2 text-left text-[11px] leading-snug text-gray-200 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+          >
+            {locked
+              ? t("buyTooltipGuest")
+              : !canAfford
+                ? t("buyTooltipFunds")
+                : t("buyTooltipOk")}
+          </div>
+        </div>
+        {locked && (
+          <p className="mt-2 text-center text-xs text-amber-300/90">
+            {t("loginToTrade")}{" "}
+            <button
+              type="button"
+              onClick={login}
+              className="font-semibold text-teal-400 underline hover:text-teal-300"
+            >
+              {t("login")}
+            </button>
+          </p>
+        )}
       </div>
     </div>
   );

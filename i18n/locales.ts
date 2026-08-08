@@ -139,6 +139,10 @@ const en = {
     "Auth0 env vars are missing. Add VITE_AUTH0_* and DATABASE_URL to enable Play.",
   loginToTrade: "Sign in to buy and sell.",
   tradingLocked: "Trading locked until you sign in.",
+  buyTooltipGuest:
+    "To buy: Log in with Auth0 (button in the navbar). Then choose quantity and press Buy — uses your virtual $10k fund.",
+  buyTooltipFunds: "Not enough cash in your fund for this quantity.",
+  buyTooltipOk: "Buy with your virtual fund (demo trade).",
   avgBuyPrice: "Avg. Buy Price:",
   currentPrice: "Current Price:",
   currentValue: "Current Value:",
@@ -300,6 +304,10 @@ const es: Dict = {
     "Faltan vars Auth0. Agregá VITE_AUTH0_* y DATABASE_URL para habilitar Play.",
   loginToTrade: "Iniciá sesión para comprar y vender.",
   tradingLocked: "Trading bloqueado hasta que inicies sesión.",
+  buyTooltipGuest:
+    "Para comprar: iniciá sesión con Auth0 (botón en la navbar). Después elegí cantidad y tocá Comprar — usa tu fondo virtual de $10k.",
+  buyTooltipFunds: "No te alcanza el efectivo del fondo para esa cantidad.",
+  buyTooltipOk: "Comprá con tu fondo virtual (operación demo).",
   avgBuyPrice: "Precio prom. compra:",
   currentPrice: "Precio actual:",
   currentValue: "Valor actual:",

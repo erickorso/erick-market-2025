@@ -384,9 +384,8 @@ const StockDetailModal: React.FC = () => {
                   <h3 className="mb-2 text-sm font-semibold text-gray-200">
                     {t("company")}
                   </h3>
-                  <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-[1fr_auto]">
-                    <div className="min-w-0">
-                      <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                  <div>
+                    <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                         <div className="flex justify-between gap-2 border-b border-gray-800 py-1.5">
                           <dt className="text-gray-500">{t("exchange")}</dt>
                           <dd className="text-gray-200">
@@ -423,25 +422,28 @@ const StockDetailModal: React.FC = () => {
                             {detail.profile.currency ?? "—"}
                           </dd>
                         </div>
-                      </dl>
-                      {detail.profile.weburl && (
+                    </dl>
+                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                      {detail.profile.weburl ? (
                         <a
                           href={detail.profile.weburl}
                           target="_blank"
                           rel="noreferrer"
-                          className="mt-3 inline-block text-sm text-teal-400 hover:text-teal-300"
+                          className="text-sm text-teal-400 hover:text-teal-300"
                         >
                           {t("companyWebsite")}
                         </a>
+                      ) : (
+                        <span />
+                      )}
+                      {tradeStock && (
+                        <DetailBuyPanel
+                          {...buyProps}
+                          tipId={`buy-tip-detail-${symbol}`}
+                          className="sm:ml-auto"
+                        />
                       )}
                     </div>
-                    {tradeStock && (
-                      <DetailBuyPanel
-                        {...buyProps}
-                        tipId={`buy-tip-detail-${symbol}`}
-                        className="justify-self-end sm:self-end"
-                      />
-                    )}
                   </div>
                 </div>
 

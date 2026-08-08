@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-/** Fully self-contained — no relative imports (Vercel ESM cold-start crash). */
+/** Fully self-contained — no relative imports (Vercel ESM cold-start crash).
+ * Watchlist mirrored from server/watchlist.ts — keep tags/symbols in sync when editing. */
 
 type StyleTag =
   | "long-term"

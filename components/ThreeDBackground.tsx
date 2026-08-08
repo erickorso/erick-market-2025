@@ -182,7 +182,13 @@ const ThreeDBackground: React.FC = () => {
   useEffect(() => {
     if (!mountRef.current) return;
 
+    // Skip WebGL when the user prefers reduced motion (a11y + battery).
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    // Avoid heavy GPU work on very small viewports.
+    if (window.matchMedia("(max-width: 640px)").matches) {
       return;
     }
 

@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import CategoryFilter from "../components/organisms/CategoryFilter";
 import StockGrid from "../components/organisms/StockGrid";
+import ErrorBoundary from "../components/organisms/ErrorBoundary";
 import Badge from "../components/atoms/Badge";
 import { useStockContext } from "../context/StockContext";
 import { useI18n } from "../context/I18nContext";
@@ -46,9 +47,11 @@ const HomePage: React.FC = () => {
   if (error) {
     return (
       <>
-        <Suspense fallback={null}>
-          <ThreeDBackground />
-        </Suspense>
+        <ErrorBoundary source="background" fallback={null}>
+          <Suspense fallback={null}>
+            <ThreeDBackground />
+          </Suspense>
+        </ErrorBoundary>
         <div className="relative z-10 p-8 text-center">
           <p className="mb-4 text-xl text-red-400">
             {t("errorLoading")} {error}
@@ -67,9 +70,11 @@ const HomePage: React.FC = () => {
 
   return (
     <>
-      <Suspense fallback={null}>
-        <ThreeDBackground />
-      </Suspense>
+      <ErrorBoundary source="background" fallback={null}>
+        <Suspense fallback={null}>
+          <ThreeDBackground />
+        </Suspense>
+      </ErrorBoundary>
       <div className="relative z-10 container mx-auto p-4 sm:p-6">
         <div className="mb-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
           <div>

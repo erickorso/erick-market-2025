@@ -3,6 +3,7 @@ import { useStockContext } from "../../context/StockContext";
 import { useI18n } from "../../context/I18nContext";
 import { formatMarketCap } from "../../services/detailService";
 import { useStockDetail } from "../../hooks/useStockDetail";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 import Price from "../atoms/Price";
 import ChangePercent from "../atoms/ChangePercent";
 import ChartPanel from "../molecules/ChartPanel";
@@ -21,6 +22,7 @@ const StockDetailModal: React.FC = () => {
   );
 
   const open = Boolean(state.detailSymbol);
+  const dialogRef = useFocusTrap<HTMLDivElement>(open);
 
   useEffect(() => {
     if (!open) return;
@@ -50,10 +52,12 @@ const StockDetailModal: React.FC = () => {
       onClick={() => dispatch({ type: "CLOSE_DETAIL" })}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-[61] grid max-h-[94vh] w-full max-w-4xl grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl sm:rounded-2xl"
+        tabIndex={-1}
+        className="relative z-[61] grid max-h-[94vh] w-full max-w-4xl grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl outline-none sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 border-b border-gray-700 bg-gray-900 px-4 py-3">
@@ -123,6 +127,7 @@ const StockDetailModal: React.FC = () => {
                   sourceLabel={chartLabel}
                   simulated={detail.chartSource === "simulated"}
                   data={detail.chart}
+                  errorLabel={t("chartUnavailable")}
                 />
 
                 <div>

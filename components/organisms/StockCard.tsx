@@ -9,6 +9,7 @@ import Price from "../atoms/Price";
 import ChangePercent from "../atoms/ChangePercent";
 import TagList from "../molecules/TagList";
 import TradePanel from "../molecules/TradePanel";
+import ErrorBoundary from "./ErrorBoundary";
 
 interface StockCardProps {
   stock: EnrichedStock;
@@ -81,7 +82,20 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
           className="mb-4 h-48 w-full text-left"
           aria-label={`${t("viewChartDetail")} ${symbol}`}
         >
-          <StockChart data={stock.chartData} lineColor="#2dd4bf" height={180} />
+          <ErrorBoundary
+            source="chart"
+            fallback={
+              <div className="flex h-full items-center justify-center rounded-lg bg-gray-800/80 text-xs text-gray-500">
+                {t("chartUnavailable")}
+              </div>
+            }
+          >
+            <StockChart
+              data={stock.chartData}
+              lineColor="#2dd4bf"
+              height={180}
+            />
+          </ErrorBoundary>
         </button>
         <button
           type="button"

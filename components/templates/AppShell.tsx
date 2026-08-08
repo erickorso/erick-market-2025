@@ -11,6 +11,7 @@ import HotSidebar from "../organisms/HotSidebar";
 import RankSidebar from "../organisms/RankSidebar";
 import SellStockForm from "../organisms/SellStockForm";
 import StockDetailModal from "../organisms/StockDetailModal";
+import ErrorBoundary from "../organisms/ErrorBoundary";
 import { protectedRoute } from "../routing/RequireAuth";
 
 /**
@@ -20,6 +21,15 @@ import { protectedRoute } from "../routing/RequireAuth";
 const AppShell: React.FC = () => {
   const year = new Date().getFullYear();
   const { t } = useI18n();
+
+  // Translated copy for the route-level boundary; the root boundary in
+  // index.tsx sits outside the providers and falls back to English.
+  const crashLabels = {
+    title: t("crashTitle"),
+    body: t("crashBody"),
+    reload: t("crashReload"),
+    details: t("crashDetails"),
+  };
 
   return (
     <HashRouter>
@@ -34,26 +44,28 @@ const AppShell: React.FC = () => {
 
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
             <main className="container relative z-10 mx-auto w-full flex-1 px-2 py-8 sm:px-4">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route
-                  path="/league"
-                  element={protectedRoute(<LeaguePage />)}
-                />
-                <Route
-                  path="/my-stocks"
-                  element={protectedRoute(<MyStocksPage />)}
-                />
-                <Route
-                  path="/my-fund"
-                  element={protectedRoute(<MyFundPage />)}
-                />
-                <Route
-                  path="/sell/:stockCompany"
-                  element={protectedRoute(<SellStockForm />)}
-                />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+              <ErrorBoundary source="route" labels={crashLabels}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route
+                    path="/league"
+                    element={protectedRoute(<LeaguePage />)}
+                  />
+                  <Route
+                    path="/my-stocks"
+                    element={protectedRoute(<MyStocksPage />)}
+                  />
+                  <Route
+                    path="/my-fund"
+                    element={protectedRoute(<MyFundPage />)}
+                  />
+                  <Route
+                    path="/sell/:stockCompany"
+                    element={protectedRoute(<SellStockForm />)}
+                  />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </ErrorBoundary>
             </main>
             <footer className="mt-auto border-t border-slate-200 bg-white px-4 py-5 text-center text-sm text-slate-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
               <p>

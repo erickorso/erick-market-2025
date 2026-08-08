@@ -165,6 +165,13 @@ const en = {
   canSellUpTo: "You can only sell up to {max} shares.",
   detailLoadFailed: "Failed to load detail",
   closeDetail: "Close detail",
+  crashTitle: "Something broke on this screen",
+  crashBody:
+    "The rest of the app is still running. Reload to try this section again.",
+  crashReload: "Reload",
+  crashDetails: "Technical details",
+  chartUnavailable: "Chart unavailable",
+  backgroundUnavailable: "3D background unavailable",
 } as const;
 
 type Dict = { [K in keyof typeof en]: string };
@@ -333,6 +340,13 @@ const es: Dict = {
   canSellUpTo: "Solo podés vender hasta {max} acciones.",
   detailLoadFailed: "No se pudo cargar el detalle",
   closeDetail: "Cerrar detalle",
+  crashTitle: "Algo se rompió en esta pantalla",
+  crashBody:
+    "El resto de la app sigue funcionando. Recargá para reintentar esta sección.",
+  crashReload: "Recargar",
+  crashDetails: "Detalles técnicos",
+  chartUnavailable: "Gráfica no disponible",
+  backgroundUnavailable: "Fondo 3D no disponible",
 };
 
 export type MsgKey = keyof typeof en;

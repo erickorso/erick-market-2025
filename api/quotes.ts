@@ -1,7 +1,77 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 /** Fully self-contained — no relative imports (Vercel ESM cold-start crash).
- * Watchlist mirrored from server/watchlist.ts — keep tags/symbols in sync when editing. */
+ * Watchlist mirrored from server/watchlist.ts — keep tags/symbols in sync when editing.
+ * The CORS/rate-limit/log block below mirrors api/_lib for the same reason;
+ * change it here and in api/hot.ts and api/detail.ts together. */
+
+const ALLOWED_ORIGINS = [
+  "https://erick-market-2025.vercel.app",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:4173",
+  ...(process.env.ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean),
+];
+const PREVIEW_ORIGIN = /^https:\/\/erick-market-2025-[a-z0-9-]+\.vercel\.app$/;
+const RATE_LIMIT = { limit: 120, windowMs: 60_000 };
+const rateHits = new Map<string, number[]>();
+
+function setCors(req: VercelRequest, res: VercelResponse) {
+  const origin = Array.isArray(req.headers.origin)
+    ? req.headers.origin[0]
+    : req.headers.origin;
+  if (origin && (ALLOWED_ORIGINS.includes(origin) || PREVIEW_ORIGIN.test(origin))) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+}
+
+/** Per-instance sliding window. The CDN cache below is the real quota guard. */
+function rateLimited(req: VercelRequest, res: VercelResponse): boolean {
+  const forwarded = req.headers["x-forwarded-for"];
+  const raw = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+  const key = raw?.split(",")[0]?.trim() || "unknown";
+  const now = Date.now();
+  const hits = (rateHits.get(key) ?? []).filter(
+    (at) => at > now - RATE_LIMIT.windowMs,
+  );
+
+  if (rateHits.size > 10_000) rateHits.clear();
+  res.setHeader("X-RateLimit-Limit", String(RATE_LIMIT.limit));
+
+  if (hits.length >= RATE_LIMIT.limit) {
+    rateHits.set(key, hits);
+    res.setHeader("X-RateLimit-Remaining", "0");
+    res.setHeader(
+      "Retry-After",
+      String(Math.max(1, Math.ceil((hits[0] + RATE_LIMIT.windowMs - now) / 1000))),
+    );
+    res.status(429).json({ error: "rate limit exceeded" });
+    return true;
+  }
+
+  hits.push(now);
+  rateHits.set(key, hits);
+  res.setHeader("X-RateLimit-Remaining", String(RATE_LIMIT.limit - hits.length));
+  return false;
+}
+
+function logRequest(req: VercelRequest, status: number, startedAt: number) {
+  console.log(
+    JSON.stringify({
+      level: status >= 500 ? "error" : status >= 400 ? "warn" : "info",
+      route: "/api/quotes",
+      method: req.method ?? "GET",
+      status,
+      ms: Date.now() - startedAt,
+    }),
+  );
+}
 
 type StyleTag =
   | "long-term"
@@ -324,15 +394,29 @@ function parsePaging(req: VercelRequest) {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const startedAt = Date.now();
   try {
+    setCors(req, res);
     if (req.method === "OPTIONS") {
       res.status(204).end();
       return;
     }
     if (req.method !== "GET") {
       res.status(405).json({ error: "method not allowed" });
+      logRequest(req, 405, startedAt);
       return;
     }
+    if (rateLimited(req, res)) {
+      logRequest(req, 429, startedAt);
+      return;
+    }
+
+    // Quotes move fast but not per-request; the edge absorbs the repeats that
+    // would otherwise each cost a Finnhub call.
+    res.setHeader(
+      "Cache-Control",
+      "public, max-age=0, s-maxage=20, stale-while-revalidate=60",
+    );
 
     const { q, limit, offset, category } = parsePaging(req);
     const apiKey = process.env.FINNHUB_API_KEY;
@@ -348,6 +432,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         category,
         categories: CATEGORIES,
       });
+      logRequest(req, 503, startedAt);
       return;
     }
 
@@ -377,6 +462,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         category,
         categories: CATEGORIES,
       });
+      logRequest(req, 200, startedAt);
       return;
     }
 
@@ -394,9 +480,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       category,
       categories: CATEGORIES,
     });
+    logRequest(req, 200, startedAt);
   } catch (err) {
     res.status(500).json({
       error: err instanceof Error ? err.message : "quotes failed",
     });
+    logRequest(req, 500, startedAt);
   }
 }

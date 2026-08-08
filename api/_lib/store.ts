@@ -1,6 +1,6 @@
-import type { AuthUser } from "./auth";
-import { getSql } from "./db";
-import { INITIAL_FUND, currentMonthKey, previousMonthKey } from "./month";
+import type { AuthUser } from "./auth.js";
+import { getSql } from "./db.js";
+import { INITIAL_FUND, currentMonthKey, previousMonthKey } from "./month.js";
 
 export type DbUser = {
   id: string;

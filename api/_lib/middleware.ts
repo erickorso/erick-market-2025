@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getBearer, verifyBearer, type AuthUser } from "./auth";
-import { dbConfigured } from "./db";
-import { handleOptions, sendError, setCors } from "./http";
-import { upsertUser, type DbUser } from "./store";
+import { getBearer, verifyBearer, type AuthUser } from "./auth.js";
+import { dbConfigured } from "./db.js";
+import { handleOptions, sendError, setCors } from "./http.js";
+import { upsertUser, type DbUser } from "./store.js";
 
 export type AuthContext = {
   auth: AuthUser;

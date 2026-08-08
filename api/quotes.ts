@@ -245,7 +245,7 @@ function parsePaging(req: VercelRequest) {
   const limitRaw = Number(req.query.limit ?? PAGE_SIZE);
   const offsetRaw = Number(req.query.offset ?? 0);
   const limit = Number.isFinite(limitRaw)
-    ? Math.min(Math.max(1, Math.floor(limitRaw)), 25)
+    ? Math.min(Math.max(1, Math.floor(limitRaw)), WATCHLIST.length)
     : PAGE_SIZE;
   const offset = Number.isFinite(offsetRaw)
     ? Math.max(0, Math.floor(offsetRaw))

@@ -436,6 +436,18 @@ const StockDetailModal: React.FC = () => {
                       ) : (
                         <span />
                       )}
+                      {detail.tags.length > 0 && (
+                        <div className="flex flex-wrap justify-center gap-1.5">
+                          {detail.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded border border-gray-600 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-400"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       {tradeStock && (
                         <DetailBuyPanel
                           {...buyProps}
@@ -446,19 +458,6 @@ const StockDetailModal: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
-                {detail.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {detail.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded border border-gray-600 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-400"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </>
             )}
           </div>

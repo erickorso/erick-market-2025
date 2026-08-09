@@ -1,4 +1,5 @@
 import { useColorScheme } from "react-native";
+import { usePrefs } from "./prefs";
 
 /**
  * Both palettes, because the web app was built dark-first and reusing its
@@ -41,7 +42,11 @@ export type Palette = typeof dark;
 
 export function useTheme(): Palette & { isDark: boolean } {
   const scheme = useColorScheme();
-  const isDark = scheme !== "light";
+  const { themeMode } = usePrefs();
+  // An explicit choice wins; "system" is what defers to the OS. Defaulting to
+  // dark when the OS says nothing keeps the app looking like the web one.
+  const isDark =
+    themeMode === "system" ? scheme !== "light" : themeMode === "dark";
   return { ...(isDark ? dark : light), isDark };
 }
 

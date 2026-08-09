@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { fetchLeagueBoard } from "../../../services/portfolioApi";
 import { money, percent, useTheme } from "../../lib/theme";
+import { usePrefs } from "../../lib/prefs";
 import { usePortfolio } from "../../lib/portfolio";
 
 type Entry = {
@@ -20,6 +21,7 @@ type Entry = {
 
 export default function LeagueScreen() {
   const theme = useTheme();
+  const { t } = usePrefs();
   const { displayName } = usePortfolio();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [month, setMonth] = useState("");
@@ -79,12 +81,12 @@ export default function LeagueScreen() {
       }
       ListHeaderComponent={
         <Text style={[styles.caption, { color: theme.textMuted }]}>
-          {month ? `${month} · ranked by equity` : "Ranked by equity"}
+          {month ? t("monthRanked", { month }) : t("rankedByEquity")}
         </Text>
       }
       ListEmptyComponent={
         <Text style={[styles.caption, { color: theme.textMuted }]}>
-          No scores yet this month.
+          {t("noScoresMonth")}
         </Text>
       }
       renderItem={({ item, index }) => {

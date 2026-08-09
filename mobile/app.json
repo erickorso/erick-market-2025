@@ -26,7 +26,8 @@
       "expo-router",
       "expo-secure-store",
       "expo-web-browser",
-      "expo-asset"
+      "expo-asset",
+      "expo-localization"
     ],
     "extra": {
       "apiBase": "https://erick-market-2025.vercel.app",

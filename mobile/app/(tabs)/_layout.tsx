@@ -2,6 +2,8 @@ import React from "react";
 import { Tabs } from "expo-router";
 import { Text } from "react-native";
 import { useTheme } from "../../lib/theme";
+import { usePrefs } from "../../lib/prefs";
+import PrefsControls from "../../components/PrefsControls";
 
 /** Emoji instead of an icon font: three glyphs is not worth a dependency. */
 const icon = (glyph: string) => {
@@ -14,6 +16,7 @@ const icon = (glyph: string) => {
 
 export default function TabsLayout() {
   const theme = useTheme();
+  const { t } = usePrefs();
 
   return (
     <Tabs
@@ -27,20 +30,21 @@ export default function TabsLayout() {
         },
         tabBarActiveTintColor: theme.accent,
         tabBarInactiveTintColor: theme.textMuted,
+        headerRight: () => <PrefsControls />,
         sceneStyle: { backgroundColor: theme.bg },
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{ title: "Market", tabBarIcon: icon("📈") }}
+        options={{ title: t("tabMarket"), tabBarIcon: icon("📈") }}
       />
       <Tabs.Screen
         name="portfolio"
-        options={{ title: "Portfolio", tabBarIcon: icon("💼") }}
+        options={{ title: t("tabPortfolio"), tabBarIcon: icon("💼") }}
       />
       <Tabs.Screen
         name="league"
-        options={{ title: "League", tabBarIcon: icon("🏆") }}
+        options={{ title: t("tabLeague"), tabBarIcon: icon("🏆") }}
       />
     </Tabs>
   );

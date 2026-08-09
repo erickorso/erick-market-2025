@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useAuth } from "../lib/auth";
 import { useTheme } from "../lib/theme";
+import { usePrefs } from "../lib/prefs";
 
 /**
  * Where Auth0 lands when the redirect does not come back through
@@ -29,6 +30,7 @@ export default function AuthRedirect() {
   }>();
   const { completeAuthCode } = useAuth();
   const theme = useTheme();
+  const { t } = usePrefs();
   // Derived, not stored: whether the URL is usable is a fact about the
   // params, known at render time. Only the exchange needs state.
   const badRedirect = error
@@ -59,7 +61,7 @@ export default function AuthRedirect() {
       {failure ? (
         <>
           <Text style={[styles.title, { color: theme.text }]}>
-            Sign-in did not complete
+            {t("signInIncomplete")}
           </Text>
           <Text style={[styles.detail, { color: theme.textMuted }]}>
             {failure}
@@ -68,14 +70,14 @@ export default function AuthRedirect() {
             style={[styles.action, { color: theme.accent }]}
             onPress={() => router.replace("/")}
           >
-            Back to the market
+            {t("backToMarket")}
           </Text>
         </>
       ) : (
         <>
           <ActivityIndicator color={theme.accent} size="large" />
           <Text style={[styles.detail, { color: theme.textMuted }]}>
-            Finishing sign-in…
+            {t("finishingSignIn")}
           </Text>
         </>
       )}

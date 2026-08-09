@@ -10,11 +10,13 @@ import {
 } from "react-native";
 import { money, percent, useTheme } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
+import { usePrefs } from "../../lib/prefs";
 import { newIdempotencyKey, usePortfolio } from "../../lib/portfolio";
 import type { PortfolioItem } from "../../../types";
 
 export default function PortfolioScreen() {
   const theme = useTheme();
+  const { t } = usePrefs();
   const { isAuthenticated, isLoading, login, logout, configured } = useAuth();
   const { cash, positions, displayName, refresh } = usePortfolio();
   const [refreshing, setRefreshing] = useState(false);
@@ -31,12 +33,10 @@ export default function PortfolioScreen() {
     return (
       <View style={[styles.center, { backgroundColor: theme.bg }]}>
         <Text style={[styles.headline, { color: theme.text }]}>
-          Sign in to trade
+          {t("signInToTrade")}
         </Text>
         <Text style={[styles.blurb, { color: theme.textMuted }]}>
-          {configured
-            ? "Trading uses a virtual $10,000 fund tied to your account. The market and the league stay open either way."
-            : "This build has no Auth0 configuration, so trading is unavailable. Browsing the market and the league still works."}
+          {configured ? t("tradeBlurb") : t("browsingOnly")}
         </Text>
         {configured && (
           <Pressable
@@ -45,7 +45,7 @@ export default function PortfolioScreen() {
             style={[styles.cta, { backgroundColor: theme.accentStrong }]}
           >
             <Text style={{ color: theme.onAccent, fontWeight: "700" }}>
-              Sign in
+              {t("login")}
             </Text>
           </Pressable>
         )}
@@ -81,7 +81,7 @@ export default function PortfolioScreen() {
           ]}
         >
           <Text style={{ color: theme.textMuted }}>
-            {displayName ?? "Your portfolio"}
+            {displayName ?? t("yourPortfolio")}
           </Text>
           <Text style={[styles.equity, { color: theme.text }]}>
             {money(equity)}
@@ -90,18 +90,19 @@ export default function PortfolioScreen() {
             {money(pnl)} · {percent((pnl / 10_000) * 100)}
           </Text>
           <Text style={{ color: theme.textMuted, marginTop: 6, fontSize: 12 }}>
-            Cash {money(cash)} · Invested {money(invested)}
+            {t("cashLabel")} {money(cash)} · {t("investedLabel")}{" "}
+            {money(invested)}
           </Text>
           <Pressable onPress={() => void logout()} style={styles.signOut}>
             <Text style={{ color: theme.textMuted, fontSize: 12 }}>
-              Sign out
+              {t("signOut")}
             </Text>
           </Pressable>
         </View>
       }
       ListEmptyComponent={
         <Text style={[styles.blurb, { color: theme.textMuted }]}>
-          No positions yet. Buy something from the Market tab.
+          {t("noPositions")}
         </Text>
       }
       renderItem={({ item }) => <PositionRow item={item} />}
@@ -111,17 +112,18 @@ export default function PortfolioScreen() {
 
 const PositionRow: React.FC<{ item: PortfolioItem }> = ({ item }) => {
   const theme = useTheme();
+  const { t } = usePrefs();
   const { trade, refresh } = usePortfolio();
   const [busy, setBusy] = useState(false);
 
   const sell = useCallback(() => {
     Alert.alert(
-      `Sell ${item.symbol ?? item.company}`,
-      `Sell all ${item.quantity} share(s)?`,
+      t("sellAllTitle", { symbol: item.symbol ?? item.company }),
+      t("sellAllBody", { qty: item.quantity }),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("cancel"), style: "cancel" },
         {
-          text: "Sell",
+          text: t("sell"),
           style: "destructive",
           onPress: async () => {
             if (busy) return;
@@ -135,12 +137,12 @@ const PositionRow: React.FC<{ item: PortfolioItem }> = ({ item }) => {
             });
             setBusy(false);
             if (result.ok) await refresh();
-            else Alert.alert("Not traded", result.message);
+            else Alert.alert(t("notTraded"), result.message);
           },
         },
       ],
     );
-  }, [busy, item, trade, refresh]);
+  }, [busy, item, trade, refresh, t]);
 
   return (
     <View
@@ -164,14 +166,14 @@ const PositionRow: React.FC<{ item: PortfolioItem }> = ({ item }) => {
         onPress={sell}
         disabled={busy}
         accessibilityRole="button"
-        accessibilityLabel={`Sell ${item.company}`}
+        accessibilityLabel={t("sellAllTitle", { symbol: item.company })}
         style={[
           styles.sell,
           { backgroundColor: theme.danger, opacity: busy ? 0.5 : 1 },
         ]}
       >
         <Text style={{ color: "#fff", fontWeight: "700", fontSize: 12 }}>
-          Sell
+          {t("sell")}
         </Text>
       </Pressable>
     </View>

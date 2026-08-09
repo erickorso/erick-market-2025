@@ -18,11 +18,13 @@ import {
 } from "../../../services/stockService";
 import type { EnrichedStock } from "../../../types";
 import { money, percent, useTheme } from "../../lib/theme";
+import { usePrefs } from "../../lib/prefs";
 
 const SEARCH_DEBOUNCE_MS = 350;
 
 export default function MarketScreen() {
   const theme = useTheme();
+  const { t } = usePrefs();
   const [term, setTerm] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<CategoryId>("all");
@@ -68,11 +70,11 @@ export default function MarketScreen() {
       <TextInput
         value={term}
         onChangeText={setTerm}
-        placeholder="Search stocks…"
+        placeholder={t("searchPlaceholder")}
         placeholderTextColor={theme.textMuted}
         autoCorrect={false}
         autoCapitalize="characters"
-        accessibilityLabel="Search stocks"
+        accessibilityLabel={t("searchAria")}
         style={[
           styles.search,
           {
@@ -140,14 +142,14 @@ export default function MarketScreen() {
           ListHeaderComponent={
             source ? (
               <Text style={[styles.source, { color: theme.textMuted }]}>
-                {source === "live" ? "Finnhub · live" : "Simulated prices"} ·{" "}
-                {stocks.length} shown
+                {source === "live" ? t("liveFinnhub") : t("simulatedPrices")} ·{" "}
+                {t("shownCount", { count: stocks.length })}
               </Text>
             ) : null
           }
           ListEmptyComponent={
             <Text style={[styles.empty, { color: theme.textMuted }]}>
-              Nothing matches that search.
+              {t("noMatches")}
             </Text>
           }
           renderItem={({ item }) => <StockRow stock={item} />}

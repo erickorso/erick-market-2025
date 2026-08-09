@@ -18,11 +18,13 @@ import {
 import Sparkline from "../../components/Sparkline";
 import { money, percent, useTheme } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
+import { usePrefs } from "../../lib/prefs";
 import { newIdempotencyKey, usePortfolio } from "../../lib/portfolio";
 
 export default function StockDetailScreen() {
   const { symbol } = useLocalSearchParams<{ symbol: string }>();
   const theme = useTheme();
+  const { t } = usePrefs();
   const navigation = useNavigation();
   const { isAuthenticated, login, configured } = useAuth();
   const { cash, trade, refresh } = usePortfolio();
@@ -68,14 +70,10 @@ export default function StockDetailScreen() {
   const buy = useCallback(async () => {
     if (!detail || busy) return;
     if (!isAuthenticated) {
-      Alert.alert(
-        "Sign in to trade",
-        "Trading uses a virtual $10,000 fund tied to your account.",
-        [
-          { text: "Not now", style: "cancel" },
-          { text: "Sign in", onPress: () => void login() },
-        ],
-      );
+      Alert.alert(t("signInToTrade"), t("authPromptTradeBody"), [
+        { text: t("notNow"), style: "cancel" },
+        { text: t("login"), onPress: () => void login() },
+      ]);
       return;
     }
     setBusy(true);
@@ -90,11 +88,14 @@ export default function StockDetailScreen() {
     if (result.ok) {
       setOrderKey(newIdempotencyKey());
       await refresh();
-      Alert.alert("Done", `Bought ${qty} ${detail.symbol}.`);
+      Alert.alert(
+        t("doneTitle"),
+        t("boughtBody", { qty, symbol: detail.symbol }),
+      );
     } else {
-      Alert.alert("Not traded", result.message);
+      Alert.alert(t("notTraded"), result.message);
     }
-  }, [detail, busy, isAuthenticated, login, trade, qty, orderKey, refresh]);
+  }, [detail, busy, isAuthenticated, login, trade, qty, orderKey, refresh, t]);
 
   if (loading) {
     return (
@@ -108,7 +109,7 @@ export default function StockDetailScreen() {
     return (
       <View style={[styles.center, { backgroundColor: theme.bg }]}>
         <Text style={{ color: theme.textMuted }}>
-          No detail available for {String(symbol)}.
+          {t("noDetailFor", { symbol: String(symbol) })}
         </Text>
       </View>
     );
@@ -142,17 +143,17 @@ export default function StockDetailScreen() {
         <Sparkline data={detail.chart} width={width - 64} height={140} />
         <Text style={[styles.caption, { color: theme.textMuted }]}>
           {detail.chartSource === "simulated"
-            ? "Simulated history"
-            : "Daily closes"}
+            ? t("simulatedHistory")
+            : t("dailyCloses")}
         </Text>
       </View>
 
       <View style={styles.stats}>
-        <Stat label="Open" value={money(detail.quote.open ?? 0)} />
-        <Stat label="High" value={money(detail.quote.high ?? 0)} />
-        <Stat label="Low" value={money(detail.quote.low ?? 0)} />
+        <Stat label={t("openLabel")} value={money(detail.quote.open ?? 0)} />
+        <Stat label={t("highLabel")} value={money(detail.quote.high ?? 0)} />
+        <Stat label={t("lowLabel")} value={money(detail.quote.low ?? 0)} />
         <Stat
-          label="Market cap"
+          label={t("marketCapLabel")}
           value={formatMarketCap(detail.profile.marketCap)}
         />
       </View>
@@ -164,7 +165,7 @@ export default function StockDetailScreen() {
         ]}
       >
         <View style={styles.qtyRow}>
-          <Text style={{ color: theme.textMuted }}>Quantity</Text>
+          <Text style={{ color: theme.textMuted }}>{t("quantity")}</Text>
           <View style={styles.stepper}>
             <Stepper
               label="−"
@@ -175,8 +176,8 @@ export default function StockDetailScreen() {
           </View>
         </View>
         <Text style={{ color: theme.textMuted, marginTop: 8 }}>
-          Total {money(total)}
-          {isAuthenticated && !canAfford ? " · not enough cash" : ""}
+          {t("total")} {money(total)}
+          {isAuthenticated && !canAfford ? ` · ${t("notEnoughCash")}` : ""}
         </Text>
 
         <Pressable
@@ -194,13 +195,17 @@ export default function StockDetailScreen() {
           ]}
         >
           <Text style={{ color: theme.onAccent, fontWeight: "700" }}>
-            {busy ? "Working…" : isAuthenticated ? "Buy" : "Sign in to buy"}
+            {busy
+              ? t("working")
+              : isAuthenticated
+                ? t("buy")
+                : t("signInToBuy")}
           </Text>
         </Pressable>
 
         {!configured && (
           <Text style={[styles.caption, { color: theme.textMuted }]}>
-            Auth is not configured in this build — browsing only.
+            {t("nativeAuthMissing")}
           </Text>
         )}
       </View>

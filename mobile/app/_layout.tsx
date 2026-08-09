@@ -1,3 +1,4 @@
+import "react-native-gesture-handler";
 import React from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -6,6 +7,12 @@ import "../lib/config";
 import { AuthProvider } from "../lib/auth";
 import { PortfolioProvider } from "../lib/portfolio";
 import { useTheme } from "../lib/theme";
+import AppErrorBoundary from "../components/AppErrorBoundary";
+
+// expo-router renders this instead of a blank screen when a route throws.
+// A release bundle has no redbox and no reachable console, so without it a
+// startup error is indistinguishable from the app simply not working.
+export { AppErrorBoundary as ErrorBoundary };
 
 export default function RootLayout() {
   const theme = useTheme();

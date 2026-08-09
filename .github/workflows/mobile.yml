@@ -32,6 +32,12 @@ jobs:
         working-directory: mobile
       - run: npx tsc --noEmit
         working-directory: mobile
+      # The check that would have caught the blank-screen release: typecheck
+      # and bundle both only look at JavaScript, so a native peer dependency
+      # that is declared but never installed compiles perfectly and then dies
+      # on a device outside Expo Go.
+      - run: npx expo-doctor@latest
+        working-directory: mobile
       # The check that matters: this is the same command EAS runs inside the
       # Android build, so a green bundle here means the APK will compile.
       - run: npm run bundle

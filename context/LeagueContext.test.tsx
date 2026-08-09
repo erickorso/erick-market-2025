@@ -69,7 +69,7 @@ function board(over: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   fetchLeagueBoard.mockReset().mockResolvedValue(board());
-  postLeagueScore.mockReset().mockResolvedValue({ ok: true });
+  postLeagueScore.mockReset().mockResolvedValue({ published: true });
   getAccessToken.mockReset().mockResolvedValue("tok");
   stock.fund = INITIAL_FUND_AMOUNT;
   stock.portfolio = [];
@@ -351,6 +351,53 @@ describe("automatic publishing", () => {
 
     expect(postLeagueScore).not.toHaveBeenCalled();
     vi.useRealTimers();
+  });
+});
+
+// Refusing to publish a rank it cannot price is only half the job: a rank that
+// quietly stops moving reads as a broken app, or gets believed.
+describe("an unpriced portfolio", () => {
+  it("surfaces which symbols left the rank stale", async () => {
+    postLeagueScore.mockResolvedValue({
+      published: false,
+      unpriced: ["AAPL", "TSLA"],
+    });
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    await act(async () => {
+      await result.current.pushScore();
+    });
+
+    expect(result.current.unpriced).toEqual(["AAPL", "TSLA"]);
+  });
+
+  it("clears the warning once the score publishes again", async () => {
+    postLeagueScore.mockResolvedValueOnce({
+      published: false,
+      unpriced: ["AAPL"],
+    });
+    const { result } = renderHook(() => useLeague(), { wrapper });
+    await act(async () => {
+      await result.current.pushScore();
+    });
+    expect(result.current.unpriced).toEqual(["AAPL"]);
+
+    postLeagueScore.mockResolvedValue({ published: true });
+    await act(async () => {
+      await result.current.pushScore();
+    });
+
+    expect(result.current.unpriced).toEqual([]);
+  });
+
+  it("says nothing when everything priced", async () => {
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    await act(async () => {
+      await result.current.pushScore();
+    });
+
+    expect(result.current.unpriced).toEqual([]);
   });
 });
 

@@ -7,7 +7,8 @@ import ProtectedLink from "../molecules/ProtectedLink";
 const COLLAPSE_KEY = "erick-market.rank-sidebar.collapsed";
 
 const RankSidebar: React.FC = () => {
-  const { entries, month, player, previousWinner, refresh } = useLeague();
+  const { entries, month, player, previousWinner, refresh, unpriced } =
+    useLeague();
   const { t } = useI18n();
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -87,6 +88,18 @@ const RankSidebar: React.FC = () => {
         <p className="mb-3 text-[11px] text-slate-600 dark:text-gray-400">
           {t("monthEquity", { month })}
         </p>
+
+        {/* The server refuses to publish a rank it cannot price. Saying so is
+            the other half of that: a rank that quietly stops moving reads as a
+            broken app, or gets believed. */}
+        {unpriced.length > 0 && (
+          <p
+            role="status"
+            className="mb-3 rounded border border-amber-500/30 bg-amber-950/20 px-2 py-1.5 text-[10px] text-amber-800 dark:text-amber-200/90"
+          >
+            {t("rankStale", { symbols: unpriced.join(", ") })}
+          </p>
+        )}
 
         {previousWinner && (
           <p className="mb-3 rounded border border-amber-500/30 bg-amber-950/20 px-2 py-1.5 text-[10px] text-amber-200/90">

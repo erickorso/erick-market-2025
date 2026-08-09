@@ -26,9 +26,15 @@ async function getHandler(req: VercelRequest, res: VercelResponse) {
 
 const postHandler = withAuth(async (req, res, { user }) => {
   // Body ignored — score is recalculated server-side from portfolio + live prices.
-  await upsertLeagueScore({ userId: user.id });
+  const sync = await upsertLeagueScore({ userId: user.id });
   const board = await getLeagueBoard();
-  res.status(200).json(board);
+  // Refusing to publish a score it cannot price is only half the job: a rank
+  // that quietly stops moving is its own kind of lie. The client is told.
+  res.status(200).json({
+    ...board,
+    published: sync.published,
+    ...(sync.published ? {} : { unpriced: sync.unpriced }),
+  });
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

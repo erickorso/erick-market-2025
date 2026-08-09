@@ -167,6 +167,8 @@ const en = {
   priceUnavailable:
     "No live price for that stock right now, so the trade was not placed. Try again in a moment.",
   tradeRetrying: "No price came back. Retrying — nothing has been bought yet.",
+  rankStale:
+    "Your rank is not current: no live price for {symbols}. It updates as soon as the market answers.",
 } as const;
 
 type Dict = { [K in keyof typeof en]: string };
@@ -337,6 +339,8 @@ const es: Dict = {
     "Ahora mismo no hay precio en vivo para esa acción, así que no se ejecutó la operación. Probá de nuevo en un momento.",
   tradeRetrying:
     "No llegó el precio. Reintentando — todavía no se compró nada.",
+  rankStale:
+    "Tu posición no está actualizada: no hay precio en vivo para {symbols}. Se actualiza apenas responda el mercado.",
 };
 
 export type MsgKey = keyof typeof en;

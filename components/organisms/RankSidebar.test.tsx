@@ -17,6 +17,7 @@ const league = vi.hoisted(() => ({
   month: "2026-08",
   player: null as { id: string } | null,
   previousWinner: null as { name: string } | null,
+  unpriced: [] as string[],
 }));
 
 vi.mock("../../context/LeagueContext", () => ({
@@ -53,6 +54,7 @@ beforeEach(() => {
   ];
   league.player = null;
   league.previousWinner = null;
+  league.unpriced = [];
 });
 
 describe("RankSidebar", () => {
@@ -166,5 +168,21 @@ describe("RankSidebar", () => {
     renderWithProviders(<RankSidebar />);
 
     expect(screen.queryByText("Erick")).not.toBeInTheDocument();
+  });
+});
+
+describe("a rank that stopped moving", () => {
+  it("says why, instead of showing a stale number in silence", () => {
+    league.unpriced = ["AAPL", "TSLA"];
+    renderWithProviders(<RankSidebar />);
+
+    const notice = screen.getByRole("status");
+    expect(notice).toHaveTextContent(/not current/i);
+    expect(notice).toHaveTextContent("AAPL, TSLA");
+  });
+
+  it("stays quiet when every holding priced", () => {
+    renderWithProviders(<RankSidebar />);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 });

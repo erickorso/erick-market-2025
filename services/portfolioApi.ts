@@ -186,7 +186,11 @@ export async function postLeagueScore(
   if (!res.ok) {
     throw await toApiError(res, "league score");
   }
-  return res.json();
+  return (await res.json()) as {
+    /** False when a holding had no live price, so the rank on screen is stale. */
+    published: boolean;
+    unpriced?: string[];
+  };
 }
 
 export const emptyPortfolioState = {

@@ -19,6 +19,8 @@ type LeagueContextValue = {
   entries: LeagueEntry[];
   previousWinner: LeagueEntry | null;
   mode: "shared" | "local" | "ephemeral";
+  /** Symbols the server could not price, so the rank on screen is not current. */
+  unpriced: string[];
   equity: ReturnType<typeof computeEquity>;
   refresh: () => Promise<void>;
   pushScore: () => Promise<void>;
@@ -41,6 +43,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     null,
   );
   const [mode, setMode] = useState<"shared" | "local" | "ephemeral">("shared");
+  const [unpriced, setUnpriced] = useState<string[]>([]);
 
   const equity = useMemo(
     () => computeEquity(state.fund, state.portfolio, state.allStocks),
@@ -96,13 +99,17 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = await getAccessToken();
     if (!token) return;
     const current = equityRef.current;
-    await postLeagueScore(token, {
+    const result = await postLeagueScore(token, {
       equity: current.equity,
       cash: current.cash,
       invested: current.invested,
       pnl: current.pnl,
       pnlPercent: current.pnlPercent,
     });
+    // Refusing to publish a rank it cannot price is only half the job. A rank
+    // that quietly stops moving looks like a bug in the app, or worse, is
+    // believed.
+    setUnpriced(result.published ? [] : (result.unpriced ?? []));
     await refresh();
   }, [isAuthenticated, getAccessToken, refresh]);
 
@@ -148,11 +155,22 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       entries,
       previousWinner,
       mode,
+      unpriced,
       equity,
       refresh,
       pushScore,
     }),
-    [player, month, entries, previousWinner, mode, equity, refresh, pushScore],
+    [
+      player,
+      month,
+      entries,
+      previousWinner,
+      mode,
+      unpriced,
+      equity,
+      refresh,
+      pushScore,
+    ],
   );
 
   return (

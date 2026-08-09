@@ -296,7 +296,9 @@ trade_in_progress`. A rejected trade frees its key. Expired claims are purged
   the honest outcome — there is no market to trade against.
 - The league **publishes nothing** when a holding cannot be priced. Marking it
   at cost is not conservative, it is false — the player shows a flat 0% and
-  ranks on a number that was never true. A stale rank beats a wrong one.
+  ranks on a number that was never true. A stale rank beats a wrong one, and
+  the board says which symbols left it stale: silently freezing a number reads
+  as a broken app, or gets believed.
 - On month rollover, the highest equity is archived as winner in `league_months`.
 - Buy/sell remain **simulated** (no real broker).
 
@@ -544,6 +546,16 @@ a request can commit and die before storing its response. So the key is written
 onto the `trades` row **inside the same statement as the trade**, which makes
 the ledger the authority: a stranded claim is resolved by asking whether that key
 ever ran, rather than guessed at with a timeout.
+
+**What it is not.** Claim, trade and record are three statements, not one
+transaction. A single transaction would be stronger: a crash would roll all
+three back and there would be no stranded claim to recover from at all. It is
+not one because Neon's HTTP driver has no interactive transactions —
+`sql.transaction([...])` batches but cannot branch on the claim's result, which
+is exactly what decides whether to trade. Doing it properly means the WebSocket
+pool driver and its connection lifecycle inside a serverless function. The
+ledger recovery is a mitigation for that gap, chosen deliberately; it repairs
+the wreckage rather than preventing it.
 
 → [`idempotency.test.ts`](api/_lib/idempotency.test.ts) — _"recovers a trade
 that committed before its response was stored"_ ·

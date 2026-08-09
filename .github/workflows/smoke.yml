@@ -24,10 +24,12 @@ jobs:
           node-version: 20
       - name: Smoke the deployment
         env:
+          # Deliberately the stable alias, not deployment_status.target_url:
+          # that one points at the per-deployment hostname, which Vercel puts
+          # behind its access protection and answers with a 302 to a login.
+          # Smoking it would only ever prove the protection works.
           SMOKE_BASE_URL: >-
-            ${{ github.event.inputs.url
-                || github.event.deployment_status.target_url
-                || 'https://erick-market-2025.vercel.app' }}
+            ${{ github.event.inputs.url || 'https://erick-market-2025.vercel.app' }}
           # Absent on forks and on most runs. The script skips the
           # authenticated trade checks rather than failing without it.
           SMOKE_TOKEN: ${{ secrets.SMOKE_TOKEN }}

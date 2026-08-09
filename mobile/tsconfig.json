@@ -4,18 +4,21 @@
     "strict": true,
     "jsx": "react-jsx",
     "paths": {
-      "@/*": ["./*"],
-      "@shared/*": ["../*"]
+      "@/*": [
+        "./*"
+      ],
+      "@shared/*": [
+        "../*"
+      ]
     }
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
-    "../services/**/*.ts",
-    "../types.ts",
-    "../constants.ts",
-    "../i18n/**/*.ts",
-    "../data/**/*.ts"
+    "**/*.tsx"
   ],
-  "exclude": ["node_modules", "dist", ".expo"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".expo"
+  ]
 }

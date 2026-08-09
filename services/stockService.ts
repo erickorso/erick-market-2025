@@ -1,4 +1,5 @@
 import type { ApiStockRow, ChartDataPoint, EnrichedStock } from "../types";
+import { apiUrl } from "./apiBase";
 import { QUOTES_API_URL } from "../constants";
 import {
   CATEGORIES,
@@ -228,7 +229,7 @@ export async function fetchStocks(
   if (category !== "all") sp.set("category", category);
   sp.set("offset", String(offset));
   sp.set("limit", String(limit));
-  const url = `${QUOTES_API_URL}?${sp.toString()}`;
+  const url = apiUrl(`${QUOTES_API_URL}?${sp.toString()}`);
 
   try {
     const data = (await fetchJson(url)) as {

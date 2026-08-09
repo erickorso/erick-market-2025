@@ -1,0 +1,69 @@
+name: Mobile
+
+# Two jobs with very different requirements. The check needs nothing and runs
+# on every change to the app; the APK needs an Expo account, so it only runs
+# when someone asks for it or cuts a tag.
+on:
+  push:
+    branches: [main]
+    paths: ["mobile/**", "services/**", "types.ts", "constants.ts", "data/**"]
+  pull_request:
+    paths: ["mobile/**", "services/**", "types.ts", "constants.ts", "data/**"]
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Build an APK and attach it to a release"
+        type: boolean
+        default: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          {
+            node-version: 20,
+            cache: npm,
+            cache-dependency-path: mobile/package-lock.json,
+          }
+      - run: npm ci
+        working-directory: mobile
+      - run: npx tsc --noEmit
+        working-directory: mobile
+      # The check that matters: this is the same command EAS runs inside the
+      # Android build, so a green bundle here means the APK will compile.
+      - run: npm run bundle
+        working-directory: mobile
+
+  apk:
+    # Needs EXPO_TOKEN, which forks and most runs do not have. Skipping is the
+    # right outcome there — failing would make the badge lie about the code.
+    if: github.event_name == 'workflow_dispatch' && inputs.release
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+        working-directory: mobile
+      - name: Build the APK
+        working-directory: mobile
+        run: eas build --platform android --profile preview --non-interactive --wait --output ../erick-market.apk
+      - name: Publish it as a release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mobile-v${{ github.run_number }}
+          name: Erick Market mobile ${{ github.run_number }}
+          body: |
+            Android APK — install directly, no store account needed.
+
+            Points at the production API. iOS cannot be side-loaded this way;
+            that route is TestFlight.
+          files: erick-market.apk

@@ -56,7 +56,11 @@ export default tseslint.config(
   // hook or helper — the standard React context shape. Splitting them would
   // buy nothing but a slightly finer HMR boundary.
   {
-    files: ["context/**/*.tsx", "components/routing/**/*.tsx"],
+    files: [
+      "context/**/*.tsx",
+      "components/routing/**/*.tsx",
+      "mobile/lib/**/*.tsx",
+    ],
     rules: { "react-refresh/only-export-components": "off" },
   },
 

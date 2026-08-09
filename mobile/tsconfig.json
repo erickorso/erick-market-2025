@@ -1,0 +1,21 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./*"],
+      "@shared/*": ["../*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../services/**/*.ts",
+    "../types.ts",
+    "../constants.ts",
+    "../i18n/**/*.ts",
+    "../data/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", ".expo"]
+}

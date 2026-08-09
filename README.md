@@ -625,6 +625,50 @@ outage must never turn a valid JWT into a 401.
 
 ---
 
+## Mobile (Expo / React Native)
+
+`mobile/` is a native client for the same API, in the same repo on purpose: it
+imports `services/`, `types.ts` and `data/watchlist.ts` **directly**, so every
+rule that makes a trade safe — server-quoted price, exactly-once via the
+idempotency key, replay only on an error that proves nothing was written — is
+the same code, not a second implementation drifting from the first.
+
+|                 |                                                                                                            |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Stack**       | Expo SDK 54 · expo-router · React Native 0.81 · react-native-svg                                           |
+| **Auth**        | Auth0 through `expo-auth-session` (PKCE), refresh token in `expo-secure-store`                             |
+| **Screens**     | Market (search, category filters) · Detail (chart + buy) · Portfolio (sell) · League                       |
+| **Verified by** | `npx tsc --noEmit` and `npm run bundle` — the latter is the exact command EAS runs inside an Android build |
+
+Two things had to change on the shared side, both improvements in their own
+right: the API base is now [configuration](services/apiBase.ts) rather than an
+assumption that every path is relative to an origin, and the websocket URL
+derives from it instead of from `window.location`.
+
+The chart is [hand-rolled SVG](mobile/components/Sparkline.tsx): recharts is
+DOM-only, and a native charting library is a large dependency for one polyline
+over a handful of daily closes.
+
+### Getting an APK
+
+```bash
+cd mobile && npm ci
+npx expo start            # Expo Go, tunnel works on SDK 54
+```
+
+[The mobile workflow](.github/workflows/mobile.yml) typechecks and bundles on
+every change with no secrets. Given an `EXPO_TOKEN`, running it with
+**release** builds an APK through EAS and attaches it to a GitHub release —
+installable directly, no store account involved. iOS cannot be side-loaded that
+way; that route is TestFlight.
+
+**Before a build can sign in**, Auth0 needs a **Native** application whose
+callback and logout URLs include `erickmarket://`, and its domain and client id
+go in `app.json` under `extra`. Without them the app still runs: it browses the
+market and the league, and says so instead of failing at a login button.
+
+---
+
 ## Stack
 
 React 19 · TypeScript · Vite · Tailwind · Recharts · Three.js · Vitest · Auth0 · Neon · Finnhub · Vercel serverless

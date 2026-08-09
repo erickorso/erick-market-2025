@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { HOT_API_URL, HOT_REFRESH_MS, HOT_WS_PATH } from "../constants";
+import { apiUrl, wsUrl } from "../services/apiBase";
 
 export type HotStock = {
   symbol: string;
@@ -36,11 +37,6 @@ function mockHot(): HotStock[] {
   }));
 }
 
-function wsUrl(): string {
-  const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${proto}//${window.location.host}${HOT_WS_PATH}`;
-}
-
 export function useHotStocks() {
   const [stocks, setStocks] = useState<HotStock[]>([]);
   const [mode, setMode] = useState<HotChannelMode>("idle");
@@ -63,7 +59,7 @@ export function useHotStocks() {
 
   const pollOnce = useCallback(async () => {
     try {
-      const res = await fetch(HOT_API_URL);
+      const res = await fetch(apiUrl(HOT_API_URL));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as HotPayload;
       applyPayload(data);
@@ -108,7 +104,7 @@ export function useHotStocks() {
       if (cancelled) return;
       let socket: WebSocket;
       try {
-        socket = new WebSocket(wsUrl());
+        socket = new WebSocket(wsUrl(HOT_WS_PATH));
       } catch {
         startPoll();
         return;

@@ -1,4 +1,5 @@
 import type { PortfolioItem } from "../types";
+import { apiUrl } from "./apiBase";
 import { INITIAL_FUND_AMOUNT } from "../constants";
 
 export type ApiPortfolio = {
@@ -29,7 +30,7 @@ async function authFetch(
   token: string,
   init?: RequestInit,
 ): Promise<Response> {
-  return fetch(url, {
+  return fetch(apiUrl(url), {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -142,7 +143,7 @@ export async function postTrade(
 
 export async function fetchLeagueBoard(month?: string) {
   const q = month ? `?month=${encodeURIComponent(month)}` : "";
-  const res = await fetch(`${LEAGUE_URL}${q}`);
+  const res = await fetch(apiUrl(`${LEAGUE_URL}${q}`));
   if (!res.ok) {
     throw await toApiError(res, "league");
   }

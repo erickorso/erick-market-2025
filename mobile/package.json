@@ -1,0 +1,37 @@
+{
+  "name": "erick-market-mobile",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "private": true,
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "bundle": "expo export:embed --platform android --entry-file node_modules/expo-router/entry.js --bundle-output .expo/bundle-check.js --dev false",
+    "lint": "expo lint"
+  },
+  "dependencies": {
+    "babel-preset-expo": "~54.0.10",
+    "expo": "~54.0.0",
+    "expo-asset": "~12.0.13",
+    "expo-auth-session": "~7.0.11",
+    "expo-constants": "~18.0.13",
+    "expo-crypto": "~15.0.9",
+    "expo-linking": "~8.0.12",
+    "expo-router": "~6.0.24",
+    "expo-secure-store": "~15.0.8",
+    "expo-status-bar": "~3.0.9",
+    "expo-web-browser": "~15.0.11",
+    "react": "^19.1.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.12.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "typescript": "^5.9.3"
+  }
+}

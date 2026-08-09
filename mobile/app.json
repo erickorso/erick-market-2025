@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Erick Market",
+    "slug": "erick-market",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "erickmarket",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0f172a",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.erickmarket.mobile"
+    },
+    "android": {
+      "package": "app.erickmarket.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#0f172a"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-asset"
+    ],
+    "extra": {
+      "apiBase": "https://erick-market-2025.vercel.app"
+    }
+  }
+}

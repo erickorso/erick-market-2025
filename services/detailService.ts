@@ -1,4 +1,5 @@
 import { DETAIL_API_URL } from "../constants";
+import { apiUrl } from "./apiBase";
 import type { ChartDataPoint, StyleTag } from "../types";
 import { generateChartData } from "./stockService";
 import { COMPANY_SITES, WATCHLIST } from "../data/watchlist";
@@ -72,7 +73,7 @@ export async function fetchStockDetail(
   const sym = symbol.trim().toUpperCase();
   try {
     const res = await fetch(
-      `${DETAIL_API_URL}?symbol=${encodeURIComponent(sym)}`,
+      apiUrl(`${DETAIL_API_URL}?symbol=${encodeURIComponent(sym)}`),
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = (await res.json()) as {

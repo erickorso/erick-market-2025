@@ -17,6 +17,15 @@ function queue(...results: Record<string, unknown>[][]) {
   db.queue.push(...results);
 }
 
+/** The orphan DELETE, told apart from the TTL purge by its response check. */
+function orphanDelete() {
+  return db.calls.find(
+    (c) =>
+      c.text.includes("DELETE FROM trade_requests") &&
+      c.text.includes("response IS NULL"),
+  );
+}
+
 beforeEach(() => {
   db.queue.length = 0;
   db.calls.length = 0;
@@ -89,9 +98,76 @@ describe("claim", () => {
   });
 
   it("treats a vanished row as still in progress rather than free", async () => {
-    queue([], [], []);
+    queue([], [], [], []);
 
     await expect(claim("u1", "k")).rejects.toMatchObject({ status: 409 });
+  });
+
+  /**
+   * The hole the ledger cannot cover: a request claims the key and dies before
+   * trading. Nothing to recover, and because the key belongs to the order, the
+   * user would be stuck on 409 until they changed the order itself.
+   */
+  it("frees a claim old enough that nothing could still be running", async () => {
+    queue(
+      [], // lost the claim race
+      [{ response: null }], // no cached answer
+      [], // no trade under the key
+      [{ idempotency_key: "k" }], // the orphan DELETE matched
+      [{ idempotency_key: "k" }], // and we retook it
+    );
+
+    expect(await claim("u1", "k")).toEqual({ replayed: false });
+  });
+
+  it("only frees one that has aged out", async () => {
+    queue([], [{ response: null }], [], []);
+    await claim("u1", "k").catch(() => null);
+
+    // Not the TTL purge that rides along with every claim — the orphan one,
+    // which is the only DELETE that looks at response IS NULL.
+    const del = orphanDelete();
+    expect(del).toBeDefined();
+    expect(del?.values).toContain("5 minutes");
+  });
+
+  it("holds the line on a young claim, which is still running", async () => {
+    queue(
+      [],
+      [{ response: null }],
+      [],
+      [], // too young: the DELETE matched nothing
+    );
+
+    await expect(claim("u1", "k")).rejects.toMatchObject({
+      status: 409,
+      code: "trade_in_progress",
+    });
+  });
+
+  // Freeing it is not the same as owning it: another request may have taken
+  // over in between, and it is the one that gets to execute.
+  it("yields to whoever wins the race to retake a freed key", async () => {
+    queue(
+      [],
+      [{ response: null }],
+      [],
+      [{ idempotency_key: "k" }], // freed by us
+      [], // ...but someone else re-claimed first
+    );
+
+    await expect(claim("u1", "k")).rejects.toMatchObject({ status: 409 });
+  });
+
+  // Age is irrelevant when the ledger has the trade: that is proof, not a
+  // guess, so it is recovered rather than freed.
+  it("recovers rather than frees when a trade exists, however old", async () => {
+    queue([], [{ response: null }], [{ id: "t1" }], [{ cash: "9000" }], [], []);
+
+    const result = await claim("u1", "k");
+
+    expect(result).toMatchObject({ replayed: true });
+    expect(orphanDelete()).toBeUndefined();
   });
 
   // The case an outside review found: the trade commits, the process dies

@@ -195,6 +195,17 @@ sequenceDiagram
 
 ## Data model (Neon)
 
+> **This database is shared.** The Neon free-tier instance also holds another
+> application's 28 Prisma-managed tables in the same `public` schema. This
+> project owns exactly seven: `users`, `portfolios`, `positions`, `trades`,
+> `trade_requests`, `league_scores`, `league_months`. Never migrate, drop or
+> truncate anything else — note that their `User` and our `users` are one
+> careless glance apart. [`npm run check:db`](scripts/check-neon-schema.mjs)
+> asserts our schema is intact and prints what else lives there;
+> [`db/schema.sql`](db/schema.sql) is additive only (`IF NOT EXISTS`
+> throughout) for the same reason. Integration tests want `DATABASE_URL_TEST`
+> pointed at a Neon branch, not at this.
+
 Source of truth: [`db/schema.sql`](db/schema.sql).
 
 ```mermaid
@@ -498,6 +509,8 @@ Redeploy after changing `VITE_*` (they are baked into the build).
 | `npm run test:coverage`    | Same, with a v8 coverage report                     |
 | `npm run test:integration` | Run Neon integration tests with `DATABASE_URL_TEST` |
 | `npm run test:watch`       | Run Vitest in watch mode                            |
+| `npm run smoke`            | Checks a live deployment (see below)                |
+| `npm run check:db`         | Asserts the schema on a shared Neon instance        |
 | `npm run test:e2e`         | Run Playwright end-to-end tests                     |
 | `npm run test:e2e:ui`      | Open Playwright UI mode                             |
 | `npm run screenshots`      | Regenerate the README images from the app           |
@@ -557,6 +570,13 @@ pool driver and its connection lifecycle inside a serverless function. The
 ledger recovery is a mitigation for that gap, chosen deliberately; it repairs
 the wreckage rather than preventing it.
 
+The ledger cannot cover one case: a request that claims a key and dies before
+trading leaves nothing to recover from. Because the key belongs to the order,
+that would strand the user on `409` until they changed the order itself. So a
+claim with no trade behind it and **older than five minutes** is released and
+retaken — five minutes being orders of magnitude past the function timeout that
+would have killed it.
+
 → [`idempotency.test.ts`](api/_lib/idempotency.test.ts) — _"recovers a trade
 that committed before its response was stored"_ ·
 [`useTradePanel.test.tsx`](hooks/useTradePanel.test.tsx) — _"reuses the key when
@@ -609,6 +629,15 @@ outage must never turn a valid JWT into a 401.
 React 19 · TypeScript · Vite · Tailwind · Recharts · Three.js · Vitest · Auth0 · Neon · Finnhub · Vercel serverless
 
 ## Quality checks
+
+**After** a deploy, [`npm run smoke`](scripts/smoke.mjs) checks the thing that
+is actually live — catalog shape, the public routes, and that every
+authenticated route refuses an anonymous caller. It needs no secrets, so
+[the smoke workflow](.github/workflows/smoke.yml) fires on Vercel's
+`deployment_status` without any setup. Give it a `SMOKE_TOKEN` and it also
+buys one share twice under the same idempotency key and asserts the second call
+replays instead of buying — the guarantee the whole design exists for, checked
+against a real deployment rather than a mock.
 
 Every push and pull request to `main` runs
 [the CI workflow](.github/workflows/ci.yml): lint with `--max-warnings=0`,

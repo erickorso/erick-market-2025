@@ -15,6 +15,16 @@ export type ClaimResult =
 /** Claims older than this are purged; long past any client still retrying. */
 const KEY_TTL = "24 hours";
 
+/**
+ * Past this, a claim with no trade behind it cannot still be running — the
+ * function that made it dies at its own timeout, orders of magnitude sooner.
+ * Without this the hole the ledger cannot cover stays open forever: a request
+ * that claims a key and dies before trading leaves that key unusable, and
+ * since the key belongs to the order, the user is stuck on 409 until they
+ * change the order itself.
+ */
+const ORPHAN_AFTER = "5 minutes";
+
 /** Format-checked before it reaches SQL, and bounded so it cannot be abused
  *  as arbitrary storage. */
 export function parseIdempotencyKey(raw: unknown): string | null {
@@ -69,8 +79,30 @@ async function recoverFromLedger(
     LIMIT 1
   `;
   if (!trade.length) {
-    // Genuinely still running. Turning the duplicate away is the whole point:
-    // letting it through is the failure this exists to prevent.
+    // No trade under this key. Either the winner is mid-flight, or it died
+    // before it got anywhere — age is the only thing that separates the two.
+    const freed = await sql`
+      DELETE FROM trade_requests
+      WHERE user_id = ${userId}
+        AND idempotency_key = ${key}
+        AND response IS NULL
+        AND created_at < now() - ${ORPHAN_AFTER}::interval
+      RETURNING idempotency_key
+    `;
+    if (freed.length) {
+      // Freed, so take it over rather than making the user press Buy again.
+      // The insert is still the lock: if another request beat us to the
+      // re-claim, it owns the execution and this one waits like any duplicate.
+      const retaken = await sql`
+        INSERT INTO trade_requests (user_id, idempotency_key)
+        VALUES (${userId}, ${key})
+        ON CONFLICT (user_id, idempotency_key) DO NOTHING
+        RETURNING idempotency_key
+      `;
+      if (retaken.length) return { replayed: false };
+    }
+    // Still running. Turning the duplicate away is the whole point: letting it
+    // through is the failure this exists to prevent.
     throw Object.assign(new Error("That trade is already being processed"), {
       status: 409,
       code: "trade_in_progress",

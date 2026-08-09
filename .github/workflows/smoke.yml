@@ -1,0 +1,34 @@
+name: Smoke
+
+# Runs against something already deployed, which is the only thing CI cannot
+# tell you: the build passing says the code compiles, not that the live URL
+# answers. Vercel emits deployment_status, so this fires on its own after every
+# successful deploy — and needs no secrets to do the checks that matter.
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Base URL to check (defaults to production)"
+        required: false
+
+jobs:
+  smoke:
+    # deployment_status fires for every transition; only success is worth a run.
+    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Smoke the deployment
+        env:
+          SMOKE_BASE_URL: >-
+            ${{ github.event.inputs.url
+                || github.event.deployment_status.target_url
+                || 'https://erick-market-2025.vercel.app' }}
+          # Absent on forks and on most runs. The script skips the
+          # authenticated trade checks rather than failing without it.
+          SMOKE_TOKEN: ${{ secrets.SMOKE_TOKEN }}
+        run: node scripts/smoke.mjs

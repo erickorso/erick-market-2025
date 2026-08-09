@@ -11,6 +11,7 @@ import { useUser } from "../context/UserContext";
 import { useI18n } from "../context/I18nContext";
 import { useAuthPrompt } from "../context/AuthPromptContext";
 import { withRetry } from "../services/retry";
+import { newIdempotencyKey } from "../services/idempotency";
 
 /**
  * Owns the write side of the portfolio: hydrating it from the server and
@@ -70,15 +71,24 @@ export function useTrading(
         });
         return;
       }
+      // Generated once, here, for this press of Buy — every retry below reuses
+      // it. A key per attempt would leave the server unable to tell a replay
+      // from a second purchase, which is the whole thing it is there to do.
+      const idempotencyKey = newIdempotencyKey();
+
       const send = async (forceRefresh: boolean) => {
         const token = await getAccessToken({ forceRefresh });
         if (!token) throw new ApiError("No access token", 401, "token_missing");
-        return postTrade(token, {
-          side: input.side,
-          symbol: input.symbol,
-          company: input.company,
-          qty: input.qty,
-        });
+        return postTrade(
+          token,
+          {
+            side: input.side,
+            symbol: input.symbol,
+            company: input.company,
+            qty: input.qty,
+          },
+          idempotencyKey,
+        );
       };
 
       const attempt = async () => {

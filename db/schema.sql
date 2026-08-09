@@ -42,6 +42,26 @@ CREATE TABLE IF NOT EXISTS trades (
 
 CREATE INDEX IF NOT EXISTS trades_user_month_idx ON trades (user_id, month, created_at DESC);
 
+-- Exactly-once for POST /api/trade.
+--
+-- A retry is only safe when the error proves nothing was written. A dropped
+-- connection proves nothing: the trade may well have committed, and the user
+-- who presses Buy again has no way to know. The primary key is what makes the
+-- second attempt a lookup instead of a second purchase.
+--
+-- `response` stays NULL while the trade is in flight, so a duplicate arriving
+-- mid-execution is answered with a conflict rather than being let through.
+CREATE TABLE IF NOT EXISTS trade_requests (
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  idempotency_key TEXT NOT NULL,
+  response JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, idempotency_key)
+);
+
+-- Scoped by user, so one caller's key can never collide with another's.
+CREATE INDEX IF NOT EXISTS trade_requests_created_idx ON trade_requests (created_at);
+
 CREATE TABLE IF NOT EXISTS league_scores (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   month TEXT NOT NULL,

@@ -126,12 +126,11 @@ describe("buyStock", () => {
       await result.current.buyStock(stock(), 2);
     });
 
-    expect(postTrade).toHaveBeenCalledWith("tok", {
-      side: "buy",
-      symbol: "AAPL",
-      company: "Apple Inc. (AAPL)",
-      qty: 2,
-    });
+    expect(postTrade).toHaveBeenCalledWith(
+      "tok",
+      { side: "buy", symbol: "AAPL", company: "Apple Inc. (AAPL)", qty: 2 },
+      expect.stringMatching(/^[A-Za-z0-9_-]{8,128}$/),
+    );
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({ type: "HYDRATE_PORTFOLIO" }),
     );
@@ -330,12 +329,11 @@ describe("sellStock", () => {
       await result.current.sellStock("Apple Inc. (AAPL)", 2);
     });
 
-    expect(postTrade).toHaveBeenCalledWith("tok", {
-      side: "sell",
-      symbol: "AAPL",
-      company: "Apple Inc. (AAPL)",
-      qty: 2,
-    });
+    expect(postTrade).toHaveBeenCalledWith(
+      "tok",
+      { side: "sell", symbol: "AAPL", company: "Apple Inc. (AAPL)", qty: 2 },
+      expect.stringMatching(/^[A-Za-z0-9_-]{8,128}$/),
+    );
   });
 
   // The quote feed, not the trade, is what failed — and the raw wording is the

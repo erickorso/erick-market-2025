@@ -95,12 +95,16 @@ describe("authenticated requests", () => {
 
   it("posts a trade as JSON", async () => {
     fetchMock.mockResolvedValue(ok(apiPortfolio()));
-    await postTrade("tok", {
-      side: "buy",
-      symbol: "AAPL",
-      company: "Apple Inc.",
-      qty: 2,
-    });
+    await postTrade(
+      "tok",
+      {
+        side: "buy",
+        symbol: "AAPL",
+        company: "Apple Inc.",
+        qty: 2,
+      },
+      "key-123",
+    );
 
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/trade");
@@ -110,12 +114,16 @@ describe("authenticated requests", () => {
 
   it("returns the portfolio the trade produced", async () => {
     fetchMock.mockResolvedValue(ok(apiPortfolio({ cash: 1 })));
-    const result = await postTrade("tok", {
-      side: "sell",
-      symbol: "AAPL",
-      company: "Apple",
-      qty: 1,
-    });
+    const result = await postTrade(
+      "tok",
+      {
+        side: "sell",
+        symbol: "AAPL",
+        company: "Apple",
+        qty: 1,
+      },
+      "key-123",
+    );
 
     expect(result.cash).toBe(1);
   });
@@ -140,12 +148,16 @@ describe("error handling", () => {
     fetchMock.mockResolvedValue(fail(400, { error: "insufficient funds" }));
 
     await expect(
-      postTrade("tok", {
-        side: "buy",
-        symbol: "AAPL",
-        company: "Apple",
-        qty: 1,
-      }),
+      postTrade(
+        "tok",
+        {
+          side: "buy",
+          symbol: "AAPL",
+          company: "Apple",
+          qty: 1,
+        },
+        "key-123",
+      ),
     ).rejects.toThrow("insufficient funds");
   });
 

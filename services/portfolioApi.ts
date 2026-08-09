@@ -125,9 +125,13 @@ export async function postTrade(
     company: string;
     qty: number;
   },
+  /** One key per intention, reused by every replay of that same Buy. A new
+   *  key per attempt would defeat the whole point. */
+  idempotencyKey: string,
 ): Promise<ApiPortfolio> {
   const res = await authFetch(TRADE_URL, token, {
     method: "POST",
+    headers: { "Idempotency-Key": idempotencyKey },
     body: JSON.stringify(body),
   });
   if (!res.ok) {

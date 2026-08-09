@@ -271,6 +271,14 @@ erDiagram
   meant a hand-written request could buy a million shares at a cent and top the
   league — and, less dramatically, that a fill could land at a simulated price
   from mock mode while the portfolio was valued at the real one.
+- `POST /api/trade` **requires an `Idempotency-Key` header**, scoped per user by
+  primary key. A replay returns the original response with `Idempotent-Replay:
+true`; a duplicate arriving while the first is still running gets
+  `409 trade_in_progress` rather than being let through. A trade that was
+  rejected frees its key, so a user is never stranded on 409 for a decision they
+  are entitled to retake. Optional would be worthless: an endpoint that moves
+  money and cannot recognise a duplicate is one dropped connection away from
+  charging twice.
 - If the quote feed cannot price the symbol, the trade is **refused** with
   `503 price_unavailable` rather than falling back to a caller-supplied number.
   Failing closed matters here: the alternative reopens the hole precisely when
@@ -479,6 +487,85 @@ Redeploy after changing `VITE_*` (they are baked into the build).
 | `npm run test:e2e:ui`      | Open Playwright UI mode                             |
 | `npm run screenshots`      | Regenerate the README images from the app           |
 | `npm run db:schema`        | Hint to apply the SQL                               |
+
+---
+
+## Five bugs worth reading about
+
+Each of these was real, each is pinned by a test that fails against the code
+that shipped before it. They are here because the reasoning is the interesting
+part, not the diff.
+
+### The client set its own execution price
+
+`POST /api/trade` took `price` from the request body and wrote it to the
+ledger. The only check was `0 < price ≤ 1_000_000`, so a hand-written request
+bought a million shares at a cent — and the league ranks by equity, so that was
+enough to win it.
+
+The fix was not stricter validation. The field is gone: the server quotes the
+symbol itself, and there is nothing left about the price for a caller to touch.
+When the feed cannot price a symbol the trade is **refused**, because falling
+back to a caller-supplied number reopens the hole exactly when the feed is down.
+
+→ [`store.test.ts`](api/_lib/store.test.ts) — _"prices the trade from the quote
+feed, not from the request"_
+
+### A retry that could have charged twice — and the one that cannot
+
+Retrying a write is how you charge someone twice, so the retry helper takes
+`shouldRetry` as a **required argument with no default**
+([`retry.ts`](api/_lib/retry.ts)). A convenient helper with a permissive default
+ends up wrapping reads and writes alike.
+
+Only one error is replayed: `price_unavailable`. The server quotes before it
+writes, so that response is _proof_ nothing was booked. A timeout proves
+nothing, and no guard in the UI can help — the first request already finished.
+That gap is what the **idempotency key** closes: one key per intention, reused
+by every replay, and the second request becomes a lookup instead of a purchase.
+
+→ [`idempotency.test.ts`](api/_lib/idempotency.test.ts) — _"replays the stored
+response instead of trading again"_
+
+### Two clicks in one tick both saw `busy: false`
+
+Both trade paths guarded with `if (busy) return`, reading state captured at
+render. Two clicks dispatched before React repaints read the same stale `false`,
+and the button's `disabled` only applies on the next render. The guard never
+fired when it mattered. It is a ref now — the only thing that has already
+changed by the time the second call runs.
+
+→ [`useTradePanel.test.tsx`](hooks/useTradePanel.test.tsx) — the test reports
+`expected "spy" to be called 1 times, but got 2 times` against the old code.
+
+### A `WITH` cannot see its own writes
+
+Selling an entire position left a phantom holding of zero shares. The sell was
+one statement: a CTE updating `qty`, and a sibling CTE deleting the row once
+`qty` hit zero. Sub-statements in a `WITH` all read the same snapshot, so the
+`DELETE` still saw the pre-sale quantity and matched nothing.
+
+The read is now where it is enforced (`qty > 1e-9`) and the delete is its own
+statement — housekeeping, not correctness.
+
+→ [`store.test.ts`](api/_lib/store.test.ts) — _"is never returned as a holding,
+whatever the row says"_
+
+### Everyone was renamed to "Trader"
+
+Moving the audience to a real API changed the bearer from an ID token to an
+access token — which carries `sub` and nothing else. `email` and `name` live on
+the ID token and on `/userinfo`. Reading them off the access token returned
+`undefined`, so every profile fell to its placeholder.
+
+The upsert made it permanent: the fallback was passed into the `ON CONFLICT`
+branch, renaming returning users on **every request**. Now the placeholder seeds
+a new row only, and the profile is recovered from `/userinfo` — cached per user,
+and failing soft, because identity here only decorates a row and a userinfo
+outage must never turn a valid JWT into a 401.
+
+→ [`auth.test.ts`](api/_lib/auth.test.ts) — _"still authenticates when
+/userinfo errors"_
 
 ---
 

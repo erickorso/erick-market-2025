@@ -108,11 +108,13 @@ test("authenticated user can buy and sends the expected trade", async ({
   page,
 }) => {
   let tradeBody: Record<string, unknown> | null = null;
+  let idempotencyKey: string | undefined;
   await page.route("**/api/trade", async (route) => {
     tradeBody = JSON.parse(route.request().postData() ?? "{}") as Record<
       string,
       unknown
     >;
+    idempotencyKey = route.request().headers()["idempotency-key"];
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -142,5 +144,8 @@ test("authenticated user can buy and sends the expected trade", async ({
       company: "Apple Inc. (AAPL)",
       qty: 1,
     });
+  // The endpoint rejects a request it cannot recognise as a duplicate, so the
+  // header is part of the contract, not a nicety.
+  expect(idempotencyKey).toMatch(/^[A-Za-z0-9_-]{8,128}$/);
   await expect(page.getByTestId("company-name")).toHaveCount(1);
 });

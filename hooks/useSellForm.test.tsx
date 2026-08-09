@@ -198,3 +198,29 @@ describe("submit", () => {
     expect(result.current.busy).toBe(false);
   });
 });
+
+// The button's `disabled` only applies on the next render, so it cannot stop
+// two clicks landing in the same tick. Selling twice is real money here.
+describe("double submit", () => {
+  it("refuses a second submit while one is in flight", async () => {
+    let release: (v: unknown) => void = () => {};
+    sellStock.mockReturnValue(new Promise((r) => (release = r)));
+    const { result } = renderHook(() => useSellForm("Apple Inc. (AAPL)"), {
+      wrapper,
+    });
+
+    act(() => {
+      result.current.setQuantity(1);
+    });
+
+    let second!: Promise<boolean>;
+    await act(async () => {
+      void result.current.submit();
+      second = result.current.submit();
+      release(undefined);
+    });
+
+    expect(await second).toBe(false);
+    expect(sellStock).toHaveBeenCalledTimes(1);
+  });
+});

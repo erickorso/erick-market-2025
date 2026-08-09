@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { EnrichedStock } from "../types";
 import { useStockContext } from "../context/StockContext";
 import { useUser } from "../context/UserContext";
@@ -22,6 +22,9 @@ export function useTradePanel(
   const { requestLogin } = useAuthPrompt();
   const [quantity, setQuantity] = useState(1);
   const [busy, setBusy] = useState(false);
+  // See useSellForm: `busy` read from the closure cannot stop two clicks in
+  // the same tick, and the button's `disabled` only lands on the next render.
+  const inFlight = useRef(false);
 
   // Reset during render rather than in an effect: this is React's documented
   // way to adjust state when a prop changes, and it avoids the extra pass that
@@ -48,14 +51,16 @@ export function useTradePanel(
       requestLogin("trade");
       return;
     }
-    if (!stock || busy || quantity <= 0 || !canAfford) return;
+    if (!stock || inFlight.current || quantity <= 0 || !canAfford) return;
+    inFlight.current = true;
     setBusy(true);
     try {
       await buyStock(stock, quantity);
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
-  }, [locked, requestLogin, stock, busy, quantity, canAfford, buyStock]);
+  }, [locked, requestLogin, stock, quantity, canAfford, buyStock]);
 
   return {
     quantity,

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useStockContext } from "../context/StockContext";
 import { useI18n } from "../context/I18nContext";
 
@@ -13,6 +13,10 @@ export function useSellForm(rawCompany: string | undefined) {
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  // A ref, not the state: two clicks in one tick both read the same rendered
+  // `busy`, and the button's `disabled` only applies on the next render. The
+  // ref is the only thing that has already changed by the second call.
+  const inFlight = useRef(false);
 
   const company = rawCompany ? decodeURIComponent(rawCompany) : "";
   const position = state.portfolio.find((item) => item.company === company);
@@ -22,6 +26,10 @@ export function useSellForm(rawCompany: string | undefined) {
   const currentPrice = listed?.price ?? 0;
 
   const submit = useCallback(async () => {
+    // Guarded here, not only by the button's `disabled`. That attribute only
+    // takes effect on the next render, so a fast double-click can land two
+    // sells before React repaints. The buy side has always had this check.
+    if (inFlight.current) return false;
     setError("");
     if (quantity <= 0) {
       setError(t("qtyMustBePositive"));
@@ -31,6 +39,7 @@ export function useSellForm(rawCompany: string | undefined) {
       setError(t("canSellUpTo", { max: maxQuantity }));
       return false;
     }
+    inFlight.current = true;
     setBusy(true);
     try {
       await sellStock(company, quantity);
@@ -39,6 +48,7 @@ export function useSellForm(rawCompany: string | undefined) {
       setError(err instanceof Error ? err.message : t("error"));
       return false;
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }, [quantity, maxQuantity, sellStock, company, t]);

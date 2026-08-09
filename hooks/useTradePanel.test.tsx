@@ -181,3 +181,21 @@ describe("submit", () => {
     await waitFor(() => expect(result.current.busy).toBe(false));
   });
 });
+
+// The buy guard used to read `busy` from the closure, which two clicks in the
+// same tick both see as false. Buying twice is real money here.
+describe("double submit", () => {
+  it("refuses a second buy while one is in flight", async () => {
+    let release: (v: unknown) => void = () => {};
+    buyStock.mockReturnValue(new Promise((r) => (release = r)));
+    const { result } = renderHook(() => useTradePanel(stock()));
+
+    await act(async () => {
+      void result.current.submit();
+      void result.current.submit();
+      release(undefined);
+    });
+
+    expect(buyStock).toHaveBeenCalledTimes(1);
+  });
+});

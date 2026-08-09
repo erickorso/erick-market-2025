@@ -324,6 +324,30 @@ describe("executeTrade", () => {
 
   // Falling back to the caller's number when the feed is down would reopen the
   // hole exactly when nobody is watching. Refusing to trade is the safe answer.
+  // One upstream hiccup should not cost a user their trade. Safe to retry only
+  // because the quote runs before any write.
+  it("retries the quote before giving up", async () => {
+    fetchLivePrices
+      .mockResolvedValueOnce(new Map())
+      .mockResolvedValueOnce(new Map([["AAPL", 200]]));
+    queueEnsure();
+    queue([{ user_id: "u1" }], [{ cash: "9600" }], []);
+
+    await executeTrade(buy);
+
+    expect(fetchLivePrices).toHaveBeenCalledTimes(2);
+    const cte = db.calls.find((c) => c.text.includes("WITH paid AS"));
+    expect(cte?.values).toContain(200);
+  });
+
+  it("gives up after a bounded number of attempts", async () => {
+    fetchLivePrices.mockResolvedValue(new Map());
+
+    await expect(executeTrade(buy)).rejects.toMatchObject({ status: 503 });
+
+    expect(fetchLivePrices).toHaveBeenCalledTimes(3);
+  });
+
   it("refuses to trade when the market cannot be priced", async () => {
     fetchLivePrices.mockResolvedValue(new Map());
 
@@ -410,6 +434,7 @@ describe("executeTrade", () => {
     queueEnsure();
     queue(
       [{ user_id: "u1", qty: "8" }],
+      [], // the cleanup DELETE
       [{ cash: "10200" }],
       [{ symbol: "AAPL", company: "Apple Inc.", qty: "8", avg_cost: "100" }],
     );
@@ -429,14 +454,15 @@ describe("executeTrade", () => {
     });
   });
 
-  it("clears a position that reaches zero in the same statement", async () => {
+  it("clears a position that reaches zero", async () => {
     queueEnsure();
-    queue([{ user_id: "u1", qty: "0" }], [{ cash: "10200" }], []);
+    queue([{ user_id: "u1", qty: "0" }], [], [{ cash: "10200" }], []);
 
     await executeTrade({ ...buy, side: "sell" });
 
-    const cte = db.calls.find((c) => c.text.includes("WITH sold AS"));
-    expect(cte?.text).toContain("DELETE FROM positions");
+    expect(db.calls.some((c) => c.text.includes("DELETE FROM positions"))).toBe(
+      true,
+    );
   });
 
   it("normalises the symbol before storing it", async () => {
@@ -447,6 +473,39 @@ describe("executeTrade", () => {
 
     const cte = db.calls.find((c) => c.text.includes("WITH paid AS"));
     expect(cte?.values).toContain("AAPL");
+  });
+});
+
+// Sub-statements in a WITH share one snapshot, so the DELETE meant to drop a
+// fully sold position could not see the UPDATE that emptied it.
+describe("a fully sold position", () => {
+  it("is never returned as a holding, whatever the row says", async () => {
+    queue([{ cash: "10000" }], []);
+
+    await loadPortfolio("u1", "2026-08");
+
+    expect(statement(1)).toMatch(/qty > 1e-9/);
+  });
+
+  it("is cleaned up in its own statement, after the sell", async () => {
+    fetchLivePrices.mockResolvedValue(new Map([["AAPL", 100]]));
+    queue(ARCHIVE_EXISTS, [{ cash: "10000" }], [{ cash: "10000" }], []);
+    queue([{ user_id: "u1", qty: "0" }], [{ cash: "10200" }], [], []);
+
+    await executeTrade({
+      userId: "u1",
+      side: "sell",
+      symbol: "AAPL",
+      company: "Apple Inc.",
+      qty: 2,
+    });
+
+    const sell = db.calls.findIndex((c) => c.text.includes("WITH sold AS"));
+    const cleanup = db.calls.findIndex((c) =>
+      c.text.includes("DELETE FROM positions"),
+    );
+    expect(cleanup).toBeGreaterThan(sell);
+    expect(db.calls[sell].text).not.toMatch(/DELETE FROM positions/);
   });
 });
 

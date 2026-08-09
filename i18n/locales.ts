@@ -166,6 +166,7 @@ const en = {
   notNow: "Not now",
   priceUnavailable:
     "No live price for that stock right now, so the trade was not placed. Try again in a moment.",
+  tradeRetrying: "No price came back. Retrying — nothing has been bought yet.",
 } as const;
 
 type Dict = { [K in keyof typeof en]: string };
@@ -334,6 +335,8 @@ const es: Dict = {
   notNow: "Ahora no",
   priceUnavailable:
     "Ahora mismo no hay precio en vivo para esa acción, así que no se ejecutó la operación. Probá de nuevo en un momento.",
+  tradeRetrying:
+    "No llegó el precio. Reintentando — todavía no se compró nada.",
 };
 
 export type MsgKey = keyof typeof en;

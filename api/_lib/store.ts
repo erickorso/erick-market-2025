@@ -2,6 +2,7 @@ import type { AuthUser } from "./auth.js";
 import { getSql } from "./db.js";
 import { INITIAL_FUND, currentMonthKey, previousMonthKey } from "./month.js";
 import { fetchLivePrices } from "./prices.js";
+import { withRetry } from "./retry.js";
 import { computeEquityFromBooks, parseTradeInput } from "./tradeValidation.js";
 
 export type DbUser = {
@@ -114,10 +115,15 @@ export async function loadPortfolio(
     SELECT cash FROM portfolios WHERE user_id = ${userId} AND month = ${month}
   `;
   const cash = Number(cashRows[0]?.cash ?? INITIAL_FUND);
+  // Filtered here, not just cleaned up on write. Sub-statements in a WITH all
+  // read the same snapshot, so the DELETE that is meant to drop a fully sold
+  // position cannot see the UPDATE that emptied it — selling everything left a
+  // row at qty 0 showing as a phantom holding. The read is the reliable place
+  // to enforce it; the delete is only housekeeping.
   const posRows = await sql`
     SELECT symbol, company, qty, avg_cost
     FROM positions
-    WHERE user_id = ${userId} AND month = ${month}
+    WHERE user_id = ${userId} AND month = ${month} AND qty > 1e-9
     ORDER BY symbol
   `;
   return {
@@ -130,6 +136,34 @@ export async function loadPortfolio(
       avg_cost: Number(p.avg_cost),
     })),
   };
+}
+
+/** Raised only inside the quote loop, so `withRetry` has something to catch. */
+const NO_QUOTE = Symbol("no-quote");
+
+/**
+ * A single upstream hiccup should not cost the user their trade. Safe to retry
+ * precisely because it runs before anything is written — there is no partial
+ * trade to duplicate.
+ *
+ * The budget is what keeps this honest: the function has a hard timeout, and a
+ * retry loop that outlives it turns a recoverable blip into a dropped request.
+ */
+async function quoteForTrade(symbol: string): Promise<number | undefined> {
+  const key = process.env.FINNHUB_API_KEY;
+  try {
+    return await withRetry(
+      async () => {
+        const price = (await fetchLivePrices([symbol], key)).get(symbol);
+        if (!price) throw NO_QUOTE;
+        return price;
+      },
+      (err) => err === NO_QUOTE,
+      { retries: 2, delayMs: 200, budgetMs: 4_000 },
+    );
+  } catch {
+    return undefined;
+  }
 }
 
 export async function executeTrade(input: {
@@ -146,8 +180,7 @@ export async function executeTrade(input: {
   // the request, and fetched before anything is written: refusing to trade is
   // the right answer when the market cannot be priced, and it is far better
   // than falling back to a number the caller chose.
-  const quotes = await fetchLivePrices([symbol], process.env.FINNHUB_API_KEY);
-  const price = quotes.get(symbol);
+  const price = await quoteForTrade(symbol);
   if (!price) {
     throw Object.assign(new Error("No market price available"), {
       status: 503,
@@ -207,15 +240,6 @@ export async function executeTrade(input: {
           AND qty >= ${qty}
         RETURNING user_id, qty
       ),
-      cleaned AS (
-        DELETE FROM positions
-        WHERE user_id = ${input.userId}
-          AND symbol = ${symbol}
-          AND month = ${month}
-          AND qty <= 1e-9
-          AND EXISTS (SELECT 1 FROM sold)
-        RETURNING user_id
-      ),
       paid AS (
         UPDATE portfolios
         SET cash = cash + ${cost}, updated_at = now()
@@ -235,6 +259,17 @@ export async function executeTrade(input: {
     if (!rows.length) {
       throw Object.assign(new Error("Not enough shares"), { status: 400 });
     }
+
+    // Housekeeping, in its own statement so it reads the post-sell row. Purely
+    // cosmetic for the ledger: loadPortfolio already refuses to return an empty
+    // position, so a crash before this point leaves nothing user-visible.
+    await sql`
+      DELETE FROM positions
+      WHERE user_id = ${input.userId}
+        AND symbol = ${symbol}
+        AND month = ${month}
+        AND qty <= 1e-9
+    `;
   }
 
   return loadPortfolio(input.userId, month);

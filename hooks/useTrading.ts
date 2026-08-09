@@ -10,6 +10,7 @@ import { symbolFromCompany, symbolFromStock } from "../services/symbols";
 import { useUser } from "../context/UserContext";
 import { useI18n } from "../context/I18nContext";
 import { useAuthPrompt } from "../context/AuthPromptContext";
+import { withRetry } from "../services/retry";
 
 /**
  * Owns the write side of the portfolio: hydrating it from the server and
@@ -80,16 +81,37 @@ export function useTrading(
         });
       };
 
-      try {
-        let portfolio;
+      const attempt = async () => {
         try {
-          portfolio = await send(false);
+          return await send(false);
         } catch (err) {
           // A stale cached token is the common case after an idle hour. Renew
           // and retry once before bothering the user about it.
           if (!(err instanceof ApiError) || !err.isAuthFailure) throw err;
-          portfolio = await send(true);
+          return send(true);
         }
+      };
+
+      try {
+        // Only `price_unavailable` is replayable. The server quotes the symbol
+        // before it writes anything, so that error is proof no trade was
+        // booked. A timeout or a dropped connection carries no such proof —
+        // replaying one of those could buy twice, so they fail straight
+        // through. This is why the predicate is required rather than defaulted.
+        const portfolio = await withRetry(
+          attempt,
+          (err) => err instanceof ApiError && err.code === "price_unavailable",
+          {
+            retries: 2,
+            delayMs: 700,
+            budgetMs: 8_000,
+            onRetry: () =>
+              dispatch({
+                type: "SET_NOTICE",
+                payload: { type: "info", message: t("tradeRetrying") },
+              }),
+          },
+        );
         const mapped = portfolioToState(portfolio);
         dispatch({
           type: "HYDRATE_PORTFOLIO",

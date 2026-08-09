@@ -340,6 +340,40 @@ describe("sellStock", () => {
 
   // The quote feed, not the trade, is what failed — and the raw wording is the
   // API talking to itself.
+  // Only this error is proof nothing was written, so only this one is replayed.
+  it("replays a trade the server proved it never booked", async () => {
+    postTrade
+      .mockRejectedValueOnce(
+        new ApiError("No market price available", 503, "price_unavailable"),
+      )
+      .mockResolvedValue(serverPortfolio);
+    const dispatch = vi.fn();
+    const { result } = renderHook(() => useTrading(state(), dispatch));
+
+    await act(async () => {
+      await result.current.buyStock(stock(), 1);
+    });
+
+    expect(postTrade).toHaveBeenCalledTimes(2);
+    const notices = dispatch.mock.calls
+      .map(([a]) => a)
+      .filter((a) => a.type === "SET_NOTICE");
+    expect(notices[0].payload.message).toBe("tradeRetrying");
+    expect(notices.at(-1).payload.type).toBe("success");
+  });
+
+  it("does not replay an error that could mean the trade landed", async () => {
+    postTrade.mockRejectedValue(new ApiError("gateway timeout", 504));
+    const dispatch = vi.fn();
+    const { result } = renderHook(() => useTrading(state(), dispatch));
+
+    await act(async () => {
+      await result.current.buyStock(stock(), 1);
+    });
+
+    expect(postTrade).toHaveBeenCalledTimes(1);
+  });
+
   it("explains a missing market price instead of echoing the API", async () => {
     postTrade.mockRejectedValue(
       new ApiError("No market price available", 503, "price_unavailable"),
@@ -351,9 +385,11 @@ describe("sellStock", () => {
       await result.current.buyStock(stock(), 1);
     });
 
+    // The last one: the retries announce themselves first, then it gives up.
     const notice = dispatch.mock.calls
       .map(([a]) => a)
-      .find((a) => a.type === "SET_NOTICE");
+      .filter((a) => a.type === "SET_NOTICE")
+      .at(-1);
     expect(notice.payload.type).toBe("info");
     // i18n is stubbed here to echo the key; the copy itself is covered in the
     // locale tests.

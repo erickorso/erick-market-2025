@@ -52,7 +52,7 @@ function stock(over: Partial<EnrichedStock> = {}): EnrichedStock {
 }
 
 beforeEach(() => {
-  buyStock.mockReset().mockResolvedValue(undefined);
+  buyStock.mockReset().mockResolvedValue(true);
   login.mockReset();
   requestLogin.mockReset();
   contextState.fund = 10_000;
@@ -91,6 +91,7 @@ describe("TradePanel", () => {
     expect(buyStock).toHaveBeenCalledWith(
       expect.objectContaining({ id: "aapl" }),
       1,
+      expect.stringMatching(/^[A-Za-z0-9_-]{8,128}$/),
     );
   });
 

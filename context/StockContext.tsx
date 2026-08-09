@@ -18,8 +18,16 @@ type StockContextValue = {
   dispatch: React.Dispatch<StockAction>;
   fetchStocks: () => Promise<void>;
   loadMore: () => Promise<void>;
-  buyStock: (stock: EnrichedStock, quantity: number) => Promise<void>;
-  sellStock: (stockCompany: string, quantity: number) => Promise<void>;
+  buyStock: (
+    stock: EnrichedStock,
+    quantity: number,
+    idempotencyKey: string,
+  ) => Promise<boolean>;
+  sellStock: (
+    stockCompany: string,
+    quantity: number,
+    idempotencyKey: string,
+  ) => Promise<boolean>;
   portfolioSynced: boolean;
 };
 

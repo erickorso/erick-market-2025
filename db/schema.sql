@@ -37,8 +37,19 @@ CREATE TABLE IF NOT EXISTS trades (
   side TEXT NOT NULL CHECK (side IN ('buy', 'sell')),
   qty NUMERIC(18, 6) NOT NULL CHECK (qty > 0),
   price NUMERIC(18, 6) NOT NULL CHECK (price >= 0),
+  -- Written inside the same statement as the trade itself, which is what makes
+  -- the ledger the authority on whether a key already ran. Without it, a crash
+  -- between committing a trade and recording its response leaves a claim that
+  -- nothing can resolve.
+  idempotency_key TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE trades ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS trades_idempotency_idx
+  ON trades (user_id, idempotency_key)
+  WHERE idempotency_key IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS trades_user_month_idx ON trades (user_id, month, created_at DESC);
 
@@ -49,8 +60,10 @@ CREATE INDEX IF NOT EXISTS trades_user_month_idx ON trades (user_id, month, crea
 -- who presses Buy again has no way to know. The primary key is what makes the
 -- second attempt a lookup instead of a second purchase.
 --
--- `response` stays NULL while the trade is in flight, so a duplicate arriving
--- mid-execution is answered with a conflict rather than being let through.
+-- `response` is a cache, not the record of truth. It stays NULL while the trade
+-- is in flight, and `trades.idempotency_key` is what settles the ambiguous case
+-- — a claim with no response is only genuinely in progress if the ledger has no
+-- trade under that key.
 CREATE TABLE IF NOT EXISTS trade_requests (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   idempotency_key TEXT NOT NULL,

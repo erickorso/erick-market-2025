@@ -34,7 +34,7 @@ function held(over: Partial<PortfolioItem> = {}): PortfolioItem {
 }
 
 beforeEach(() => {
-  sellStock.mockReset().mockResolvedValue(undefined);
+  sellStock.mockReset().mockResolvedValue(true);
   store.portfolio = [held()];
   store.allStocks = [
     { id: "aapl", company: "Apple Inc. (AAPL)", price: 150, chartData: [] },
@@ -107,7 +107,11 @@ describe("submit", () => {
     });
 
     expect(ok).toBe(true);
-    expect(sellStock).toHaveBeenCalledWith("Apple Inc. (AAPL)", 1);
+    expect(sellStock).toHaveBeenCalledWith(
+      "Apple Inc. (AAPL)",
+      1,
+      expect.stringMatching(/^[A-Za-z0-9_-]{8,128}$/),
+    );
   });
 
   it("refuses a non-positive quantity", async () => {
@@ -150,7 +154,11 @@ describe("submit", () => {
       await result.current.submit();
     });
 
-    expect(sellStock).toHaveBeenCalledWith("Apple Inc. (AAPL)", 10);
+    expect(sellStock).toHaveBeenCalledWith(
+      "Apple Inc. (AAPL)",
+      10,
+      expect.stringMatching(/^[A-Za-z0-9_-]{8,128}$/),
+    );
   });
 
   it("surfaces a rejected trade and stays on the form", async () => {

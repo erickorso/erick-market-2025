@@ -1,9 +1,10 @@
 import http from "node:http";
 import { existsSync, readFileSync } from "node:fs";
 import { WebSocketServer, type WebSocket } from "ws";
-import { getMarketQuotesPage } from "./quotes";
-import { PAGE_SIZE } from "./watchlist";
-import { HOT_INTERVAL_MS, buildHotPayload, type HotPayload } from "./hot";
+import { runVercelHandler } from "./vercelAdapter";
+import quotesHandler from "../api/quotes";
+import hotHandler from "../api/hot";
+import detailHandler from "../api/detail";
 
 function loadDotEnv() {
   if (!existsSync(".env")) return;
@@ -27,6 +28,17 @@ function loadDotEnv() {
 loadDotEnv();
 
 const PORT = Number(process.env.MARKET_API_PORT || 4010);
+const HOT_INTERVAL_MS = 5 * 60_000;
+
+/**
+ * Dev runs the deployed handlers, not copies of them. Everything here is
+ * routing and the WebSocket, which Vercel has no equivalent of.
+ */
+const routes: Array<[string, Parameters<typeof runVercelHandler>[0]]> = [
+  ["/api/quotes", quotesHandler],
+  ["/api/hot", hotHandler],
+  ["/api/detail", detailHandler],
+];
 
 const server = http.createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -43,98 +55,24 @@ const server = http.createServer(async (req, res) => {
   const { handleAuthApi } = await import("./authRoutes");
   if (await handleAuthApi(req, res, pathname)) return;
 
-  if (req.url?.startsWith("/api/quotes") && req.method === "GET") {
+  const route = routes.find(([prefix]) => pathname.startsWith(prefix));
+  if (route) {
     try {
-      const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
-      const q = url.searchParams.get("q") ?? undefined;
-      const category = url.searchParams.get("category") ?? undefined;
-      const offset = Number(url.searchParams.get("offset") ?? 0);
-      const limit = Number(url.searchParams.get("limit") ?? PAGE_SIZE);
-      const result = await getMarketQuotesPage(process.env.FINNHUB_API_KEY, {
-        q,
-        offset,
-        limit,
-        category,
-      });
-      const status = result.source === "live" ? 200 : 503;
-      res.writeHead(status, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          stocks: result.quotes.map((row) => ({
-            symbol: row.symbol,
-            company: row.company,
-            name: row.company,
-            price: row.price,
-            change: row.change,
-            changePercent: row.changePercent,
-            tags: row.tags,
-            chart: row.chart,
-            chartSource: row.chartSource,
-            quoteSource: row.quoteSource,
-          })),
-          source: result.source,
-          total: result.total,
-          offset: result.offset,
-          limit: result.limit,
-          hasMore: result.hasMore,
-          q: q || undefined,
-          category: result.category,
-          categories: result.categories,
-        }),
-      );
+      await runVercelHandler(route[1], PORT)(req, res);
     } catch (err) {
-      res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          error: err instanceof Error ? err.message : "quotes failed",
-        }),
-      );
-    }
-    return;
-  }
-
-  if (req.url?.startsWith("/api/hot") && req.method === "GET") {
-    try {
-      const payload = await buildHotPayload(process.env.FINNHUB_API_KEY);
-      const status = payload.source === "live" ? 200 : 503;
-      res.writeHead(status, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(payload));
-    } catch (err) {
-      res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          error: err instanceof Error ? err.message : "hot failed",
-        }),
-      );
-    }
-    return;
-  }
-
-  if (req.url?.startsWith("/api/detail") && req.method === "GET") {
-    try {
-      const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
-      const symbol = url.searchParams.get("symbol") ?? "";
-      const { getStockDetail } = await import("./detail");
-      const result = await getStockDetail(process.env.FINNHUB_API_KEY, symbol);
-      if ("error" in result) {
-        res.writeHead(result.status, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(result));
-        return;
+      if (!res.headersSent) {
+        res.writeHead(500, { "Content-Type": "application/json" });
       }
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(result));
-    } catch (err) {
-      res.writeHead(500, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
-          error: err instanceof Error ? err.message : "detail failed",
+          error: err instanceof Error ? err.message : "handler failed",
         }),
       );
     }
     return;
   }
 
-  if (req.url === "/health") {
+  if (pathname === "/health") {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ok: true, service: "erick-market-api" }));
     return;
@@ -146,15 +84,17 @@ const server = http.createServer(async (req, res) => {
 
 const wss = new WebSocketServer({ server, path: "/ws/hot" });
 const clients = new Set<WebSocket>();
-let lastHot: HotPayload | null = null;
+let lastHot: string | null = null;
 
+/** Reads its own /api/hot rather than importing a payload builder: that import
+ *  is what made a second copy of the hot logic necessary in the first place. */
 async function refreshHot(broadcast: boolean) {
   try {
-    lastHot = await buildHotPayload(process.env.FINNHUB_API_KEY);
+    const res = await fetch(`http://127.0.0.1:${PORT}/api/hot`);
+    lastHot = await res.text();
     if (broadcast && lastHot) {
-      const msg = JSON.stringify(lastHot);
       for (const client of clients) {
-        if (client.readyState === client.OPEN) client.send(msg);
+        if (client.readyState === client.OPEN) client.send(lastHot);
       }
     }
   } catch (err) {
@@ -168,22 +108,15 @@ async function refreshHot(broadcast: boolean) {
 wss.on("connection", (socket) => {
   clients.add(socket);
   if (lastHot) {
-    socket.send(JSON.stringify(lastHot));
+    socket.send(lastHot);
   } else {
     void refreshHot(false).then(() => {
-      if (lastHot && socket.readyState === socket.OPEN) {
-        socket.send(JSON.stringify(lastHot));
-      }
+      if (lastHot && socket.readyState === socket.OPEN) socket.send(lastHot);
     });
   }
   socket.on("close", () => clients.delete(socket));
   socket.on("error", () => clients.delete(socket));
 });
-
-void refreshHot(false);
-setInterval(() => {
-  void refreshHot(true);
-}, HOT_INTERVAL_MS);
 
 server.listen(PORT, "127.0.0.1", () => {
   console.log(`[market-api] http://127.0.0.1:${PORT}/api/quotes?limit=10`);
@@ -193,4 +126,8 @@ server.listen(PORT, "127.0.0.1", () => {
   if (!process.env.FINNHUB_API_KEY) {
     console.warn("[market-api] FINNHUB_API_KEY missing — /api/quotes will 503");
   }
+  void refreshHot(false);
+  setInterval(() => {
+    void refreshHot(true);
+  }, HOT_INTERVAL_MS);
 });

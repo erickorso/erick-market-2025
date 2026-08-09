@@ -524,20 +524,43 @@ describe("syncLeagueScoreFromPortfolio", () => {
     fetchLivePrices.mockResolvedValue(new Map([["AAPL", 150]]));
     queue([]);
 
-    const score = await syncLeagueScoreFromPortfolio("u1");
+    const result = await syncLeagueScoreFromPortfolio("u1");
 
-    expect(score.invested).toBe(1_500);
-    expect(score.equity).toBe(6_500);
+    expect(result.score?.invested).toBe(1_500);
+    expect(result.score?.equity).toBe(6_500);
   });
 
-  it("falls back to the cost basis when a symbol is unquoted", async () => {
+  // Marking an unpriced holding at what it cost is not conservative, it is
+  // false: the player shows a flat 0% and ranks on a number that was never
+  // true. A stale rank beats a wrong one.
+  it("publishes nothing when a holding cannot be priced", async () => {
     queueEnsureWithPosition();
     fetchLivePrices.mockResolvedValue(new Map());
-    queue([]);
 
-    const score = await syncLeagueScoreFromPortfolio("u1");
+    const result = await syncLeagueScoreFromPortfolio("u1");
 
-    expect(score.invested).toBe(1_000);
+    expect(result).toMatchObject({ published: false, unpriced: ["AAPL"] });
+  });
+
+  it("leaves the previous score standing rather than overwriting it", async () => {
+    queueEnsureWithPosition();
+    fetchLivePrices.mockResolvedValue(new Map());
+
+    await syncLeagueScoreFromPortfolio("u1");
+
+    expect(
+      db.calls.some((c) => c.text.includes("INSERT INTO league_scores")),
+    ).toBe(false);
+  });
+
+  it("still publishes for a portfolio holding nothing at all", async () => {
+    queue(ARCHIVE_EXISTS, [{ cash: "10000" }], [{ cash: "10000" }], [], []);
+    fetchLivePrices.mockResolvedValue(new Map());
+
+    const result = await syncLeagueScoreFromPortfolio("u1");
+
+    expect(result.published).toBe(true);
+    expect(result.score?.equity).toBe(10_000);
   });
 
   it("computes pnl against the opening fund", async () => {
@@ -545,9 +568,9 @@ describe("syncLeagueScoreFromPortfolio", () => {
     fetchLivePrices.mockResolvedValue(new Map([["AAPL", 150]]));
     queue([]);
 
-    const score = await syncLeagueScoreFromPortfolio("u1");
+    const result = await syncLeagueScoreFromPortfolio("u1");
 
-    expect(score.pnl).toBe(6_500 - INITIAL_FUND);
+    expect(result.score?.pnl).toBe(6_500 - INITIAL_FUND);
   });
 
   it("never trusts a client-supplied score", async () => {
@@ -555,17 +578,18 @@ describe("syncLeagueScoreFromPortfolio", () => {
     fetchLivePrices.mockResolvedValue(new Map([["AAPL", 150]]));
     queue([]);
 
-    const score = await upsertLeagueScore({
+    const result = await upsertLeagueScore({
       userId: "u1",
       equity: 999_999,
       pnl: 999_999,
     });
 
-    expect(score.equity).toBe(6_500);
+    expect(result.score?.equity).toBe(6_500);
   });
 
   it("upserts the score so a resync does not duplicate the row", async () => {
     queueEnsureWithPosition();
+    fetchLivePrices.mockResolvedValue(new Map([["AAPL", 150]]));
     queue([]);
 
     await syncLeagueScoreFromPortfolio("u1");

@@ -11,7 +11,6 @@ import { useUser } from "../context/UserContext";
 import { useI18n } from "../context/I18nContext";
 import { useAuthPrompt } from "../context/AuthPromptContext";
 import { withRetry } from "../services/retry";
-import { newIdempotencyKey } from "../services/idempotency";
 
 /**
  * Owns the write side of the portfolio: hydrating it from the server and
@@ -61,20 +60,17 @@ export function useTrading(
       symbol: string;
       company: string;
       qty: number;
+      idempotencyKey: string;
       successMessage: string;
       failureMessage: string;
-    }) => {
+    }): Promise<boolean> => {
       if (!isAuthenticated) {
         dispatch({
           type: "SET_NOTICE",
           payload: { type: "info", message: "Sign in to trade." },
         });
-        return;
+        return false;
       }
-      // Generated once, here, for this press of Buy — every retry below reuses
-      // it. A key per attempt would leave the server unable to tell a replay
-      // from a second purchase, which is the whole thing it is there to do.
-      const idempotencyKey = newIdempotencyKey();
 
       const send = async (forceRefresh: boolean) => {
         const token = await getAccessToken({ forceRefresh });
@@ -87,7 +83,7 @@ export function useTrading(
             company: input.company,
             qty: input.qty,
           },
-          idempotencyKey,
+          input.idempotencyKey,
         );
       };
 
@@ -103,11 +99,9 @@ export function useTrading(
       };
 
       try {
-        // Only `price_unavailable` is replayable. The server quotes the symbol
-        // before it writes anything, so that error is proof no trade was
-        // booked. A timeout or a dropped connection carries no such proof —
-        // replaying one of those could buy twice, so they fail straight
-        // through. This is why the predicate is required rather than defaulted.
+        // Only `price_unavailable` is replayable: the server quotes before it
+        // writes, so that error proves no trade was booked. A timeout proves
+        // nothing, and replaying one could buy twice.
         const portfolio = await withRetry(
           attempt,
           (err) => err instanceof ApiError && err.code === "price_unavailable",
@@ -132,6 +126,7 @@ export function useTrading(
           type: "SET_NOTICE",
           payload: { type: "success", message: input.successMessage },
         });
+        return true;
       } catch (err) {
         // A dead session is not a trade error: say so plainly and send the
         // user where they can fix it, instead of surfacing the API's wording.
@@ -141,7 +136,7 @@ export function useTrading(
             payload: { type: "info", message: t("sessionExpiredNotice") },
           });
           requestLogin("sessionExpired");
-          return;
+          return false;
         }
         // The quote feed, not the trade, is what failed. "No market price
         // available" is the API talking to itself; say what it means for the
@@ -151,7 +146,7 @@ export function useTrading(
             type: "SET_NOTICE",
             payload: { type: "info", message: t("priceUnavailable") },
           });
-          return;
+          return false;
         }
         dispatch({
           type: "SET_NOTICE",
@@ -160,6 +155,7 @@ export function useTrading(
             message: err instanceof Error ? err.message : input.failureMessage,
           },
         });
+        return false;
       }
     },
     [
@@ -173,12 +169,13 @@ export function useTrading(
   );
 
   const buyStock = useCallback(
-    async (stock: EnrichedStock, quantity: number) =>
+    async (stock: EnrichedStock, quantity: number, idempotencyKey: string) =>
       trade({
         side: "buy",
         symbol: symbolFromStock(stock),
         company: stock.company,
         qty: quantity,
+        idempotencyKey,
         successMessage: `Bought ${quantity} share(s) of ${stock.company}.`,
         failureMessage: "Buy failed",
       }),
@@ -186,13 +183,14 @@ export function useTrading(
   );
 
   const sellStock = useCallback(
-    async (stockCompany: string, quantity: number) => {
+    async (stockCompany: string, quantity: number, idempotencyKey: string) => {
       const held = state.portfolio.find((p) => p.company === stockCompany);
       return trade({
         side: "sell",
         symbol: held?.symbol || symbolFromCompany(stockCompany),
         company: stockCompany,
         qty: quantity,
+        idempotencyKey,
         successMessage: `Sold ${quantity} share(s) of ${stockCompany}.`,
         failureMessage: "Sell failed",
       });

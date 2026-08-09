@@ -86,7 +86,14 @@ components/
   templates/   AppShell
   routing/     RequireAuth
 pages/         Home · League · MyStocks · MyFund
+data/          watchlist — the catalog, shared by the client and the dev server
 ```
+
+Local dev runs the **deployed** `api/` handlers through a thin adapter
+([`server/vercelAdapter.ts`](server/vercelAdapter.ts)) rather than its own copy
+of quotes, hot and detail. The copies existed and could drift without anything
+failing — the worst kind of duplication, where the version you test is not the
+version you ship.
 
 | Hook                                                | Owns                                                                 |
 | --------------------------------------------------- | -------------------------------------------------------------------- |
@@ -272,18 +279,24 @@ erDiagram
   league — and, less dramatically, that a fill could land at a simulated price
   from mock mode while the portfolio was valued at the real one.
 - `POST /api/trade` **requires an `Idempotency-Key` header**, scoped per user by
-  primary key. A replay returns the original response with `Idempotent-Replay:
-true`; a duplicate arriving while the first is still running gets
-  `409 trade_in_progress` rather than being let through. A trade that was
-  rejected frees its key, so a user is never stranded on 409 for a decision they
-  are entitled to retake. Optional would be worthless: an endpoint that moves
-  money and cannot recognise a duplicate is one dropped connection away from
-  charging twice.
+  primary key. The key is written onto the `trades` row **inside the same
+  statement as the trade**, which makes the ledger — not a cache — the authority
+  on whether a key already ran: a request that commits and dies before storing
+  its response is recovered from it rather than left unresolvable. A replay
+  returns the original response with `Idempotent-Replay: true`; a duplicate
+  arriving while the first is genuinely still running gets `409
+trade_in_progress`. A rejected trade frees its key. Expired claims are purged
+  in the same round trip as the next claim. On the client the key belongs to the
+  **intention**, not the click: it survives a failure so a hand retry is
+  recognised, and rotates on success or when the order changes.
 - If the quote feed cannot price the symbol, the trade is **refused** with
   `503 price_unavailable` rather than falling back to a caller-supplied number.
   Failing closed matters here: the alternative reopens the hole precisely when
   the feed is down. It also means trading is unavailable in mock mode, which is
   the honest outcome — there is no market to trade against.
+- The league **publishes nothing** when a holding cannot be priced. Marking it
+  at cost is not conservative, it is false — the player shows a flat 0% and
+  ranks on a number that was never true. A stale rank beats a wrong one.
 - On month rollover, the highest equity is archived as winner in `league_months`.
 - Buy/sell remain **simulated** (no real broker).
 

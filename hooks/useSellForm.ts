@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useStockContext } from "../context/StockContext";
 import { useI18n } from "../context/I18nContext";
+import { useIdempotencyKey } from "./useIdempotencyKey";
 
 /**
  * Resolves the position being sold and guards the quantity before hitting the
@@ -25,6 +26,11 @@ export function useSellForm(rawCompany: string | undefined) {
   const maxQuantity = position?.quantity ?? 0;
   const currentPrice = listed?.price ?? 0;
 
+  // Same order, same key: a failed sell the user retries must not become two.
+  const { key: idempotencyKey, rotate } = useIdempotencyKey(
+    `${company}:${quantity}`,
+  );
+
   const submit = useCallback(async () => {
     // Guarded here, not only by the button's `disabled`. That attribute only
     // takes effect on the next render, so a fast double-click can land two
@@ -42,7 +48,8 @@ export function useSellForm(rawCompany: string | undefined) {
     inFlight.current = true;
     setBusy(true);
     try {
-      await sellStock(company, quantity);
+      if (!(await sellStock(company, quantity, idempotencyKey))) return false;
+      rotate();
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : t("error"));
@@ -51,7 +58,7 @@ export function useSellForm(rawCompany: string | undefined) {
       inFlight.current = false;
       setBusy(false);
     }
-  }, [quantity, maxQuantity, sellStock, company, t]);
+  }, [quantity, maxQuantity, sellStock, company, t, idempotencyKey, rotate]);
 
   return {
     company,

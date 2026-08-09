@@ -1,22 +1,19 @@
 import { getSql } from "./db.js";
 
 /**
- * Exactly-once for a write endpoint.
+ * Exactly-once for POST /api/trade.
  *
- * The retry logic elsewhere in this codebase is careful to replay only errors
- * that prove nothing was written. That covers the errors the server chose to
- * return; it cannot cover the ones it never got to send. If the connection
- * drops after the trade commits, the user sees a failure, presses Buy again,
- * and buys twice — and no amount of guarding in the UI can prevent it, because
- * the first request already finished.
- *
- * A key supplied by the caller is the only thing that ties those two requests
- * together. It is generated per *intention*, not per attempt: every replay of
- * one Buy carries the same key, and a new Buy carries a new one.
+ * Retries elsewhere replay only errors that prove nothing was written. A
+ * dropped connection proves nothing: the trade may have committed, and the
+ * user who presses Buy again cannot know. A caller-supplied key, held for the
+ * whole intention rather than one attempt, is what ties the two together.
  */
 
-export type ReplayHit = { replayed: true; response: unknown };
-export type ClaimResult = ReplayHit | { replayed: false };
+export type ClaimResult =
+  { replayed: true; response: unknown } | { replayed: false };
+
+/** Claims older than this are purged; long past any client still retrying. */
+const KEY_TTL = "24 hours";
 
 /** Format-checked before it reaches SQL, and bounded so it cannot be abused
  *  as arbitrary storage. */
@@ -28,16 +25,18 @@ export function parseIdempotencyKey(raw: unknown): string | null {
 }
 
 /**
- * Reserves the key, or reports what to do instead.
- *
- * The INSERT is the lock: `ON CONFLICT DO NOTHING` means whoever wins the race
- * is the one who executes. Everyone else either replays a stored response or —
- * if the winner has not finished yet — is turned away rather than let through,
- * because letting a duplicate proceed is the exact failure this prevents.
+ * The INSERT is the lock: whoever wins the race executes, everyone else is told
+ * what happened rather than allowed to trade again. The purge rides along in
+ * the same statement — a background job for one DELETE is more moving parts
+ * than the problem deserves.
  */
 export async function claim(userId: string, key: string): Promise<ClaimResult> {
   const sql = getSql();
   const inserted = await sql`
+    WITH purged AS (
+      DELETE FROM trade_requests
+      WHERE created_at < now() - ${KEY_TTL}::interval
+    )
     INSERT INTO trade_requests (user_id, idempotency_key)
     VALUES (${userId}, ${key})
     ON CONFLICT (user_id, idempotency_key) DO NOTHING
@@ -50,16 +49,42 @@ export async function claim(userId: string, key: string): Promise<ClaimResult> {
     WHERE user_id = ${userId} AND idempotency_key = ${key}
   `;
   const response = existing[0]?.response ?? null;
-  if (response === null) {
+  if (response !== null) return { replayed: true, response };
+
+  // No response yet, which is ambiguous: the winner may still be running, or it
+  // may have committed and died before writing one. The ledger settles it —
+  // the trade row carries the key and was written in the same statement as the
+  // trade itself, so its presence is proof the trade happened.
+  return recoverFromLedger(userId, key);
+}
+
+async function recoverFromLedger(
+  userId: string,
+  key: string,
+): Promise<ClaimResult> {
+  const sql = getSql();
+  const trade = await sql`
+    SELECT id FROM trades
+    WHERE user_id = ${userId} AND idempotency_key = ${key}
+    LIMIT 1
+  `;
+  if (!trade.length) {
+    // Genuinely still running. Turning the duplicate away is the whole point:
+    // letting it through is the failure this exists to prevent.
     throw Object.assign(new Error("That trade is already being processed"), {
       status: 409,
       code: "trade_in_progress",
     });
   }
-  return { replayed: true, response };
+  // It ran. Rebuild the answer the crashed request never got to send, and cache
+  // it so the next replay is a single lookup again.
+  const { loadPortfolio } = await import("./store.js");
+  const portfolio = await loadPortfolio(userId);
+  await record(userId, key, portfolio);
+  return { replayed: true, response: portfolio };
 }
 
-/** Stores the answer so a later replay of the same key returns it verbatim. */
+/** Caches the answer so a later replay of the same key returns it verbatim. */
 export async function record(userId: string, key: string, response: unknown) {
   const sql = getSql();
   await sql`
@@ -74,7 +99,7 @@ export async function record(userId: string, key: string, response: unknown) {
  *
  * A rejected trade — no cash, not enough shares, no market price — wrote
  * nothing, so holding its key would strand the user on 409 for a decision they
- * are entitled to retake. Only a trade that actually ran keeps its key.
+ * are entitled to retake.
  */
 export async function release(userId: string, key: string) {
   const sql = getSql();

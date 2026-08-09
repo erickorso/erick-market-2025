@@ -46,7 +46,11 @@ export default withAuth(async (req, res, { user }) => {
 
   let portfolio;
   try {
-    portfolio = await executeTrade({ userId: user.id, ...trade });
+    portfolio = await executeTrade({
+      userId: user.id,
+      ...trade,
+      idempotencyKey: key,
+    });
   } catch (err) {
     // Nothing was booked, so the key must not outlive the attempt — otherwise
     // a rejected trade strands the user on 409 for a decision they are allowed

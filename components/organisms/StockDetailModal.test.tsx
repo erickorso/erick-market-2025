@@ -70,7 +70,7 @@ function detail(over: Partial<StockDetail> = {}): StockDetail {
 
 beforeEach(() => {
   dispatch.mockReset();
-  buyStock.mockReset().mockResolvedValue(undefined);
+  buyStock.mockReset().mockResolvedValue(true);
   fetchStockDetail.mockReset().mockResolvedValue(detail());
   store.detailSymbol = "AAPL";
 });
@@ -180,6 +180,7 @@ describe("loaded", () => {
     expect(buyStock).toHaveBeenCalledWith(
       expect.objectContaining({ symbol: "AAPL" }),
       1,
+      expect.stringMatching(/^[A-Za-z0-9_-]{8,128}$/),
     );
   });
 });

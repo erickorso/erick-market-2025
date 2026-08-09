@@ -6,7 +6,7 @@ import Badge from "../components/atoms/Badge";
 import { useStockContext } from "../context/StockContext";
 import { useI18n } from "../context/I18nContext";
 import type { MsgKey } from "../i18n/locales";
-import { PAGE_SIZE } from "../server/watchlist";
+import { PAGE_SIZE } from "../data/watchlist";
 
 const HomePage: React.FC = () => {
   const { state, fetchStocks, loadMore } = useStockContext();

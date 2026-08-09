@@ -8,7 +8,7 @@ import {
   parseCategory,
   type CategoryId,
   type StyleTag,
-} from "../server/watchlist";
+} from "../data/watchlist";
 
 export function generateChartData(currentPrice: number): ChartDataPoint[] {
   const data: ChartDataPoint[] = [];

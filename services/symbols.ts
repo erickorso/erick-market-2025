@@ -1,4 +1,4 @@
-import { WATCHLIST } from "../server/watchlist";
+import { WATCHLIST } from "../data/watchlist";
 
 const TRAILING_SYMBOL = /\(([A-Z.]+)\)\s*$/;
 

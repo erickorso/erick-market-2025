@@ -27,7 +27,7 @@ vi.mock("../../context/StockContext", () => ({
 
 beforeEach(() => {
   navigate.mockReset();
-  sellStock.mockReset().mockResolvedValue(undefined);
+  sellStock.mockReset().mockResolvedValue(true);
   store.param = "Apple%20Inc.%20(AAPL)";
   store.portfolio = [
     {
@@ -113,7 +113,11 @@ describe("with a held position", () => {
 
     await userEvent.click(screen.getByTestId("sell"));
 
-    expect(sellStock).toHaveBeenCalledWith("Apple Inc. (AAPL)", 1);
+    expect(sellStock).toHaveBeenCalledWith(
+      "Apple Inc. (AAPL)",
+      1,
+      expect.stringMatching(/^[A-Za-z0-9_-]{8,128}$/),
+    );
     expect(navigate).toHaveBeenCalledWith("/my-stocks");
   });
 

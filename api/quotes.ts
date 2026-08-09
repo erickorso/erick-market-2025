@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 /** Fully self-contained — no relative imports (Vercel ESM cold-start crash).
- * Watchlist mirrored from server/watchlist.ts — keep tags/symbols in sync when editing.
+ * Watchlist mirrored from data/watchlist.ts — keep tags/symbols in sync when editing.
  * The CORS/rate-limit/log block below mirrors api/_lib for the same reason;
  * change it here and in api/hot.ts and api/detail.ts together. */
 

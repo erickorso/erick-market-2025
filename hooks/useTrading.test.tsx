@@ -123,13 +123,13 @@ describe("buyStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock(), 2);
+      await result.current.buyStock(stock(), 2, "key-1");
     });
 
     expect(postTrade).toHaveBeenCalledWith(
       "tok",
       { side: "buy", symbol: "AAPL", company: "Apple Inc. (AAPL)", qty: 2 },
-      expect.stringMatching(/^[A-Za-z0-9_-]{8,128}$/),
+      "key-1",
     );
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({ type: "HYDRATE_PORTFOLIO" }),
@@ -141,7 +141,7 @@ describe("buyStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock(), 1);
+      await result.current.buyStock(stock(), 1, "key-1");
     });
 
     expect(refreshProfile).toHaveBeenCalledTimes(1);
@@ -152,7 +152,7 @@ describe("buyStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock(), 3);
+      await result.current.buyStock(stock(), 3, "key-1");
     });
 
     expect(dispatch).toHaveBeenCalledWith({
@@ -169,7 +169,7 @@ describe("buyStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock({ symbol: undefined }), 1);
+      await result.current.buyStock(stock({ symbol: undefined }), 1, "key-1");
     });
 
     expect(postTrade.mock.calls[0][1].symbol).toBe("AAPL");
@@ -181,7 +181,7 @@ describe("buyStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock(), 1);
+      await result.current.buyStock(stock(), 1, "key-1");
     });
 
     expect(postTrade).not.toHaveBeenCalled();
@@ -197,7 +197,7 @@ describe("buyStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock(), 1);
+      await result.current.buyStock(stock(), 1, "key-1");
     });
 
     expect(postTrade).not.toHaveBeenCalled();
@@ -220,7 +220,7 @@ describe("buyStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock(), 1);
+      await result.current.buyStock(stock(), 1, "key-1");
     });
 
     expect(getAccessToken).toHaveBeenLastCalledWith({ forceRefresh: true });
@@ -242,7 +242,7 @@ describe("buyStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock(), 1);
+      await result.current.buyStock(stock(), 1, "key-1");
     });
 
     expect(requestLogin).toHaveBeenCalledWith("sessionExpired");
@@ -263,7 +263,7 @@ describe("buyStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock(), 1);
+      await result.current.buyStock(stock(), 1, "key-1");
     });
 
     expect(requestLogin).not.toHaveBeenCalled();
@@ -279,7 +279,7 @@ describe("buyStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock(), 1);
+      await result.current.buyStock(stock(), 1, "key-1");
     });
 
     expect(dispatch).toHaveBeenCalledWith({
@@ -295,7 +295,7 @@ describe("buyStock", () => {
     dispatch.mockClear();
 
     await act(async () => {
-      await result.current.buyStock(stock(), 1);
+      await result.current.buyStock(stock(), 1, "key-1");
     });
 
     expect(
@@ -326,13 +326,13 @@ describe("sellStock", () => {
     );
 
     await act(async () => {
-      await result.current.sellStock("Apple Inc. (AAPL)", 2);
+      await result.current.sellStock("Apple Inc. (AAPL)", 2, "key-1");
     });
 
     expect(postTrade).toHaveBeenCalledWith(
       "tok",
       { side: "sell", symbol: "AAPL", company: "Apple Inc. (AAPL)", qty: 2 },
-      expect.stringMatching(/^[A-Za-z0-9_-]{8,128}$/),
+      "key-1",
     );
   });
 
@@ -349,7 +349,7 @@ describe("sellStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock(), 1);
+      await result.current.buyStock(stock(), 1, "key-1");
     });
 
     expect(postTrade).toHaveBeenCalledTimes(2);
@@ -366,7 +366,7 @@ describe("sellStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock(), 1);
+      await result.current.buyStock(stock(), 1, "key-1");
     });
 
     expect(postTrade).toHaveBeenCalledTimes(1);
@@ -380,7 +380,7 @@ describe("sellStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.buyStock(stock(), 1);
+      await result.current.buyStock(stock(), 1, "key-1");
     });
 
     // The last one: the retries announce themselves first, then it gives up.
@@ -400,7 +400,7 @@ describe("sellStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.sellStock("Tesla Inc. (TSLA)", 1);
+      await result.current.sellStock("Tesla Inc. (TSLA)", 1, "key-1");
     });
 
     expect(postTrade.mock.calls[0][1].symbol).toBe("TSLA");
@@ -411,7 +411,7 @@ describe("sellStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.sellStock("Apple Inc. (AAPL)", 2);
+      await result.current.sellStock("Apple Inc. (AAPL)", 2, "key-1");
     });
 
     expect(dispatch).toHaveBeenCalledWith({
@@ -429,7 +429,7 @@ describe("sellStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.sellStock("Apple Inc. (AAPL)", 1);
+      await result.current.sellStock("Apple Inc. (AAPL)", 1, "key-1");
     });
 
     expect(postTrade).not.toHaveBeenCalled();

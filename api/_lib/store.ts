@@ -115,11 +115,9 @@ export async function loadPortfolio(
     SELECT cash FROM portfolios WHERE user_id = ${userId} AND month = ${month}
   `;
   const cash = Number(cashRows[0]?.cash ?? INITIAL_FUND);
-  // Filtered here, not just cleaned up on write. Sub-statements in a WITH all
-  // read the same snapshot, so the DELETE that is meant to drop a fully sold
-  // position cannot see the UPDATE that emptied it — selling everything left a
-  // row at qty 0 showing as a phantom holding. The read is the reliable place
-  // to enforce it; the delete is only housekeeping.
+  // Sub-statements in a WITH share one snapshot, so the DELETE meant to drop a
+  // fully sold position cannot see the UPDATE that emptied it. The read is the
+  // reliable place to enforce this; the delete is only housekeeping.
   const posRows = await sql`
     SELECT symbol, company, qty, avg_cost
     FROM positions
@@ -141,14 +139,8 @@ export async function loadPortfolio(
 /** Raised only inside the quote loop, so `withRetry` has something to catch. */
 const NO_QUOTE = Symbol("no-quote");
 
-/**
- * A single upstream hiccup should not cost the user their trade. Safe to retry
- * precisely because it runs before anything is written — there is no partial
- * trade to duplicate.
- *
- * The budget is what keeps this honest: the function has a hard timeout, and a
- * retry loop that outlives it turns a recoverable blip into a dropped request.
- */
+/** Safe to retry because it runs before anything is written. The budget keeps
+ *  the loop inside the function timeout it would otherwise outlive. */
 async function quoteForTrade(symbol: string): Promise<number | undefined> {
   const key = process.env.FINNHUB_API_KEY;
   try {
@@ -172,6 +164,8 @@ export async function executeTrade(input: {
   symbol: string;
   company: string;
   qty: number;
+  /** Stored on the trade row, so the ledger can answer "did this key run?". */
+  idempotencyKey?: string | null;
 }): Promise<PortfolioPayload> {
   const trade = parseTradeInput(input);
   const { symbol, company, qty, side } = trade;
@@ -219,8 +213,8 @@ export async function executeTrade(input: {
         RETURNING user_id
       ),
       led AS (
-        INSERT INTO trades (user_id, month, symbol, side, qty, price)
-        SELECT ${input.userId}, ${month}, ${symbol}, ${side}, ${qty}, ${price}
+        INSERT INTO trades (user_id, month, symbol, side, qty, price, idempotency_key)
+        SELECT ${input.userId}, ${month}, ${symbol}, ${side}, ${qty}, ${price}, ${input.idempotencyKey ?? null}
         FROM paid
         RETURNING id
       )
@@ -249,8 +243,8 @@ export async function executeTrade(input: {
         RETURNING user_id
       ),
       led AS (
-        INSERT INTO trades (user_id, month, symbol, side, qty, price)
-        SELECT ${input.userId}, ${month}, ${symbol}, ${side}, ${qty}, ${price}
+        INSERT INTO trades (user_id, month, symbol, side, qty, price, idempotency_key)
+        SELECT ${input.userId}, ${month}, ${symbol}, ${side}, ${qty}, ${price}, ${input.idempotencyKey ?? null}
         FROM sold
         RETURNING id
       )
@@ -284,9 +278,22 @@ export async function syncLeagueScoreFromPortfolio(userId: string) {
     process.env.FINNHUB_API_KEY,
   );
 
+  // Marking an unpriced holding at cost is not conservative, it is false: the
+  // player shows a flat 0% and ranks on a number that was never true. A stale
+  // rank beats a wrong one, so this publishes nothing instead.
+  const unpriced = portfolio.positions.filter(
+    (p) => !prices.get(p.symbol.toUpperCase()),
+  );
+  if (unpriced.length) {
+    return {
+      published: false as const,
+      unpriced: unpriced.map((p) => p.symbol),
+    };
+  }
+
   const marked = portfolio.positions.map((p) => ({
     qty: p.qty,
-    price: prices.get(p.symbol.toUpperCase()) ?? p.avg_cost,
+    price: prices.get(p.symbol.toUpperCase()) as number,
   }));
   const score = computeEquityFromBooks(portfolio.cash, marked, INITIAL_FUND);
 
@@ -304,7 +311,7 @@ export async function syncLeagueScoreFromPortfolio(userId: string) {
       pnl_pct = EXCLUDED.pnl_pct,
       updated_at = now()
   `;
-  return score;
+  return { published: true as const, score };
 }
 
 /** @deprecated Prefer syncLeagueScoreFromPortfolio — ignores client numbers. */

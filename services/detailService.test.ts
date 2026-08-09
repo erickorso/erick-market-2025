@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fetchStockDetail, formatMarketCap } from "./detailService";
-import { COMPANY_SITES } from "../server/watchlist";
+import { COMPANY_SITES } from "../data/watchlist";
 
 function jsonResponse(body: unknown) {
   return { ok: true, json: async () => body } as Response;

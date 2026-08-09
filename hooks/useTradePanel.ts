@@ -3,6 +3,7 @@ import type { EnrichedStock } from "../types";
 import { useStockContext } from "../context/StockContext";
 import { useUser } from "../context/UserContext";
 import { useAuthPrompt } from "../context/AuthPromptContext";
+import { useIdempotencyKey } from "./useIdempotencyKey";
 
 type Options = {
   /** Changing this resets the quantity — e.g. opening a different symbol. */
@@ -35,6 +36,12 @@ export function useTradePanel(
     setQuantity(1);
   }
 
+  // The order this key belongs to. Change the symbol or the size and it is a
+  // different intention, so it gets a different key.
+  const { key: idempotencyKey, rotate } = useIdempotencyKey(
+    `${stock?.id ?? ""}:${quantity}`,
+  );
+
   const increment = useCallback(() => setQuantity((p) => p + 1), []);
   const decrement = useCallback(
     () => setQuantity((p) => Math.max(1, p - 1)),
@@ -55,12 +62,24 @@ export function useTradePanel(
     inFlight.current = true;
     setBusy(true);
     try {
-      await buyStock(stock, quantity);
+      // Only a confirmed purchase retires the key. After a failure the user
+      // may press Buy again, and that second press has to be recognisable as
+      // the same order rather than land as a second one.
+      if (await buyStock(stock, quantity, idempotencyKey)) rotate();
     } finally {
       inFlight.current = false;
       setBusy(false);
     }
-  }, [locked, requestLogin, stock, quantity, canAfford, buyStock]);
+  }, [
+    locked,
+    requestLogin,
+    stock,
+    quantity,
+    canAfford,
+    buyStock,
+    idempotencyKey,
+    rotate,
+  ]);
 
   return {
     quantity,

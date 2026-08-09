@@ -62,7 +62,7 @@ function stock(over: Partial<EnrichedStock> = {}): EnrichedStock {
 
 beforeEach(() => {
   dispatch.mockReset();
-  buyStock.mockReset().mockResolvedValue(undefined);
+  buyStock.mockReset().mockResolvedValue(true);
 });
 
 describe("StockCard", () => {
@@ -158,6 +158,7 @@ describe("StockCard", () => {
     expect(buyStock).toHaveBeenCalledWith(
       expect.objectContaining({ symbol: "AAPL" }),
       1,
+      expect.stringMatching(/^[A-Za-z0-9_-]{8,128}$/),
     );
   });
 

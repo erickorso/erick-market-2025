@@ -1,7 +1,7 @@
 import { DETAIL_API_URL } from "../constants";
 import type { ChartDataPoint, StyleTag } from "../types";
 import { generateChartData } from "./stockService";
-import { COMPANY_SITES, WATCHLIST } from "../server/watchlist";
+import { COMPANY_SITES, WATCHLIST } from "../data/watchlist";
 
 export type StockDetail = {
   source: "live" | "mock";

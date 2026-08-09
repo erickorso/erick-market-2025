@@ -118,6 +118,7 @@ describe("submit", () => {
     expect(buyStock).toHaveBeenCalledWith(
       expect.objectContaining({ id: "aapl" }),
       2,
+      expect.stringMatching(/^[A-Za-z0-9_-]{8,128}$/),
     );
   });
 
@@ -197,5 +198,64 @@ describe("double submit", () => {
     });
 
     expect(buyStock).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * The point of the key is the request whose response never arrived: the user
+ * sees a failure and presses Buy again. That second press has to be
+ * recognisable as the same order, or the server books it twice.
+ */
+describe("idempotency key lifetime", () => {
+  const keyOf = (call: unknown[]) => call[2] as string;
+
+  it("reuses the key when a failed buy is retried by hand", async () => {
+    buyStock.mockResolvedValue(false);
+    const { result } = renderHook(() => useTradePanel(stock()));
+
+    await act(async () => {
+      await result.current.submit();
+    });
+    await act(async () => {
+      await result.current.submit();
+    });
+
+    expect(keyOf(buyStock.mock.calls[0])).toBe(keyOf(buyStock.mock.calls[1]));
+  });
+
+  it("retires the key once a buy actually lands", async () => {
+    buyStock.mockResolvedValue(true);
+    const { result } = renderHook(() => useTradePanel(stock()));
+
+    await act(async () => {
+      await result.current.submit();
+    });
+    await act(async () => {
+      await result.current.submit();
+    });
+
+    expect(keyOf(buyStock.mock.calls[0])).not.toBe(
+      keyOf(buyStock.mock.calls[1]),
+    );
+  });
+
+  // A different size is a different order, not a retry of the last one.
+  it("takes a new key when the size changes", async () => {
+    buyStock.mockResolvedValue(false);
+    const { result } = renderHook(() => useTradePanel(stock()));
+
+    await act(async () => {
+      await result.current.submit();
+    });
+    act(() => {
+      result.current.increment();
+    });
+    await act(async () => {
+      await result.current.submit();
+    });
+
+    expect(keyOf(buyStock.mock.calls[0])).not.toBe(
+      keyOf(buyStock.mock.calls[1]),
+    );
   });
 });

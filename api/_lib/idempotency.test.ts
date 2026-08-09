@@ -79,8 +79,8 @@ describe("claim", () => {
 
   // Letting a duplicate proceed mid-execution is the exact failure this
   // exists to prevent, so it is turned away rather than allowed through.
-  it("refuses a duplicate that arrives while the first is still running", async () => {
-    queue([], [{ response: null }]);
+  it("refuses a duplicate while the first is genuinely still running", async () => {
+    queue([], [{ response: null }], []); // claim, response lookup, no trade row
 
     await expect(claim("u1", "k")).rejects.toMatchObject({
       status: 409,
@@ -89,9 +89,47 @@ describe("claim", () => {
   });
 
   it("treats a vanished row as still in progress rather than free", async () => {
-    queue([], []);
+    queue([], [], []);
 
     await expect(claim("u1", "k")).rejects.toMatchObject({ status: 409 });
+  });
+
+  // The case an outside review found: the trade commits, the process dies
+  // before recording a response, and the claim is left unresolvable. The
+  // ledger settles it, because the key was written with the trade itself.
+  it("recovers a trade that committed before its response was stored", async () => {
+    queue(
+      [], // the claim lost the race
+      [{ response: null }], // no cached answer
+      [{ id: "t1" }], // ...but the ledger has the trade
+      [{ cash: "9000" }], // loadPortfolio: cash
+      [], //             positions
+      [], // record()
+    );
+
+    const result = await claim("u1", "k");
+
+    expect(result).toMatchObject({ replayed: true });
+    expect((result as { response: { cash: number } }).response.cash).toBe(9000);
+  });
+
+  it("caches the recovered answer, so the next replay is one lookup", async () => {
+    queue([], [{ response: null }], [{ id: "t1" }], [{ cash: "9000" }], [], []);
+
+    await claim("u1", "k");
+
+    expect(db.calls.some((c) => c.text.includes("UPDATE trade_requests"))).toBe(
+      true,
+    );
+  });
+
+  it("purges expired claims in the same round trip", async () => {
+    queue([{ idempotency_key: "k" }]);
+    await claim("u1", "k");
+
+    expect(db.calls).toHaveLength(1);
+    expect(db.calls[0].text).toMatch(/DELETE FROM trade_requests/);
+    expect(db.calls[0].text).toMatch(/INSERT INTO trade_requests/);
   });
 });
 

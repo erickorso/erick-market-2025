@@ -460,7 +460,7 @@ does nothing to what is already live.
 cp .env.example .env
 # FINNHUB_API_KEY, DATABASE_URL, AUTH0_*, VITE_AUTH0_*
 npm install
-npm run dev:api   # :4010 — quotes + auth APIs
+npm run dev:api   # :4010 — the real api/ handlers + dev auth
 npm run dev       # Vite proxies /api → :4010
 ```
 
@@ -487,7 +487,7 @@ Redeploy after changing `VITE_*` (they are baked into the build).
 | Command                    | What it does                                        |
 | -------------------------- | --------------------------------------------------- |
 | `npm run dev`              | Vite frontend                                       |
-| `npm run dev:api`          | Local BFF (:4010)                                   |
+| `npm run dev:api`          | The deployed `api/` handlers on :4010               |
 | `npm run build`            | typecheck + Vite build                              |
 | `npm run typecheck`        | `tsc --noEmit`, app and tests                       |
 | `npm run lint`             | ESLint (`lint:fix` autofixes)                       |
@@ -534,11 +534,21 @@ ends up wrapping reads and writes alike.
 Only one error is replayed: `price_unavailable`. The server quotes before it
 writes, so that response is _proof_ nothing was booked. A timeout proves
 nothing, and no guard in the UI can help — the first request already finished.
-That gap is what the **idempotency key** closes: one key per intention, reused
-by every replay, and the second request becomes a lookup instead of a purchase.
+That gap is what the **idempotency key** closes.
 
-→ [`idempotency.test.ts`](api/_lib/idempotency.test.ts) — _"replays the stored
-response instead of trading again"_
+Getting it right took two corrections, and neither was obvious. The key is
+generated per _intention_, not per attempt: the first version made a new one on
+every click, which is useless precisely in the case it exists for — the user who
+sees a failure and presses Buy again. And the claim alone is not enough, because
+a request can commit and die before storing its response. So the key is written
+onto the `trades` row **inside the same statement as the trade**, which makes
+the ledger the authority: a stranded claim is resolved by asking whether that key
+ever ran, rather than guessed at with a timeout.
+
+→ [`idempotency.test.ts`](api/_lib/idempotency.test.ts) — _"recovers a trade
+that committed before its response was stored"_ ·
+[`useTradePanel.test.tsx`](hooks/useTradePanel.test.tsx) — _"reuses the key when
+a failed buy is retried by hand"_
 
 ### Two clicks in one tick both saw `busy: false`
 

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Erick Market">
+  <!-- Carries its own background: a transparent favicon disappears against a
+       dark browser theme, and this one has to read at 16px in both. -->
+  <rect width="32" height="32" rx="7" fill="#0f172a" />
+  <!-- Chunky bars, because a thin line turns to mush at favicon size. -->
+  <g fill="#0f766e">
+    <rect x="6" y="19" width="4.5" height="8" rx="1.2" />
+    <rect x="13.75" y="15" width="4.5" height="12" rx="1.2" />
+    <rect x="21.5" y="10" width="4.5" height="17" rx="1.2" />
+  </g>
+  <!-- The trend on top, in the brighter accent so it survives downscaling. -->
+  <polyline
+    points="5,20 12,14.5 18.5,17 27,6.5"
+    fill="none"
+    stroke="#2dd4bf"
+    stroke-width="2.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="27" cy="6.5" r="2.6" fill="#2dd4bf" />
+</svg>

@@ -14,6 +14,7 @@ import StockDetailModal from "../organisms/StockDetailModal";
 import AuthPromptModal from "../organisms/AuthPromptModal";
 import ErrorBoundary from "../organisms/ErrorBoundary";
 import { protectedRoute } from "../routing/RequireAuth";
+import { UI } from "../../constants";
 
 /**
  * Page frame: header, the two sidebars, the routed centre column, and the
@@ -81,7 +82,7 @@ const AppShell: React.FC = () => {
             </main>
             <footer className="mt-auto border-t border-slate-200 bg-white px-4 py-5 text-center text-sm text-slate-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
               <p>
-                © {year} Erick Stocks Simulator. {t("footerDemo")}
+                © {year} {UI.NAV_TITLE} Simulator. {t("footerDemo")}
               </p>
             </footer>
           </div>

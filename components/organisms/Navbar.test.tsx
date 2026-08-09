@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders, screen } from "../../test/render";
 import Navbar from "./Navbar";
+import { UI } from "../../constants";
 
 const dispatch = vi.hoisted(() => vi.fn());
 const navigate = vi.hoisted(() => vi.fn());
@@ -198,5 +199,17 @@ describe("language", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /language/i }));
     expect(screen.getByTestId("Home")).toHaveTextContent("Inicio");
+  });
+});
+
+// The brand used to be hardcoded here while constants.ts held its own copy,
+// which is how the header ended up saying something else than the URL.
+describe("branding", () => {
+  it("takes the name from the one place that defines it", () => {
+    renderWithProviders(<Navbar />);
+    expect(screen.getByRole("link", { name: UI.NAV_TITLE })).toHaveAttribute(
+      "href",
+      "/",
+    );
   });
 });

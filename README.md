@@ -1,4 +1,4 @@
-# Erick Stocks — Market Simulator
+# Erick Market — Trading Simulator
 
 [![CI](https://github.com/erickorso/erick-market-2025/actions/workflows/ci.yml/badge.svg)](https://github.com/erickorso/erick-market-2025/actions/workflows/ci.yml)
 

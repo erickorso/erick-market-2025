@@ -23,7 +23,7 @@ export const PRICE_TICK_MS = 3000;
 export const LIVE_POLL_MS = 15_000;
 
 export const UI = {
-  NAV_TITLE: "Erick Stocks",
+  NAV_TITLE: "Erick Market",
   HOME_LINK: "Home",
   MY_STOCKS_LINK: "My Stocks",
   MY_FUND_LINK: "My Fund",

@@ -5,6 +5,7 @@ import { useUser } from "../../context/UserContext";
 import { useI18n } from "../../context/I18nContext";
 import ThemeToggle from "../molecules/ThemeToggle";
 import ProtectedLink from "../molecules/ProtectedLink";
+import { UI } from "../../constants";
 
 const Navbar: React.FC = () => {
   const { state, dispatch } = useStockContext();
@@ -23,7 +24,7 @@ const Navbar: React.FC = () => {
             to="/"
             className="text-2xl font-bold text-teal-700 transition duration-300 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300"
           >
-            Erick Stocks
+            {UI.NAV_TITLE}
           </Link>
         </div>
         <div className="flex flex-col items-center space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0">

@@ -99,9 +99,11 @@ export function useTrading(
       };
 
       try {
-        // Only `price_unavailable` is replayable: the server quotes before it
-        // writes, so that error proves no trade was booked. A timeout proves
-        // nothing, and replaying one could buy twice.
+        // Only `price_unavailable` is replayable. The server quotes the symbol
+        // before it writes anything, so that error is proof no trade was
+        // booked. A timeout or a dropped connection carries no such proof —
+        // replaying one of those could buy twice, so they fail straight
+        // through. This is why the predicate is required rather than defaulted.
         const portfolio = await withRetry(
           attempt,
           (err) => err instanceof ApiError && err.code === "price_unavailable",

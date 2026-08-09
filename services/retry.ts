@@ -30,9 +30,10 @@ const defaultSleep = (ms: number) =>
   new Promise<void>((r) => setTimeout(r, ms));
 
 /**
- * `shouldRetry` is required, with no default. Blind retries are safe for a read
- * and a way to charge someone twice for a write, and a helper this convenient
- * ends up wrapping both.
+ * There is no `shouldRetry` default that retries everything on purpose: the
+ * predicate is required. Blind retries are safe for a read and a way to charge
+ * someone twice for a write, and a helper this convenient will end up wrapping
+ * both. Making the caller state the rule is the whole point.
  */
 export async function withRetry<T>(
   fn: (attempt: number) => Promise<T>,

@@ -115,9 +115,11 @@ export async function loadPortfolio(
     SELECT cash FROM portfolios WHERE user_id = ${userId} AND month = ${month}
   `;
   const cash = Number(cashRows[0]?.cash ?? INITIAL_FUND);
-  // Sub-statements in a WITH share one snapshot, so the DELETE meant to drop a
-  // fully sold position cannot see the UPDATE that emptied it. The read is the
-  // reliable place to enforce this; the delete is only housekeeping.
+  // Filtered here, not just cleaned up on write. Sub-statements in a WITH all
+  // read the same snapshot, so the DELETE that is meant to drop a fully sold
+  // position cannot see the UPDATE that emptied it — selling everything left a
+  // row at qty 0 showing as a phantom holding. The read is the reliable place
+  // to enforce it; the delete is only housekeeping.
   const posRows = await sql`
     SELECT symbol, company, qty, avg_cost
     FROM positions
@@ -139,8 +141,14 @@ export async function loadPortfolio(
 /** Raised only inside the quote loop, so `withRetry` has something to catch. */
 const NO_QUOTE = Symbol("no-quote");
 
-/** Safe to retry because it runs before anything is written. The budget keeps
- *  the loop inside the function timeout it would otherwise outlive. */
+/**
+ * A single upstream hiccup should not cost the user their trade. Safe to retry
+ * precisely because it runs before anything is written — there is no partial
+ * trade to duplicate.
+ *
+ * The budget is what keeps this honest: the function has a hard timeout, and a
+ * retry loop that outlives it turns a recoverable blip into a dropped request.
+ */
 async function quoteForTrade(symbol: string): Promise<number | undefined> {
   const key = process.env.FINNHUB_API_KEY;
   try {
@@ -278,9 +286,11 @@ export async function syncLeagueScoreFromPortfolio(userId: string) {
     process.env.FINNHUB_API_KEY,
   );
 
-  // Marking an unpriced holding at cost is not conservative, it is false: the
-  // player shows a flat 0% and ranks on a number that was never true. A stale
-  // rank beats a wrong one, so this publishes nothing instead.
+  // Falling back to avg_cost used to look conservative and was in fact a lie:
+  // an unpriced holding was marked at what it cost, so the player showed a flat
+  // 0% and ranked on a number that was never true. A ranking would rather be
+  // stale than wrong, so an unpriceable portfolio publishes nothing and the
+  // previous score stands.
   const unpriced = portfolio.positions.filter(
     (p) => !prices.get(p.symbol.toUpperCase()),
   );

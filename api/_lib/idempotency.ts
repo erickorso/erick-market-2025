@@ -1,12 +1,18 @@
 import { getSql } from "./db.js";
 
 /**
- * Exactly-once for POST /api/trade.
+ * Exactly-once for a write endpoint.
  *
- * Retries elsewhere replay only errors that prove nothing was written. A
- * dropped connection proves nothing: the trade may have committed, and the
- * user who presses Buy again cannot know. A caller-supplied key, held for the
- * whole intention rather than one attempt, is what ties the two together.
+ * The retry logic elsewhere in this codebase replays only errors that prove
+ * nothing was written. That covers the errors the server chose to return; it
+ * cannot cover the ones it never got to send. If the connection drops after the
+ * trade commits, the user sees a failure, presses Buy again, and buys twice —
+ * and no amount of guarding in the UI can prevent it, because the first request
+ * already finished.
+ *
+ * A key supplied by the caller is the only thing that ties those two requests
+ * together. It is generated per *intention*, not per attempt: every replay of
+ * one Buy carries the same key, and a new Buy carries a new one.
  */
 
 export type ClaimResult =
@@ -35,9 +41,14 @@ export function parseIdempotencyKey(raw: unknown): string | null {
 }
 
 /**
- * The INSERT is the lock: whoever wins the race executes, everyone else is told
- * what happened rather than allowed to trade again. The purge rides along in
- * the same statement — a background job for one DELETE is more moving parts
+ * Reserves the key, or reports what to do instead.
+ *
+ * The INSERT is the lock: `ON CONFLICT DO NOTHING` means whoever wins the race
+ * executes, and everyone else has to be told what happened rather than allowed
+ * to trade again.
+ *
+ * The purge rides along in the same statement so expiring old keys costs no
+ * extra round trip — a background job for one DELETE would be more moving parts
  * than the problem deserves.
  */
 export async function claim(userId: string, key: string): Promise<ClaimResult> {

@@ -102,6 +102,7 @@ version you ship.
 | [`useStockDetail`](hooks/useStockDetail.ts)         | detail fetch + live quote overlay (no refetch on price polls)        |
 | [`useTradePanel`](hooks/useTradePanel.ts)           | quantity, affordability, guarded submit — shared by card and modal   |
 | [`useSellForm`](hooks/useSellForm.ts)               | position lookup and sell validation                                  |
+| [`useIdempotencyKey`](hooks/useIdempotencyKey.ts)   | one key per order, so a hand-retried trade is not a second one       |
 | [`useQueryFilters`](hooks/useQueryFilters.ts)       | filters ↔ URL, so any view is linkable                               |
 | [`useFocusTrap`](hooks/useFocusTrap.ts)             | dialog focus containment and restore                                 |
 | [`useInertBackground`](hooks/useInertBackground.ts) | marking the page behind an overlay inert                             |

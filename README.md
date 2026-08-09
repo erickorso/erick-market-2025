@@ -662,10 +662,23 @@ every change with no secrets. Given an `EXPO_TOKEN`, running it with
 installable directly, no store account involved. iOS cannot be side-loaded that
 way; that route is TestFlight.
 
-**Before a build can sign in**, Auth0 needs a **Native** application whose
-callback and logout URLs include `erickmarket://`, and its domain and client id
-go in `app.json` under `extra`. Without them the app still runs: it browses the
-market and the league, and says so instead of failing at a login button.
+Signing in uses a **second Auth0 application** — same tenant, same accounts,
+same API audience, so a phone and a browser see the same portfolio. It is a
+separate registration rather than a shared client id because the two have
+different refresh-token policies and sharing one would mean revoking both at
+once. It needs authorising against the API under **Application Access →
+User-delegated Access**, exactly like the SPA did.
+
+The callback is `erickmarket://redirect`, and the path is not decoration:
+Auth0 rejects a custom scheme with an empty authority, so `erickmarket://`
+fails its format check. [`REDIRECT_PATH`](mobile/lib/auth.tsx) is what keeps
+the registered URL and the requested one from drifting.
+
+**Login needs a development build, not Expo Go.** In Expo Go the redirect
+becomes an `exp://` URL that changes every session, and Auth0 matches callbacks
+exactly. Expo Go is still the fast way to work on everything else: with no auth
+configured the app browses the market and the league and says so, rather than
+failing at a login button.
 
 ---
 

@@ -20,6 +20,13 @@ import {
 WebBrowser.maybeCompleteAuthSession();
 
 const REFRESH_KEY = "erick-market.refresh-token";
+/**
+ * The path is not decoration. Auth0 refuses a custom scheme with an empty
+ * authority — `erickmarket://` fails its callback-url format check — so the
+ * redirect has to carry one, and this constant is what keeps the registered
+ * URL and the requested one from drifting apart.
+ */
+const REDIRECT_PATH = "redirect";
 /** Renew a little early rather than after the API has already refused. */
 const RENEW_MARGIN_MS = 60_000;
 
@@ -67,7 +74,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     sessionRef.current = session;
   }, [session]);
 
-  const redirectUri = AuthSession.makeRedirectUri({ scheme: "erickmarket" });
+  const redirectUri = AuthSession.makeRedirectUri({
+    scheme: "erickmarket",
+    path: REDIRECT_PATH,
+  });
 
   const exchange = useCallback(
     async (body: Record<string, string>): Promise<Session | null> => {

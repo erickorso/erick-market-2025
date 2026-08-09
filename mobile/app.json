@@ -29,7 +29,10 @@
       "expo-asset"
     ],
     "extra": {
-      "apiBase": "https://erick-market-2025.vercel.app"
+      "apiBase": "https://erick-market-2025.vercel.app",
+      "auth0Domain": "dev-wfdctrtgoj8cy2tr.us.auth0.com",
+      "auth0ClientId": "XAuLCOcUeosqbjWojU3bDjWKUHLxGxf3",
+      "auth0Audience": "https://erick-market-api"
     }
   }
 }

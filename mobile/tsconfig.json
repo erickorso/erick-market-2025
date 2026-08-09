@@ -6,7 +6,8 @@
     "paths": {
       "@/*": ["./*"],
       "@shared/*": ["../*"]
-    }
+    },
+    "types": ["jest"]
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "dist", ".expo"]

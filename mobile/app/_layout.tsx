@@ -15,32 +15,46 @@ import AppErrorBoundary from "../components/AppErrorBoundary";
 // startup error is indistinguishable from the app simply not working.
 export { AppErrorBoundary as ErrorBoundary };
 
-export default function RootLayout() {
+/**
+ * The navigator, split out for one reason: it reads the theme, and the theme
+ * comes from PrefsProvider. A component cannot consume a context it renders
+ * itself — its own body runs before its children exist — so the consumer has
+ * to sit below the provider, not beside it.
+ */
+function ThemedStack() {
   const theme = useTheme();
 
+  return (
+    <>
+      <StatusBar style={theme.isDark ? "light" : "dark"} />
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: theme.surface },
+          headerTintColor: theme.text,
+          headerTitleStyle: { fontWeight: "700" },
+          contentStyle: { backgroundColor: theme.bg },
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="stock/[symbol]"
+          options={{ title: "", presentation: "card" }}
+        />
+        {/* The Auth0 callback. No header: it is a hand-off, not a place the
+            user chose to be. */}
+        <Stack.Screen name="redirect" options={{ headerShown: false }} />
+      </Stack>
+    </>
+  );
+}
+
+export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <PrefsProvider>
         <AuthProvider>
           <PortfolioProvider>
-            <StatusBar style={theme.isDark ? "light" : "dark"} />
-            <Stack
-              screenOptions={{
-                headerStyle: { backgroundColor: theme.surface },
-                headerTintColor: theme.text,
-                headerTitleStyle: { fontWeight: "700" },
-                contentStyle: { backgroundColor: theme.bg },
-              }}
-            >
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="stock/[symbol]"
-                options={{ title: "", presentation: "card" }}
-              />
-              {/* The Auth0 callback. No header: it is a hand-off, not a place
-                the user chose to be. */}
-              <Stack.Screen name="redirect" options={{ headerShown: false }} />
-            </Stack>
+            <ThemedStack />
           </PortfolioProvider>
         </AuthProvider>
       </PrefsProvider>

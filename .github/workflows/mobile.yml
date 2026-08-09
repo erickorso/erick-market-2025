@@ -38,6 +38,11 @@ jobs:
       # on a device outside Expo Go.
       - run: npx expo-doctor@latest
         working-directory: mobile
+      # Renders the app. Everything above only reads it — three startup
+      # failures reached a device while typecheck, bundle and doctor were all
+      # green, because none of them mount a component.
+      - run: npm test
+        working-directory: mobile
       # The check that matters: this is the same command EAS runs inside the
       # Android build, so a green bundle here means the APK will compile.
       - run: npm run bundle

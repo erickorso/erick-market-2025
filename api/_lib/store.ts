@@ -26,17 +26,21 @@ export type PortfolioPayload = {
 
 export async function upsertUser(auth: AuthUser): Promise<DbUser> {
   const sql = getSql();
-  const display =
+  // Null when the token carried no profile claims at all. "Trader" is only a
+  // seed for a brand-new row: writing it on conflict overwrote the real name
+  // of every existing user on every request.
+  const claimed =
     auth.nickname?.trim() ||
     auth.name?.trim() ||
     auth.email?.split("@")[0] ||
-    "Trader";
+    null;
+  const named = claimed ? claimed.slice(0, 64) : null;
   const rows = await sql`
     INSERT INTO users (auth0_sub, email, display_name)
-    VALUES (${auth.sub}, ${auth.email ?? null}, ${display.slice(0, 64)})
+    VALUES (${auth.sub}, ${auth.email ?? null}, ${named ?? "Trader"})
     ON CONFLICT (auth0_sub) DO UPDATE SET
       email = COALESCE(EXCLUDED.email, users.email),
-      display_name = COALESCE(NULLIF(EXCLUDED.display_name, ''), users.display_name)
+      display_name = COALESCE(${named}, users.display_name)
     RETURNING id, auth0_sub, email, display_name
   `;
   return rows[0] as DbUser;

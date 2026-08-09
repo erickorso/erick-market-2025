@@ -9,6 +9,52 @@ export type AuthUser = {
 
 const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 
+type ProfileClaims = Pick<AuthUser, "email" | "name" | "nickname">;
+
+/** Profiles keyed by `sub`, so /userinfo is hit once per user per instance. */
+const profileCache = new Map<string, { value: ProfileClaims; until: number }>();
+const PROFILE_TTL_MS = 10 * 60 * 1000;
+
+const str = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+
+/**
+ * An access token issued for a custom API carries only `sub` — `email`, `name`
+ * and `nickname` live on the ID token and on /userinfo. Reading them off the
+ * access token yields nothing, which is how every display name degraded to the
+ * "Trader" placeholder.
+ *
+ * Failing soft is deliberate: identity here only decorates a profile row, so a
+ * userinfo outage must not turn into a 401 on a request whose JWT was valid.
+ */
+async function fetchProfile(
+  domain: string,
+  token: string,
+  sub: string,
+): Promise<ProfileClaims> {
+  const hit = profileCache.get(sub);
+  if (hit && hit.until > Date.now()) return hit.value;
+  try {
+    const res = await fetch(`https://${domain}/userinfo`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return {};
+    const body = (await res.json()) as Record<string, unknown>;
+    const value: ProfileClaims = {
+      email: str(body.email),
+      name: str(body.name),
+      nickname: str(body.nickname),
+    };
+    // Only cache a useful answer, so a transient empty response does not stick
+    // around for the whole TTL.
+    if (value.email || value.name || value.nickname) {
+      profileCache.set(sub, { value, until: Date.now() + PROFILE_TTL_MS });
+    }
+    return value;
+  } catch {
+    return {};
+  }
+}
+
 function getJwks(domain: string) {
   let jwks = jwksCache.get(domain);
   if (!jwks) {
@@ -66,7 +112,14 @@ export async function verifyBearer(
     });
   }
 
-  return claimsToUser(payload);
+  const user = claimsToUser(payload);
+  if (user.email || user.name || user.nickname) return user;
+  return { ...user, ...(await fetchProfile(domain, token, user.sub)) };
+}
+
+/** Test seam: instances are long-lived, so the cache outlives a single case. */
+export function __clearProfileCache() {
+  profileCache.clear();
 }
 
 function claimsToUser(payload: JWTPayload): AuthUser {

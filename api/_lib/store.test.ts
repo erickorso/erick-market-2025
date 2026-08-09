@@ -102,6 +102,27 @@ describe("upsertUser", () => {
     expect(db.calls[0].values).toContain("Trader");
   });
 
+  // The placeholder is a seed for a new row only. Passing it to the conflict
+  // branch renamed every returning user to "Trader" on their next request,
+  // which is what happened when the bearer became a claim-less access token.
+  it("never writes the placeholder over an existing name", async () => {
+    queue([row]);
+    await upsertUser({ sub: "auth0|1" });
+
+    const [insert, update] = db.calls[0].values.slice(-2);
+    expect(insert).toBe("Trader");
+    expect(update).toBeNull();
+  });
+
+  it("does update the stored name when the token does carry one", async () => {
+    queue([row]);
+    await upsertUser({ sub: "auth0|1", name: "Erick Vargas" });
+
+    const [insert, update] = db.calls[0].values.slice(-2);
+    expect(insert).toBe("Erick Vargas");
+    expect(update).toBe("Erick Vargas");
+  });
+
   it("ignores a whitespace-only nickname", async () => {
     queue([row]);
     await upsertUser({ sub: "auth0|1", nickname: "   ", name: "Erick" });

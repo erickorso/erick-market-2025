@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useAuth } from "./AuthContext";
@@ -70,16 +71,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   const [profileError, setProfileError] = useState<string | null>(null);
   /** Set when the credential is dead and re-authenticating is the only fix. */
   const [sessionExpired, setSessionExpired] = useState(false);
+  /** Whether the profile has ever arrived, so later refreshes stay silent. */
+  const loadedOnceRef = useRef(false);
 
   const refreshProfile = useCallback(async () => {
     if (!isAuthenticated) {
+      loadedOnceRef.current = false;
       setProfile(null);
       setPortfolio(null);
       setProfileError(null);
       setSessionExpired(false);
       return;
     }
-    setProfileLoading(true);
+    // Only the first load gates the UI. Every trade calls this again, and
+    // flipping the global loading flag made the navbar drop the user's name
+    // and the Log out button for a moment — which reads as being signed out
+    // and back in mid-action.
+    if (!loadedOnceRef.current) setProfileLoading(true);
     setProfileError(null);
 
     const load = async (forceRefresh: boolean) => {
@@ -101,6 +109,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       setProfile(data.user);
       setPortfolio(data.portfolio);
       setSessionExpired(false);
+      loadedOnceRef.current = true;
     } catch (err) {
       setProfile(null);
       setPortfolio(null);

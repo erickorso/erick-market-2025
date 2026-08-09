@@ -175,6 +175,50 @@ describe("isLoading", () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
+
+  // Every trade refreshes the profile. Gating the UI on that made the navbar
+  // drop the user's name and the Log out button mid-action, which reads as
+  // being signed out and straight back in.
+  it("stays settled while a later refresh is in flight", async () => {
+    const { result } = renderHook(() => useUser(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    let resolve: (v: unknown) => void = () => {};
+    fetchMe.mockReturnValue(new Promise((r) => (resolve = r)));
+
+    let done!: Promise<void>;
+    await act(async () => {
+      done = result.current.refreshProfile();
+    });
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.profileLoading).toBe(false);
+
+    await act(async () => {
+      resolve(me);
+      await done;
+    });
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it("gates again after signing out and back in", async () => {
+    const { result, rerender } = renderHook(() => useUser(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    auth.isAuthenticated = false;
+    rerender();
+    await waitFor(() => expect(result.current.profile).toBeNull());
+
+    auth.isAuthenticated = true;
+    let resolve: (v: unknown) => void = () => {};
+    fetchMe.mockReturnValue(new Promise((r) => (resolve = r)));
+    rerender();
+
+    await waitFor(() => expect(result.current.isLoading).toBe(true));
+    await act(async () => {
+      resolve(me);
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+  });
 });
 
 describe("identity", () => {

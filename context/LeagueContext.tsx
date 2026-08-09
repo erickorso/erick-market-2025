@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useStockContext } from "./StockContext";
@@ -24,6 +25,9 @@ type LeagueContextValue = {
 };
 
 const LeagueContext = createContext<LeagueContextValue | null>(null);
+
+/** How often a mark-to-market score is republished with no trade involved. */
+const LIVE_SCORE_INTERVAL_MS = 60_000;
 
 export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -79,19 +83,28 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [month]);
 
+  // Equity is recomputed on every price tick. Reading it through a ref keeps
+  // pushScore's identity stable, so the effects below fire on what actually
+  // happened rather than on the clock.
+  const equityRef = useRef(equity);
+  useEffect(() => {
+    equityRef.current = equity;
+  }, [equity]);
+
   const pushScore = useCallback(async () => {
     if (!isAuthenticated) return;
     const token = await getAccessToken();
     if (!token) return;
+    const current = equityRef.current;
     await postLeagueScore(token, {
-      equity: equity.equity,
-      cash: equity.cash,
-      invested: equity.invested,
-      pnl: equity.pnl,
-      pnlPercent: equity.pnlPercent,
+      equity: current.equity,
+      cash: current.cash,
+      invested: current.invested,
+      pnl: current.pnl,
+      pnlPercent: current.pnlPercent,
     });
     await refresh();
-  }, [isAuthenticated, getAccessToken, equity, refresh]);
+  }, [isAuthenticated, getAccessToken, refresh]);
 
   useEffect(() => {
     // Loads the board on mount; the state it sets lands in a promise callback,
@@ -100,6 +113,10 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     void refresh();
   }, [refresh]);
 
+  // A trade changes the standings, so publish it. `state.allStocks` used to be
+  // a dependency here, which meant every price tick posted a score and then
+  // re-fetched the board — a burst of writes for a ranking nobody was reading
+  // that fast.
   useEffect(() => {
     if (!isAuthenticated || state.isLoading) return;
     const id = window.setTimeout(() => {
@@ -110,10 +127,19 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     isAuthenticated,
     state.fund,
     state.portfolio,
-    state.allStocks,
     state.isLoading,
     pushScore,
   ]);
+
+  // The ranking is still mark-to-market: prices move it without any trade, so
+  // it republishes on a fixed cadence instead of chasing the tick.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const id = window.setInterval(() => {
+      void pushScore();
+    }, LIVE_SCORE_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, [isAuthenticated, pushScore]);
 
   const value = useMemo(
     () => ({

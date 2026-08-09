@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getBearer, verifyBearer } from "./auth";
+import { __clearProfileCache, getBearer, verifyBearer } from "./auth";
 
 const jwtVerify = vi.hoisted(() => vi.fn());
 
@@ -11,16 +11,28 @@ vi.mock("jose", () => ({
 const originalDomain = process.env.AUTH0_DOMAIN;
 const originalAudience = process.env.AUTH0_AUDIENCE;
 
+/** Answers /userinfo. Stubbed by default so no case reaches the network. */
+const userinfo = vi.fn();
+
 beforeEach(() => {
   process.env.AUTH0_DOMAIN = "tenant.eu.auth0.com";
   process.env.AUTH0_AUDIENCE = "https://erick-market-api";
   jwtVerify.mockReset().mockResolvedValue({ payload: { sub: "auth0|1" } });
+  __clearProfileCache();
+  userinfo.mockReset().mockResolvedValue({ ok: false, status: 404 });
+  vi.stubGlobal("fetch", userinfo);
 });
 
 afterEach(() => {
   process.env.AUTH0_DOMAIN = originalDomain;
   process.env.AUTH0_AUDIENCE = originalAudience;
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
+});
+
+const ok = (body: Record<string, unknown>) => ({
+  ok: true,
+  json: async () => body,
 });
 
 describe("getBearer", () => {
@@ -179,5 +191,98 @@ describe("verifyBearer", () => {
     await verifyBearer("Bearer tok");
 
     expect(calls.length).toBeLessThanOrEqual(before + 1);
+  });
+});
+
+/**
+ * The switch from an ID token to a custom-API access token silently dropped
+ * every profile claim, so display names degraded to a placeholder. These pin
+ * the recovery path and, just as importantly, that it never costs a 401.
+ */
+describe("profile claims on an access token", () => {
+  it("reads them straight off the token when they are there", async () => {
+    jwtVerify.mockResolvedValue({
+      payload: { sub: "auth0|1", email: "trader@example.com", name: "Erick" },
+    });
+
+    expect(await verifyBearer("Bearer tok")).toEqual({
+      sub: "auth0|1",
+      email: "trader@example.com",
+      name: "Erick",
+      nickname: undefined,
+    });
+    expect(userinfo).not.toHaveBeenCalled();
+  });
+
+  it("falls back to /userinfo when the token carries none", async () => {
+    userinfo.mockResolvedValue(
+      ok({ email: "trader@example.com", name: "Erick", nickname: "erickorso" }),
+    );
+
+    const user = await verifyBearer("Bearer tok");
+
+    expect(user).toMatchObject({
+      sub: "auth0|1",
+      email: "trader@example.com",
+      name: "Erick",
+      nickname: "erickorso",
+    });
+    const [url, init] = userinfo.mock.calls[0];
+    expect(url).toBe("https://tenant.eu.auth0.com/userinfo");
+    expect(init.headers.Authorization).toBe("Bearer tok");
+  });
+
+  it("hits /userinfo once per user on a warm instance", async () => {
+    userinfo.mockResolvedValue(ok({ name: "Erick" }));
+
+    await verifyBearer("Bearer tok");
+    await verifyBearer("Bearer tok");
+    await verifyBearer("Bearer tok");
+
+    expect(userinfo).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps users apart in the cache", async () => {
+    userinfo.mockResolvedValueOnce(ok({ name: "Erick" }));
+    userinfo.mockResolvedValueOnce(ok({ name: "Marta" }));
+    const first = await verifyBearer("Bearer tok");
+    jwtVerify.mockResolvedValue({ payload: { sub: "auth0|2" } });
+    const second = await verifyBearer("Bearer tok");
+
+    expect(first.name).toBe("Erick");
+    expect(second.name).toBe("Marta");
+  });
+
+  // Identity here only decorates a profile row. A userinfo outage turning a
+  // valid JWT into a 401 would be a far worse failure than a missing name.
+  it("still authenticates when /userinfo errors", async () => {
+    userinfo.mockRejectedValue(new Error("network down"));
+
+    expect(await verifyBearer("Bearer tok")).toMatchObject({ sub: "auth0|1" });
+  });
+
+  it("still authenticates when /userinfo refuses", async () => {
+    userinfo.mockResolvedValue({ ok: false, status: 403 });
+
+    expect(await verifyBearer("Bearer tok")).toMatchObject({ sub: "auth0|1" });
+  });
+
+  it("does not cache an empty answer, so the next request retries", async () => {
+    userinfo.mockResolvedValueOnce(ok({}));
+    userinfo.mockResolvedValueOnce(ok({ name: "Erick" }));
+
+    expect((await verifyBearer("Bearer tok")).name).toBeUndefined();
+    expect((await verifyBearer("Bearer tok")).name).toBe("Erick");
+  });
+
+  it("ignores non-string fields in the response", async () => {
+    userinfo.mockResolvedValue(ok({ name: 42, email: null, nickname: "ok" }));
+
+    expect(await verifyBearer("Bearer tok")).toMatchObject({
+      sub: "auth0|1",
+      name: undefined,
+      email: undefined,
+      nickname: "ok",
+    });
   });
 });

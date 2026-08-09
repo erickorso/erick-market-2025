@@ -246,6 +246,114 @@ describe("pushScore", () => {
   });
 });
 
+/**
+ * The auto-push effect used to depend on `state.allStocks`, so every price
+ * tick posted a score and re-fetched the board. A single buy produced a burst
+ * of writes against a ranking nobody reads that fast.
+ */
+describe("automatic publishing", () => {
+  function priced(price: number): EnrichedStock[] {
+    return [
+      {
+        id: "1",
+        company: "Apple (AAPL)",
+        price,
+        change: 0,
+        tags: [],
+      } as unknown as EnrichedStock,
+    ];
+  }
+
+  it("publishes once after a trade", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { rerender } = renderHook(() => useLeague(), { wrapper });
+
+    stock.portfolio = [
+      { company: "Apple (AAPL)", quantity: 1 } as PortfolioItem,
+    ];
+    stock.fund = 9_000;
+    rerender();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_500);
+    });
+
+    expect(postLeagueScore).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it("does not publish on a price tick", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { rerender } = renderHook(() => useLeague(), { wrapper });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_500);
+    });
+    postLeagueScore.mockClear();
+
+    for (const price of [190, 191, 192, 193]) {
+      stock.allStocks = priced(price);
+      rerender();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1_500);
+      });
+    }
+
+    expect(postLeagueScore).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  // The board is still mark-to-market — prices move a rank with no trade
+  // involved — so it republishes on a cadence rather than chasing the tick.
+  it("republishes on its own interval", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    renderHook(() => useLeague(), { wrapper });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_500);
+    });
+    postLeagueScore.mockClear();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000);
+    });
+
+    expect(postLeagueScore).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it("sends the equity current at push time, not at scheduling time", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { rerender } = renderHook(() => useLeague(), { wrapper });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_500);
+    });
+    postLeagueScore.mockClear();
+
+    stock.fund = 7_500;
+    rerender();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000);
+    });
+
+    expect(postLeagueScore).toHaveBeenCalledWith(
+      "tok",
+      expect.objectContaining({ cash: 7_500 }),
+    );
+    vi.useRealTimers();
+  });
+
+  it("publishes nothing for a guest", async () => {
+    user.isAuthenticated = false;
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    renderHook(() => useLeague(), { wrapper });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(120_000);
+    });
+
+    expect(postLeagueScore).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+});
+
 describe("guard", () => {
   it("refuses to be used outside its provider", () => {
     expect(() => renderHook(() => useLeague())).toThrow(/LeagueProvider/);

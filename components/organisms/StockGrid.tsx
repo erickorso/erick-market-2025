@@ -22,7 +22,12 @@ const StockGrid: React.FC<{
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {/* Columns follow the space the grid actually has, not the window width.
+          Two sidebars sit beside it and the Top 10 one collapses, so viewport
+          breakpoints were always guessing: 4 cards were forced into a squeezed
+          centre column at 1280px, and collapsing a sidebar freed room the
+          layout could not use. */}
+      <div className="grid gap-6 [grid-template-columns:repeat(auto-fill,minmax(15rem,1fr))]">
         {stocks.map((stock) => (
           <StockCard key={stock.id} stock={stock} />
         ))}

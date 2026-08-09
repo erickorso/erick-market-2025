@@ -262,8 +262,20 @@ erDiagram
 - Month = `YYYY-MM`. First access in a new month → portfolio with **$10,000** cash.
 - Trades update `positions` + `cash` + the trade ledger in one SQL CTE statement,
   preventing partial updates when funds or holdings are insufficient.
-- Trade input is validated server-side, including side, symbol format, finite
-  positive quantity, finite positive price, and reasonable upper bounds.
+- Trade input is validated server-side: side, symbol format, finite positive
+  quantity and reasonable upper bounds.
+- **The execution price is never taken from the request.** `POST /api/trade`
+  carries no price at all — the server quotes the symbol itself and books that.
+  A price in the body is ignored, not rejected, so an older client still works.
+  Earlier the client sent its own price and the server wrote it verbatim, which
+  meant a hand-written request could buy a million shares at a cent and top the
+  league — and, less dramatically, that a fill could land at a simulated price
+  from mock mode while the portfolio was valued at the real one.
+- If the quote feed cannot price the symbol, the trade is **refused** with
+  `503 price_unavailable` rather than falling back to a caller-supplied number.
+  Failing closed matters here: the alternative reopens the hole precisely when
+  the feed is down. It also means trading is unavailable in mock mode, which is
+  the honest outcome — there is no market to trade against.
 - On month rollover, the highest equity is archived as winner in `league_months`.
 - Buy/sell remain **simulated** (no real broker).
 

@@ -7,15 +7,19 @@ export type TradeInput = {
   symbol: string;
   company: string;
   qty: number;
-  price: number;
 };
 
+/**
+ * Deliberately has no `price`. The client used to send one and the server
+ * booked it verbatim, so a hand-written request could buy a million shares at
+ * a cent and take the league. The execution price is now looked up server
+ * side, which leaves nothing about it for a caller to tamper with.
+ */
 export type ValidTrade = {
   side: TradeSide;
   symbol: string;
   company: string;
   qty: number;
-  price: number;
 };
 
 function isFinitePositive(n: number): boolean {
@@ -47,15 +51,14 @@ export function parseTradeInput(raw: {
   const company = companyRaw.slice(0, 128);
 
   const qty = Number(raw.qty);
-  const price = Number(raw.price);
   if (!isFinitePositive(qty) || qty > 1_000_000) {
     throw Object.assign(new Error("Invalid quantity"), { status: 400 });
   }
-  if (!isFinitePositive(price) || price > 1_000_000) {
-    throw Object.assign(new Error("Invalid price"), { status: 400 });
-  }
 
-  return { side, symbol, company, qty, price };
+  // A `price` in the body is ignored rather than rejected: an older client
+  // still sends one, and failing those requests would be a worse outcome than
+  // quietly pricing them correctly.
+  return { side, symbol, company, qty };
 }
 
 export function computeEquityFromBooks(

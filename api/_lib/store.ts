@@ -138,14 +138,27 @@ export async function executeTrade(input: {
   symbol: string;
   company: string;
   qty: number;
-  price: number;
 }): Promise<PortfolioPayload> {
   const trade = parseTradeInput(input);
+  const { symbol, company, qty, side } = trade;
+
+  // The one place a trade gets its price. Fetched here rather than taken from
+  // the request, and fetched before anything is written: refusing to trade is
+  // the right answer when the market cannot be priced, and it is far better
+  // than falling back to a number the caller chose.
+  const quotes = await fetchLivePrices([symbol], process.env.FINNHUB_API_KEY);
+  const price = quotes.get(symbol);
+  if (!price) {
+    throw Object.assign(new Error("No market price available"), {
+      status: 503,
+      code: "price_unavailable",
+    });
+  }
+
   const sql = getSql();
   const month = currentMonthKey();
   await ensurePortfolio(input.userId);
 
-  const { symbol, company, qty, price, side } = trade;
   const cost = qty * price;
 
   if (side === "buy") {

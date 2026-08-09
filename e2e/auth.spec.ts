@@ -141,7 +141,6 @@ test("authenticated user can buy and sends the expected trade", async ({
       symbol: "AAPL",
       company: "Apple Inc. (AAPL)",
       qty: 1,
-      price: 190,
     });
   await expect(page.getByTestId("company-name")).toHaveCount(1);
 });

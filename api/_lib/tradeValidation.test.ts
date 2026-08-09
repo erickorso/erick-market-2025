@@ -15,7 +15,6 @@ describe("parseTradeInput", () => {
       symbol: "AAPL",
       company: "Apple",
       qty: 2,
-      price: 100,
     });
   });
 
@@ -31,15 +30,24 @@ describe("parseTradeInput", () => {
     ).toThrow(/quantity/i);
   });
 
-  it("rejects Infinity price", () => {
+  // The server prices every trade itself, so a price in the body is inert
+  // rather than rejected: an older client still sends one.
+  it("ignores any price in the body", () => {
+    expect(
+      parseTradeInput({ side: "sell", symbol: "AAPL", qty: 1, price: 0.01 }),
+    ).not.toHaveProperty("price");
+  });
+
+  it("accepts a body with no price at all", () => {
+    expect(
+      parseTradeInput({ side: "buy", symbol: "AAPL", qty: 1 }),
+    ).toMatchObject({ side: "buy", symbol: "AAPL", qty: 1 });
+  });
+
+  it("does not reject an absurd price, it just disregards it", () => {
     expect(() =>
-      parseTradeInput({
-        side: "sell",
-        symbol: "AAPL",
-        qty: 1,
-        price: Infinity,
-      }),
-    ).toThrow(/price/i);
+      parseTradeInput({ side: "buy", symbol: "AAPL", qty: 1, price: Infinity }),
+    ).not.toThrow();
   });
 
   it("rejects negative qty", () => {
@@ -65,9 +73,7 @@ describe("parseTradeInput", () => {
 
   it.each([
     ["zero quantity", { qty: 0, price: 10 }, /quantity/i],
-    ["zero price", { qty: 1, price: 0 }, /price/i],
     ["oversized quantity", { qty: 1_000_001, price: 10 }, /quantity/i],
-    ["oversized price", { qty: 1, price: 1_000_001 }, /price/i],
   ])("rejects %s", (_label, values, message) => {
     expect(() =>
       parseTradeInput({ side: "buy", symbol: "AAPL", ...values }),

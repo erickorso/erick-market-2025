@@ -113,7 +113,7 @@ describe("with a held position", () => {
 
     await userEvent.click(screen.getByTestId("sell"));
 
-    expect(sellStock).toHaveBeenCalledWith("Apple Inc. (AAPL)", 1, 150);
+    expect(sellStock).toHaveBeenCalledWith("Apple Inc. (AAPL)", 1);
     expect(navigate).toHaveBeenCalledWith("/my-stocks");
   });
 

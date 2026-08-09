@@ -117,12 +117,13 @@ export async function fetchPortfolio(token: string): Promise<ApiPortfolio> {
 
 export async function postTrade(
   token: string,
+  // No price: the server looks it up. Letting the client name its own
+  // execution price was a way to buy a million shares at a cent.
   body: {
     side: "buy" | "sell";
     symbol: string;
     company: string;
     qty: number;
-    price: number;
   },
 ): Promise<ApiPortfolio> {
   const res = await authFetch(TRADE_URL, token, {

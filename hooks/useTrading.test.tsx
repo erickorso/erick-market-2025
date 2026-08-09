@@ -131,7 +131,6 @@ describe("buyStock", () => {
       symbol: "AAPL",
       company: "Apple Inc. (AAPL)",
       qty: 2,
-      price: 190,
     });
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({ type: "HYDRATE_PORTFOLIO" }),
@@ -328,7 +327,7 @@ describe("sellStock", () => {
     );
 
     await act(async () => {
-      await result.current.sellStock("Apple Inc. (AAPL)", 2, 195);
+      await result.current.sellStock("Apple Inc. (AAPL)", 2);
     });
 
     expect(postTrade).toHaveBeenCalledWith("tok", {
@@ -336,8 +335,30 @@ describe("sellStock", () => {
       symbol: "AAPL",
       company: "Apple Inc. (AAPL)",
       qty: 2,
-      price: 195,
     });
+  });
+
+  // The quote feed, not the trade, is what failed — and the raw wording is the
+  // API talking to itself.
+  it("explains a missing market price instead of echoing the API", async () => {
+    postTrade.mockRejectedValue(
+      new ApiError("No market price available", 503, "price_unavailable"),
+    );
+    const dispatch = vi.fn();
+    const { result } = renderHook(() => useTrading(state(), dispatch));
+
+    await act(async () => {
+      await result.current.buyStock(stock(), 1);
+    });
+
+    const notice = dispatch.mock.calls
+      .map(([a]) => a)
+      .find((a) => a.type === "SET_NOTICE");
+    expect(notice.payload.type).toBe("info");
+    // i18n is stubbed here to echo the key; the copy itself is covered in the
+    // locale tests.
+    expect(notice.payload.message).toBe("priceUnavailable");
+    expect(notice.payload.message).not.toMatch(/No market price available/);
   });
 
   it("falls back to the ticker in the company label", async () => {
@@ -345,7 +366,7 @@ describe("sellStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.sellStock("Tesla Inc. (TSLA)", 1, 250);
+      await result.current.sellStock("Tesla Inc. (TSLA)", 1);
     });
 
     expect(postTrade.mock.calls[0][1].symbol).toBe("TSLA");
@@ -356,7 +377,7 @@ describe("sellStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.sellStock("Apple Inc. (AAPL)", 2, 195);
+      await result.current.sellStock("Apple Inc. (AAPL)", 2);
     });
 
     expect(dispatch).toHaveBeenCalledWith({
@@ -374,7 +395,7 @@ describe("sellStock", () => {
     const { result } = renderHook(() => useTrading(state(), dispatch));
 
     await act(async () => {
-      await result.current.sellStock("Apple Inc. (AAPL)", 1, 1);
+      await result.current.sellStock("Apple Inc. (AAPL)", 1);
     });
 
     expect(postTrade).not.toHaveBeenCalled();

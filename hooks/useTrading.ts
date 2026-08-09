@@ -59,7 +59,6 @@ export function useTrading(
       symbol: string;
       company: string;
       qty: number;
-      price: number;
       successMessage: string;
       failureMessage: string;
     }) => {
@@ -78,7 +77,6 @@ export function useTrading(
           symbol: input.symbol,
           company: input.company,
           qty: input.qty,
-          price: input.price,
         });
       };
 
@@ -113,6 +111,16 @@ export function useTrading(
           requestLogin("sessionExpired");
           return;
         }
+        // The quote feed, not the trade, is what failed. "No market price
+        // available" is the API talking to itself; say what it means for the
+        // person who just pressed Buy.
+        if (err instanceof ApiError && err.code === "price_unavailable") {
+          dispatch({
+            type: "SET_NOTICE",
+            payload: { type: "info", message: t("priceUnavailable") },
+          });
+          return;
+        }
         dispatch({
           type: "SET_NOTICE",
           payload: {
@@ -139,7 +147,6 @@ export function useTrading(
         symbol: symbolFromStock(stock),
         company: stock.company,
         qty: quantity,
-        price: stock.price,
         successMessage: `Bought ${quantity} share(s) of ${stock.company}.`,
         failureMessage: "Buy failed",
       }),
@@ -147,14 +154,13 @@ export function useTrading(
   );
 
   const sellStock = useCallback(
-    async (stockCompany: string, quantity: number, sellPrice: number) => {
+    async (stockCompany: string, quantity: number) => {
       const held = state.portfolio.find((p) => p.company === stockCompany);
       return trade({
         side: "sell",
         symbol: held?.symbol || symbolFromCompany(stockCompany),
         company: stockCompany,
         qty: quantity,
-        price: sellPrice,
         successMessage: `Sold ${quantity} share(s) of ${stockCompany}.`,
         failureMessage: "Sell failed",
       });

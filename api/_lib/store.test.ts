@@ -285,12 +285,78 @@ describe("executeTrade", () => {
     symbol: "AAPL",
     company: "Apple Inc.",
     qty: 2,
-    price: 100,
   };
 
   function queueEnsure() {
     queue(ARCHIVE_EXISTS, [{ cash: "10000" }], [{ cash: "10000" }], []);
   }
+
+  beforeEach(() => {
+    // Every trade is priced from the quote feed now, so it has to answer.
+    fetchLivePrices.mockResolvedValue(new Map([["AAPL", 100]]));
+  });
+
+  // The client used to send its own execution price and the server booked it
+  // verbatim. A hand-written request could buy a million shares at a cent and
+  // take the league with it.
+  it("prices the trade from the quote feed, not from the request", async () => {
+    fetchLivePrices.mockResolvedValue(new Map([["AAPL", 313.33]]));
+    queueEnsure();
+    queue([{ user_id: "u1" }], [{ cash: "9373.34" }], []);
+
+    await executeTrade({ ...buy, price: 0.01 } as never);
+
+    const cte = db.calls.find((c) => c.text.includes("WITH paid AS"));
+    expect(cte?.values).toContain(313.33);
+    expect(cte?.values).not.toContain(0.01);
+  });
+
+  it("charges the quoted price times quantity, ignoring any sent cost", async () => {
+    fetchLivePrices.mockResolvedValue(new Map([["AAPL", 250]]));
+    queueEnsure();
+    queue([{ user_id: "u1" }], [{ cash: "9500" }], []);
+
+    await executeTrade({ ...buy, qty: 2, price: 1 } as never);
+
+    const cte = db.calls.find((c) => c.text.includes("WITH paid AS"));
+    expect(cte?.values).toContain(500);
+  });
+
+  // Falling back to the caller's number when the feed is down would reopen the
+  // hole exactly when nobody is watching. Refusing to trade is the safe answer.
+  it("refuses to trade when the market cannot be priced", async () => {
+    fetchLivePrices.mockResolvedValue(new Map());
+
+    await expect(executeTrade(buy)).rejects.toMatchObject({
+      status: 503,
+      code: "price_unavailable",
+    });
+  });
+
+  it("writes nothing when it cannot price the trade", async () => {
+    fetchLivePrices.mockResolvedValue(new Map());
+
+    await executeTrade(buy).catch(() => null);
+
+    expect(db.calls).toHaveLength(0);
+  });
+
+  it("prices a sell the same way", async () => {
+    fetchLivePrices.mockResolvedValue(new Map([["AAPL", 400]]));
+    queueEnsure();
+    queue([{ user_id: "u1", qty: "3" }], [{ cash: "10800" }], []);
+
+    await executeTrade({
+      ...buy,
+      side: "sell",
+      qty: 2,
+      price: 99_999,
+    } as never);
+
+    const cte = db.calls.find((c) => c.text.includes("WITH sold AS"));
+    expect(cte?.values).toContain(400);
+    expect(cte?.values).not.toContain(99_999);
+  });
 
   it("validates the input before touching the database", async () => {
     await expect(executeTrade({ ...buy, qty: -1 })).rejects.toMatchObject({

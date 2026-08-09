@@ -100,7 +100,6 @@ describe("authenticated requests", () => {
       symbol: "AAPL",
       company: "Apple Inc.",
       qty: 2,
-      price: 100,
     });
 
     const [url, init] = fetchMock.mock.calls[0];
@@ -116,7 +115,6 @@ describe("authenticated requests", () => {
       symbol: "AAPL",
       company: "Apple",
       qty: 1,
-      price: 1,
     });
 
     expect(result.cash).toBe(1);
@@ -147,7 +145,6 @@ describe("error handling", () => {
         symbol: "AAPL",
         company: "Apple",
         qty: 1,
-        price: 1,
       }),
     ).rejects.toThrow("insufficient funds");
   });

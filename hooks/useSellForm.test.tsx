@@ -107,7 +107,7 @@ describe("submit", () => {
     });
 
     expect(ok).toBe(true);
-    expect(sellStock).toHaveBeenCalledWith("Apple Inc. (AAPL)", 1, 150);
+    expect(sellStock).toHaveBeenCalledWith("Apple Inc. (AAPL)", 1);
   });
 
   it("refuses a non-positive quantity", async () => {
@@ -150,7 +150,7 @@ describe("submit", () => {
       await result.current.submit();
     });
 
-    expect(sellStock).toHaveBeenCalledWith("Apple Inc. (AAPL)", 10, 150);
+    expect(sellStock).toHaveBeenCalledWith("Apple Inc. (AAPL)", 10);
   });
 
   it("surfaces a rejected trade and stays on the form", async () => {

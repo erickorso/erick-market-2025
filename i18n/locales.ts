@@ -164,6 +164,8 @@ const en = {
   authPromptLeagueBody:
     "The monthly league ranks players by equity, so it needs an account to rank you. Signing in takes you to Auth0 and brings you straight back here.",
   notNow: "Not now",
+  priceUnavailable:
+    "No live price for that stock right now, so the trade was not placed. Try again in a moment.",
 } as const;
 
 type Dict = { [K in keyof typeof en]: string };
@@ -330,6 +332,8 @@ const es: Dict = {
   authPromptLeagueBody:
     "La liga mensual ordena por equity, así que necesita una cuenta para rankearte. Al entrar pasás por Auth0 y volvés justo acá.",
   notNow: "Ahora no",
+  priceUnavailable:
+    "Ahora mismo no hay precio en vivo para esa acción, así que no se ejecutó la operación. Probá de nuevo en un momento.",
 };
 
 export type MsgKey = keyof typeof en;

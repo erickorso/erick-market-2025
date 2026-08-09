@@ -33,7 +33,7 @@ export function useSellForm(rawCompany: string | undefined) {
     }
     setBusy(true);
     try {
-      await sellStock(company, quantity, currentPrice);
+      await sellStock(company, quantity);
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : t("error"));
@@ -41,7 +41,7 @@ export function useSellForm(rawCompany: string | undefined) {
     } finally {
       setBusy(false);
     }
-  }, [quantity, maxQuantity, sellStock, company, currentPrice, t]);
+  }, [quantity, maxQuantity, sellStock, company, t]);
 
   return {
     company,

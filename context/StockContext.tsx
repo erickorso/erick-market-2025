@@ -19,11 +19,7 @@ type StockContextValue = {
   fetchStocks: () => Promise<void>;
   loadMore: () => Promise<void>;
   buyStock: (stock: EnrichedStock, quantity: number) => Promise<void>;
-  sellStock: (
-    stockCompany: string,
-    quantity: number,
-    sellPrice: number,
-  ) => Promise<void>;
+  sellStock: (stockCompany: string, quantity: number) => Promise<void>;
   portfolioSynced: boolean;
 };
 

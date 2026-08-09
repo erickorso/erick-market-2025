@@ -35,6 +35,9 @@ export default function RootLayout() {
               name="stock/[symbol]"
               options={{ title: "", presentation: "card" }}
             />
+            {/* The Auth0 callback. No header: it is a hand-off, not a place
+                the user chose to be. */}
+            <Stack.Screen name="redirect" options={{ headerShown: false }} />
           </Stack>
         </PortfolioProvider>
       </AuthProvider>

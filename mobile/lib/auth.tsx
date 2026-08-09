@@ -21,6 +21,15 @@ WebBrowser.maybeCompleteAuthSession();
 
 const REFRESH_KEY = "erick-market.refresh-token";
 /**
+ * PKCE verifier, parked where a cold start can still find it.
+ *
+ * The redirect does not always come back through promptAsync: a Custom Tab
+ * can relaunch the activity instead of resuming it, and then the code arrives
+ * as an ordinary deep link with the in-memory AuthRequest — and its verifier —
+ * already gone. Persisting it is what lets that path finish the exchange.
+ */
+const VERIFIER_KEY = "erick-market.pkce-verifier";
+/**
  * The path is not decoration. Auth0 refuses a custom scheme with an empty
  * authority — `erickmarket://` fails its callback-url format check — so the
  * redirect has to carry one, and this constant is what keeps the registered
@@ -41,6 +50,8 @@ type AuthValue = {
   logout: () => Promise<void>;
   /** Fresh token for an API call; renews on its own when close to expiry. */
   getAccessToken: (opts?: { forceRefresh?: boolean }) => Promise<string | null>;
+  /** Finishes a login whose redirect arrived as a deep link. */
+  completeAuthCode: (code: string) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -137,6 +148,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [renew]);
 
+  /**
+   * The one place a code becomes a session, whichever route it took to get
+   * here — promptAsync resolving, or the redirect landing as a deep link.
+   */
+  const completeAuthCode = useCallback(
+    async (code: string) => {
+      const verifier = await SecureStore.getItemAsync(VERIFIER_KEY);
+      if (!verifier) return false;
+      const next = await exchange({
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: redirectUri,
+        code_verifier: verifier,
+      });
+      // Single use: a verifier left behind would be tried against a future
+      // code it does not belong to.
+      await SecureStore.deleteItemAsync(VERIFIER_KEY);
+      setSession(next);
+      return Boolean(next);
+    },
+    [exchange, redirectUri],
+  );
+
   const login = useCallback(async () => {
     if (!authConfigured) return;
     const request = new AuthSession.AuthRequest({
@@ -148,16 +182,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       usePKCE: true,
       extraParams: AUTH0_AUDIENCE ? { audience: AUTH0_AUDIENCE } : undefined,
     });
+    // Stored before the browser opens, because after it opens this process
+    // may not be the one that comes back.
+    await request.makeAuthUrlAsync(discovery);
+    await SecureStore.setItemAsync(VERIFIER_KEY, request.codeVerifier ?? "");
+
     const result = await request.promptAsync(discovery);
     if (result.type !== "success" || !result.params.code) return;
-    const next = await exchange({
-      grant_type: "authorization_code",
-      code: result.params.code,
-      redirect_uri: redirectUri,
-      code_verifier: request.codeVerifier ?? "",
-    });
-    setSession(next);
-  }, [exchange, redirectUri]);
+    await completeAuthCode(result.params.code);
+  }, [redirectUri, completeAuthCode]);
 
   const logout = useCallback(async () => {
     await SecureStore.deleteItemAsync(REFRESH_KEY);
@@ -192,8 +225,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       login,
       logout,
       getAccessToken,
+      completeAuthCode,
     }),
-    [isLoading, session, login, logout, getAccessToken],
+    [isLoading, session, login, logout, getAccessToken, completeAuthCode],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

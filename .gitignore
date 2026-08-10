@@ -36,3 +36,5 @@ mobile/node_modules/
 mobile/.expo/
 mobile/dist/
 *.apk
+mobile/android/
+mobile/ios/

@@ -36,6 +36,13 @@
         {
           "cameraPermission": "Erick Market uses the camera only to take your profile photo. Nothing is recorded and the camera is off unless that screen is open."
         }
+      ],
+      [
+        "react-native-auth0",
+        {
+          "domain": "dev-wfdctrtgoj8cy2tr.us.auth0.com",
+          "customScheme": "erickmarket"
+        }
       ]
     ],
     "extra": {

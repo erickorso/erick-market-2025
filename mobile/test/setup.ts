@@ -22,6 +22,20 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
 // The auth flow reaches for the app manifest to build its redirect URI, which
 // Node has no equivalent of. Stubbed because the subject here is whether the
 // tree mounts, not whether Auth0 answers.
+// The Auth0 SDK reaches for its native module the moment it is imported.
+// Node has no native binary, so the provider is stubbed at the boundary the
+// app actually uses — the hook — leaving the tree it wraps under test.
+jest.mock("react-native-auth0", () => ({
+  Auth0Provider: ({ children }: { children: unknown }) => children,
+  useAuth0: () => ({
+    authorize: jest.fn(async () => undefined),
+    clearSession: jest.fn(async () => undefined),
+    getCredentials: jest.fn(async () => undefined),
+    user: null,
+    isLoading: false,
+  }),
+}));
+
 jest.mock("expo-auth-session", () => ({
   makeRedirectUri: () => "erickmarket://redirect",
   ResponseType: { Code: "code" },

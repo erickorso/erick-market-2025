@@ -670,7 +670,16 @@ every change with no secrets. Given an `EXPO_TOKEN`, running it with
 installable directly, no store account involved. iOS cannot be side-loaded that
 way; that route is TestFlight.
 
-Signing in uses a **second Auth0 application** — same tenant, same accounts,
+Signing in goes through **[react-native-auth0](mobile/lib/auth.tsx)**, not a
+hand-rolled PKCE flow. The hand-rolled one worked until the browser had to
+hand a custom scheme back to the app, and that failed three separate ways: an
+unmatched route, a consent screen whose buttons went nowhere, and a blank tab —
+a Custom Tab handed a 302 to `erickmarket://` has nothing to render, and
+Android silently remembers a declined prompt. The SDK registers a
+RedirectActivity in the manifest so the callback returns natively instead. The
+contract above it is unchanged, so the shared trading code needed no edits.
+
+It uses a **second Auth0 application** — same tenant, same accounts,
 same API audience, so a phone and a browser see the same portfolio. It is a
 separate registration rather than a shared client id because the two have
 different refresh-token policies and sharing one would mean revoking both at

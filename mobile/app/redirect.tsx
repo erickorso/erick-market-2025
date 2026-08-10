@@ -6,42 +6,55 @@ import { useTheme } from "../lib/theme";
 import { usePrefs } from "../lib/prefs";
 
 /**
- * Where Auth0 lands when the redirect does not come back through
- * `promptAsync`.
+ * Where Auth0 lands, coming back from either direction.
  *
  * The callback is `erickmarket://redirect`, and expo-router resolves any deep
- * link against the routes on disk — so without a file at this path the code
- * arrives and the user gets "Unmatched Route" with a perfectly good
- * authorization code sitting in the URL bar.
+ * link against the routes on disk — so without a file here a successful login
+ * ends in "Unmatched Route" with a perfectly good authorization code sitting
+ * in the URL bar.
  *
- * It is not a fallback for a broken flow so much as the second of two paths
- * the OS is free to choose between: a Custom Tab may resume the activity, or
- * it may relaunch it, and only the first one resolves the original promise.
+ * Three different things arrive at this path, and telling them apart is the
+ * whole job:
+ *
+ *  - an authorization code, when the browser handed the login back this way
+ *    instead of through `promptAsync`;
+ *  - `event=logout`, because Auth0 returns here after clearing its session,
+ *    and a sign-out is not a sign-in that lost its code;
+ *  - an `error`, which is the only one of the three that actually failed.
  */
 export default function AuthRedirect() {
   const {
     code,
     error,
     error_description: description,
+    event,
   } = useLocalSearchParams<{
     code?: string;
     error?: string;
     error_description?: string;
+    event?: string;
   }>();
   const { completeAuthCode } = useAuth();
   const theme = useTheme();
   const { t } = usePrefs();
-  // Derived, not stored: whether the URL is usable is a fact about the
-  // params, known at render time. Only the exchange needs state.
-  const badRedirect = error
-    ? (description ?? error)
-    : !code
-      ? "The sign-in redirect carried no authorization code."
-      : null;
+
+  const signedOut = event === "logout";
+  // Derived, not stored: whether the URL is usable is a fact about the params,
+  // known at render time. Only the exchange needs state.
+  const badRedirect =
+    signedOut || code
+      ? null
+      : error
+        ? (description ?? error)
+        : "The sign-in redirect carried no authorization code.";
   const [exchangeFailure, setExchangeFailure] = useState<string | null>(null);
   const failure = badRedirect ?? exchangeFailure;
 
   useEffect(() => {
+    if (signedOut) {
+      router.replace("/");
+      return;
+    }
     if (badRedirect || !code) return;
     let cancelled = false;
     void completeAuthCode(String(code)).then((ok) => {
@@ -54,7 +67,7 @@ export default function AuthRedirect() {
     return () => {
       cancelled = true;
     };
-  }, [code, badRedirect, completeAuthCode]);
+  }, [code, badRedirect, signedOut, completeAuthCode]);
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.bg }]}>
@@ -77,7 +90,7 @@ export default function AuthRedirect() {
         <>
           <ActivityIndicator color={theme.accent} size="large" />
           <Text style={[styles.detail, { color: theme.textMuted }]}>
-            {t("finishingSignIn")}
+            {signedOut ? t("signingOut") : t("finishingSignIn")}
           </Text>
         </>
       )}

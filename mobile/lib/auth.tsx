@@ -36,6 +36,14 @@ const VERIFIER_KEY = "erick-market.pkce-verifier";
  * URL and the requested one from drifting apart.
  */
 const REDIRECT_PATH = "redirect";
+/**
+ * Logout comes back to the same path — Auth0 ignores query strings when it
+ * validates a logout URL, so this needs no second entry in the dashboard —
+ * but it has to arrive distinguishable. Without the marker the callback screen
+ * finds no authorization code and reports a sign-in that never failed because
+ * it never happened.
+ */
+const LOGOUT_RETURN_PARAM = "event=logout";
 /** Renew a little early rather than after the API has already refused. */
 const RENEW_MARGIN_MS = 60_000;
 
@@ -155,7 +163,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const completeAuthCode = useCallback(
     async (code: string) => {
       const verifier = await SecureStore.getItemAsync(VERIFIER_KEY);
-      if (!verifier) return false;
+      if (!verifier) {
+        // The other path got here first and spent it. That is not a failure —
+        // it is one login arriving twice, because promptAsync resolving and
+        // the deep link landing are both legitimate ways back. Asking the
+        // stored refresh token settles which of the two happened.
+        return Boolean(await renew());
+      }
       const next = await exchange({
         grant_type: "authorization_code",
         code,
@@ -168,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setSession(next);
       return Boolean(next);
     },
-    [exchange, redirectUri],
+    [exchange, redirectUri, renew],
   );
 
   const login = useCallback(async () => {
@@ -199,7 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // Clears the Auth0 session cookie too, so the next login actually asks
       // rather than silently signing the same account back in.
       await WebBrowser.openAuthSessionAsync(
-        `https://${AUTH0_DOMAIN}/v2/logout?client_id=${AUTH0_CLIENT_ID}&returnTo=${encodeURIComponent(redirectUri)}`,
+        `https://${AUTH0_DOMAIN}/v2/logout?client_id=${AUTH0_CLIENT_ID}&returnTo=${encodeURIComponent(`${redirectUri}?${LOGOUT_RETURN_PARAM}`)}`,
         redirectUri,
       );
     }

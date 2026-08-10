@@ -686,7 +686,16 @@ different refresh-token policies and sharing one would mean revoking both at
 once. It needs authorising against the API under **Application Access →
 User-delegated Access**, exactly like the SPA did.
 
-The callback is `erickmarket://redirect`, and the path is not decoration:
+The callback is the SDK's own —
+`app.erickmarket.mobile.auth0://{domain}/android/app.erickmarket.mobile/callback` —
+and the `.auth0` suffix is not cosmetic. The config plugin builds the Android
+intent filter from `${applicationId}.auth0`, and the SDK builds its
+`redirect_uri` the same way, so leaving both at the default is what keeps them
+agreeing. Passing a `customScheme` changes only the manifest, which leaves the
+app listening on one scheme while the SDK asks for another.
+
+Historically the callback was `erickmarket://redirect`, and the path was not
+decoration there either:
 Auth0 rejects a custom scheme with an empty authority, so `erickmarket://`
 fails its format check. [`REDIRECT_PATH`](mobile/lib/auth.tsx) is what keeps
 the registered URL and the requested one from drifting.

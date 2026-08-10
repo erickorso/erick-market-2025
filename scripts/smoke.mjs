@@ -74,7 +74,7 @@ await check("league board is public", "/api/league", (r) => {
 });
 
 // The one that matters most: the guard has to hold from outside.
-for (const path of ["/api/me", "/api/portfolio"]) {
+for (const path of ["/api/me", "/api/portfolio", "/api/avatar"]) {
   await check(`${path} refuses an anonymous caller`, path, (r) =>
     r.status === 401 ? null : `expected 401, got ${r.status}`,
   );

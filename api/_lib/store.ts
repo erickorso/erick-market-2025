@@ -10,6 +10,7 @@ export type DbUser = {
   auth0_sub: string;
   email: string | null;
   display_name: string;
+  avatar_url: string | null;
 };
 
 export type PositionRow = {
@@ -42,7 +43,18 @@ export async function upsertUser(auth: AuthUser): Promise<DbUser> {
     ON CONFLICT (auth0_sub) DO UPDATE SET
       email = COALESCE(EXCLUDED.email, users.email),
       display_name = COALESCE(${named}, users.display_name)
-    RETURNING id, auth0_sub, email, display_name
+    RETURNING id, auth0_sub, email, display_name, avatar_url
+  `;
+  return rows[0] as DbUser;
+}
+
+/** Points a user at a freshly uploaded avatar. The bytes live in Blob. */
+export async function setAvatarUrl(userId: string, url: string) {
+  const sql = getSql();
+  const rows = await sql`
+    UPDATE users SET avatar_url = ${url}
+    WHERE id = ${userId}
+    RETURNING id, auth0_sub, email, display_name, avatar_url
   `;
   return rows[0] as DbUser;
 }
@@ -58,7 +70,7 @@ export async function updateDisplayName(
   const rows = await sql`
     UPDATE users SET display_name = ${name}
     WHERE id = ${userId}
-    RETURNING id, auth0_sub, email, display_name
+    RETURNING id, auth0_sub, email, display_name, avatar_url
   `;
   return rows[0] as DbUser;
 }

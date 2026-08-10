@@ -8,8 +8,13 @@ CREATE TABLE IF NOT EXISTS users (
   auth0_sub TEXT NOT NULL UNIQUE,
   email TEXT,
   display_name TEXT NOT NULL,
+  -- Blob URL, not the bytes. Image data in a row is how a database grows
+  -- without anyone noticing, and this one is shared with another app.
+  avatar_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 
 CREATE TABLE IF NOT EXISTS portfolios (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

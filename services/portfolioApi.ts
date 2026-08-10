@@ -18,12 +18,15 @@ export type ApiUser = {
   auth0_sub: string;
   email: string | null;
   display_name: string;
+  /** Blob URL of the profile photo, or null before one is taken. */
+  avatar_url?: string | null;
 };
 
 const ME_URL = "/api/me";
 const PORTFOLIO_URL = "/api/portfolio";
 const TRADE_URL = "/api/trade";
 const LEAGUE_URL = "/api/league";
+const AVATAR_URL = "/api/avatar";
 
 async function authFetch(
   url: string,
@@ -192,6 +195,28 @@ export async function postLeagueScore(
     published: boolean;
     unpriced?: string[];
   };
+}
+
+/**
+ * Uploads a profile photo and returns the updated user row.
+ *
+ * Raw bytes rather than multipart: there is exactly one field, and the
+ * content type in the header carries everything the server needs to validate.
+ */
+export async function postAvatar(
+  token: string,
+  body: Blob | ArrayBuffer | Uint8Array,
+  contentType: string,
+): Promise<{ user: ApiUser }> {
+  const res = await authFetch(AVATAR_URL, token, {
+    method: "POST",
+    headers: { "Content-Type": contentType },
+    body: body as BodyInit,
+  });
+  if (!res.ok) {
+    throw await toApiError(res, "avatar");
+  }
+  return (await res.json()) as { user: ApiUser };
 }
 
 export const emptyPortfolioState = {

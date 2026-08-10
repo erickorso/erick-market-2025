@@ -13,7 +13,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.erickmarket.mobile"
+      "bundleIdentifier": "app.erickmarket.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Erick Market uses the camera only to take your profile photo."
+      }
     },
     "android": {
       "package": "app.erickmarket.mobile",
@@ -27,7 +30,13 @@
       "expo-secure-store",
       "expo-web-browser",
       "expo-asset",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Erick Market uses the camera only to take your profile photo. Nothing is recorded and the camera is off unless that screen is open."
+        }
+      ]
     ],
     "extra": {
       "apiBase": "https://erick-market-2025.vercel.app",

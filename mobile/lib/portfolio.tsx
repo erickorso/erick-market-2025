@@ -25,6 +25,7 @@ type PortfolioValue = {
   cash: number;
   positions: PortfolioItem[];
   displayName: string | null;
+  avatarUrl: string | null;
   loading: boolean;
   refresh: () => Promise<void>;
   trade: (input: {
@@ -50,12 +51,14 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
   const { isAuthenticated, getAccessToken } = useAuth();
   const [portfolio, setPortfolio] = useState<ApiPortfolio | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!isAuthenticated) {
       setPortfolio(null);
       setDisplayName(null);
+      setAvatarUrl(null);
       return;
     }
     setLoading(true);
@@ -65,6 +68,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
       const me = await fetchMe(token);
       setPortfolio(me.portfolio);
       setDisplayName(me.user.display_name);
+      setAvatarUrl(me.user.avatar_url ?? null);
     } catch {
       // A failed refresh leaves the last good numbers on screen rather than
       // blanking a portfolio the user was reading.
@@ -153,11 +157,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
       cash: mapped.fund,
       positions: mapped.portfolio,
       displayName,
+      avatarUrl,
       loading,
       refresh,
       trade,
     }),
-    [mapped, displayName, loading, refresh, trade],
+    [mapped, displayName, avatarUrl, loading, refresh, trade],
   );
 
   return (

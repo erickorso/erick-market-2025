@@ -207,6 +207,15 @@ const en = {
   themeLight: "Light",
   themeDark: "Dark",
   noDetailFor: "No detail available for {symbol}.",
+  cameraNeeded: "Camera access needed",
+  cameraWhy:
+    "Only to take your profile photo. The camera is off unless this screen is open, and nothing is recorded.",
+  allowCamera: "Allow camera",
+  takePhoto: "Take photo",
+  retake: "Retake",
+  usePhoto: "Use this photo",
+  changePhoto: "Change photo",
+  addPhoto: "Add a photo",
   tradeRetrying: "No price came back. Retrying — nothing has been bought yet.",
   rankStale:
     "Your rank is not current: no live price for {symbols}. It updates as soon as the market answers.",
@@ -420,6 +429,15 @@ const es: Dict = {
   themeLight: "Claro",
   themeDark: "Oscuro",
   noDetailFor: "No hay detalle para {symbol}.",
+  cameraNeeded: "Falta permiso de cámara",
+  cameraWhy:
+    "Solo para tomar tu foto de perfil. La cámara está apagada salvo en esta pantalla, y no se graba nada.",
+  allowCamera: "Permitir cámara",
+  takePhoto: "Tomar foto",
+  retake: "Repetir",
+  usePhoto: "Usar esta foto",
+  changePhoto: "Cambiar foto",
+  addPhoto: "Agregar foto",
   tradeRetrying:
     "No llegó el precio. Reintentando — todavía no se compró nada.",
   rankStale:

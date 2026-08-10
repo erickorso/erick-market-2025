@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 import {
   Alert,
   FlatList,
+  Image,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -11,6 +12,7 @@ import {
 import { money, percent, useTheme } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
 import { usePrefs } from "../../lib/prefs";
+import { router } from "expo-router";
 import { newIdempotencyKey, usePortfolio } from "../../lib/portfolio";
 import type { PortfolioItem } from "../../../types";
 
@@ -18,7 +20,7 @@ export default function PortfolioScreen() {
   const theme = useTheme();
   const { t } = usePrefs();
   const { isAuthenticated, isLoading, login, logout, configured } = useAuth();
-  const { cash, positions, displayName, refresh } = usePortfolio();
+  const { cash, positions, displayName, avatarUrl, refresh } = usePortfolio();
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -80,9 +82,39 @@ export default function PortfolioScreen() {
             { backgroundColor: theme.surface, borderColor: theme.border },
           ]}
         >
-          <Text style={{ color: theme.textMuted }}>
-            {displayName ?? t("yourPortfolio")}
-          </Text>
+          <View style={styles.identity}>
+            {/* The only entry point to the camera: tapping the avatar. A
+                separate button would compete with Sign out for attention on a
+                screen whose job is the numbers. */}
+            <Pressable
+              onPress={() => router.push("/avatar")}
+              accessibilityRole="button"
+              accessibilityLabel={avatarUrl ? t("changePhoto") : t("addPhoto")}
+            >
+              {avatarUrl ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={[styles.avatar, { borderColor: theme.accent }]}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.avatar,
+                    styles.avatarEmpty,
+                    {
+                      borderColor: theme.border,
+                      backgroundColor: theme.surfaceAlt,
+                    },
+                  ]}
+                >
+                  <Text style={{ fontSize: 20 }}>📷</Text>
+                </View>
+              )}
+            </Pressable>
+            <Text style={{ color: theme.textMuted, flex: 1 }}>
+              {displayName ?? t("yourPortfolio")}
+            </Text>
+          </View>
           <Text style={[styles.equity, { color: theme.text }]}>
             {money(equity)}
           </Text>
@@ -198,6 +230,9 @@ const styles = StyleSheet.create({
   },
   list: { padding: 16, gap: 10 },
   summary: { borderWidth: 1, borderRadius: 14, padding: 16, marginBottom: 6 },
+  identity: { flexDirection: "row", alignItems: "center", gap: 12 },
+  avatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 2 },
+  avatarEmpty: { alignItems: "center", justifyContent: "center" },
   equity: { fontSize: 30, fontWeight: "700", marginVertical: 2 },
   signOut: { marginTop: 12, alignSelf: "flex-start" },
   row: {

@@ -306,6 +306,14 @@ trade_in_progress`. A rejected trade frees its key. Expired claims are purged
   Failing closed matters here: the alternative reopens the hole precisely when
   the feed is down. It also means trading is unavailable in mock mode, which is
   the honest outcome — there is no market to trade against.
+- Profile photos are taken on the phone only, resized to 512px there, and
+  uploaded as raw bytes to `POST /api/avatar`. The endpoint allow-lists JPEG,
+  PNG and WebP by content type — an allow-list because the dangerous case is
+  the type nobody thought of, `image/svg+xml` being a script served from our
+  own domain — caps the body at 2 MB **while reading it**, and keys the object
+  by user id so one account cannot overwrite another's. Postgres stores the
+  URL, never the bytes: this database is shared, and growing it with images
+  would be somebody else's problem as much as ours.
 - The league **publishes nothing** when a holding cannot be priced. Marking it
   at cost is not conservative, it is false — the player shows a flat 0% and
   ranks on a number that was never true. A stale rank beats a wrong one, and

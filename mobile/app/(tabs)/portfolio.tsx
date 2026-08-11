@@ -19,7 +19,8 @@ import type { PortfolioItem } from "../../../types";
 export default function PortfolioScreen() {
   const theme = useTheme();
   const { t } = usePrefs();
-  const { isAuthenticated, isLoading, login, logout, configured } = useAuth();
+  const { isAuthenticated, isLoading, login, logout, configured, loginError } =
+    useAuth();
   const { cash, positions, displayName, avatarUrl, refresh } = usePortfolio();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -50,6 +51,17 @@ export default function PortfolioScreen() {
               {t("login")}
             </Text>
           </Pressable>
+        )}
+        {loginError && (
+          // Verbatim, not translated: this is the SDK's own text and the only
+          // thing that says why a sign-in died. Rewording it loses the clue.
+          <Text
+            role="alert"
+            selectable
+            style={[styles.loginError, { color: theme.down }]}
+          >
+            {loginError}
+          </Text>
         )}
       </View>
     );
@@ -228,6 +240,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 13,
   },
+  loginError: { marginTop: 14, textAlign: "center", fontSize: 13 },
   list: { padding: 16, gap: 10 },
   summary: { borderWidth: 1, borderRadius: 14, padding: 16, marginBottom: 6 },
   identity: { flexDirection: "row", alignItems: "center", gap: 12 },

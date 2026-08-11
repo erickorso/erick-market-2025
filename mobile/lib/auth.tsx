@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useContext, useMemo } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import { Auth0Provider, useAuth0 } from "react-native-auth0";
 import {
   AUTH0_AUDIENCE,
@@ -10,11 +16,49 @@ import {
 /** Ask for a token that will still be valid by the time the request lands. */
 const RENEW_MARGIN_SECONDS = 60;
 
+/**
+ * Markers the SDK uses when the person simply backed out of the browser.
+ *
+ * Everything the browser flow can throw arrives as one opaque error, so the
+ * only way to tell "changed their mind" from "the token exchange failed" is to
+ * match on these. Anything not on this list is a real failure and gets said
+ * out loud — matching narrowly is the point, because the earlier version of
+ * this file caught everything and stayed quiet, which is how a broken login
+ * looked exactly like a cancelled one for days.
+ */
+const CANCELLED = [
+  "USER_CANCELLED",
+  "a0.session.user_cancelled",
+  "authentication_canceled",
+  "a0.authentication_canceled",
+];
+
+const wasCancelled = (err: unknown): boolean => {
+  const e = err as { name?: string; code?: string; message?: string } | null;
+  if (!e) return false;
+  const fields = [e.name, e.code, e.message].filter(Boolean) as string[];
+  return fields.some((f) =>
+    CANCELLED.some((c) => f.toLowerCase().includes(c.toLowerCase())),
+  );
+};
+
+/** Keep the SDK's own wording: it is the only clue about what actually broke. */
+const describe = (err: unknown): string => {
+  const e = err as { name?: string; code?: string; message?: string } | null;
+  if (!e) return "Unknown error";
+  const label = e.name ?? e.code;
+  const detail = e.message ?? "";
+  if (label && detail && !detail.includes(label)) return `${label}: ${detail}`;
+  return detail || label || "Unknown error";
+};
+
 type AuthValue = {
   isLoading: boolean;
   isAuthenticated: boolean;
   /** False when the dashboard side is not set up, so the UI can say so. */
   configured: boolean;
+  /** The SDK's own message when the last sign-in failed for a real reason. */
+  loginError: string | null;
   login: () => Promise<void>;
   logout: () => Promise<void>;
   /** Fresh token for an API call; renews on its own when close to expiry. */
@@ -47,16 +91,20 @@ const Inner: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { authorize, clearSession, getCredentials, user, isLoading } =
     useAuth0();
 
+  const [loginError, setLoginError] = useState<string | null>(null);
+
   const login = useCallback(async () => {
     if (!authConfigured) return;
+    setLoginError(null);
     try {
       await authorize({
         scope: "openid profile email offline_access",
         audience: AUTH0_AUDIENCE || undefined,
       });
-    } catch {
-      // Backing out of the browser throws here. Someone who changed their mind
-      // did not hit an error, and saying so would be a lie.
+    } catch (err) {
+      // Someone who changed their mind did not hit an error, and saying so
+      // would be a lie. Anything else did, and staying quiet about it is worse.
+      if (!wasCancelled(err)) setLoginError(describe(err));
     }
   }, [authorize]);
 
@@ -92,11 +140,12 @@ const Inner: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       isLoading,
       isAuthenticated: Boolean(user),
       configured: authConfigured,
+      loginError,
       login,
       logout,
       getAccessToken,
     }),
-    [isLoading, user, login, logout, getAccessToken],
+    [isLoading, user, loginError, login, logout, getAccessToken],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

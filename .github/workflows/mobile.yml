@@ -64,9 +64,29 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
       - run: npm ci
         working-directory: mobile
+      # `--output` is a local-build flag: a remote build leaves the artifact on
+      # Expo's servers and hands back a URL, so the download is a second step.
+      # --json keeps stdout pure, with the progress log going to stderr.
       - name: Build the APK
         working-directory: mobile
-        run: eas build --platform android --profile preview --non-interactive --wait --output ../erick-market.apk
+        run: eas build --platform android --profile preview --non-interactive --wait --json > build.json
+      - name: Download it
+        working-directory: mobile
+        run: |
+          url=$(node -e '
+            const b = require("./build.json");
+            const build = Array.isArray(b) ? b[0] : b;
+            const a = build?.artifacts ?? {};
+            const url = a.applicationArchiveUrl ?? a.buildUrl;
+            if (!url) {
+              console.error(JSON.stringify(build, null, 2));
+              throw new Error("the build returned no artifact URL");
+            }
+            process.stdout.write(url);
+          ')
+          echo "artifact: $url"
+          curl -fSL -o ../erick-market.apk "$url"
+          ls -l ../erick-market.apk
       - name: Publish it as a release
         uses: softprops/action-gh-release@v2
         with:

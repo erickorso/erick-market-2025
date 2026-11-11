@@ -1,6 +1,7 @@
 import React from "react";
 import CategoryFilter from "../components/organisms/CategoryFilter";
 import StockGrid from "../components/organisms/StockGrid";
+import StockGridSkeleton from "../components/organisms/StockGridSkeleton";
 import MarketBackground from "../components/organisms/MarketBackground";
 import Badge from "../components/atoms/Badge";
 import { useStockContext } from "../context/StockContext";
@@ -26,24 +27,12 @@ const HomePage: React.FC = () => {
   const catLabel =
     category === "all" ? "" : t(`cat_${category.replace(/-/g, "_")}` as MsgKey);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <div
-          className="h-16 w-16 rounded-full motion-safe:animate-spin border-t-2 border-b-2 border-teal-500"
-          role="status"
-          aria-label={t("loading")}
-        />
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <>
         <MarketBackground />
         <div className="relative z-10 p-8 text-center">
-          <p className="mb-4 text-xl text-red-400">
+          <p className="mb-4 text-xl text-red-600 dark:text-red-400">
             {t("errorLoading")} {error}
           </p>
           <button
@@ -68,8 +57,14 @@ const HomePage: React.FC = () => {
               {t("availableStocks")}
             </h1>
             <p className="mt-1 text-sm text-slate-600 dark:text-gray-400">
-              {t("showing")} {allStocks.length}
-              {total > 0 ? ` ${t("of")} ${total}` : ""}
+              {isLoading ? (
+                t("loading")
+              ) : (
+                <>
+                  {t("showing")} {allStocks.length}
+                  {total > 0 ? ` ${t("of")} ${total}` : ""}
+                </>
+              )}
               {catLabel ? ` · ${catLabel}` : ""}
               {searchTerm ? ` · “${searchTerm}”` : ""}
             </p>
@@ -88,12 +83,16 @@ const HomePage: React.FC = () => {
 
         <CategoryFilter />
 
-        <StockGrid
-          stocks={allStocks}
-          hasMore={hasMore}
-          isLoadingMore={isLoadingMore}
-          onLoadMore={() => void loadMore()}
-        />
+        {isLoading ? (
+          <StockGridSkeleton />
+        ) : (
+          <StockGrid
+            stocks={allStocks}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={() => void loadMore()}
+          />
+        )}
       </div>
     </>
   );

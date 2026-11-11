@@ -3,12 +3,14 @@ import { EnrichedStock } from "../../types";
 import { useStockContext } from "../../context/StockContext";
 import { useI18n } from "../../context/I18nContext";
 import { symbolFromStock } from "../../services/symbols";
+import { useNearViewport } from "../../hooks/useNearViewport";
 import StockChart from "../atoms/Chart";
 import Badge from "../atoms/Badge";
 import Price from "../atoms/Price";
 import ChangePercent from "../atoms/ChangePercent";
 import TagList from "../molecules/TagList";
 import TradePanel from "../molecules/TradePanel";
+import WatchlistStar from "../molecules/WatchlistStar";
 import ErrorBoundary from "./ErrorBoundary";
 
 interface StockCardProps {
@@ -20,6 +22,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
   const { t } = useI18n();
 
   const symbol = symbolFromStock(stock);
+  const [chartRef, chartNear] = useNearViewport<HTMLButtonElement>();
 
   const openDetailModal = () => {
     dispatch({ type: "OPEN_DETAIL", payload: symbol });
@@ -31,12 +34,13 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
       className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 shadow-lg transition-shadow duration-300 hover:shadow-teal-500/20 dark:border-transparent dark:bg-gray-800 dark:shadow-2xl dark:hover:shadow-teal-500/30"
     >
       <div>
-        <button
-          type="button"
-          onClick={openDetailModal}
-          className="mb-2 w-full text-left"
-          aria-label={`${t("openDetail")} ${stock.company}`}
-        >
+        <div className="mb-2 flex items-start gap-2">
+          <button
+            type="button"
+            onClick={openDetailModal}
+            className="min-w-0 flex-1 text-left"
+            aria-label={`${t("openDetail")} ${stock.company}`}
+          >
           <h3
             data-testid={stock.company}
             className="truncate text-xl font-semibold text-teal-700 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300"
@@ -55,7 +59,9 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
               className="block text-sm font-medium"
             />
           )}
-        </button>
+          </button>
+          <WatchlistStar symbol={symbol} />
+        </div>
 
         {stock.tags && (
           <TagList tags={stock.tags} max={3} size="xs" className="mb-2 gap-1" />
@@ -72,6 +78,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
           </Badge>
         )}
         <button
+          ref={chartRef}
           type="button"
           onClick={openDetailModal}
           className="mb-4 h-48 w-full text-left"
@@ -80,16 +87,23 @@ const StockCard: React.FC<StockCardProps> = ({ stock }) => {
           <ErrorBoundary
             source="chart"
             fallback={
-              <div className="flex h-full items-center justify-center rounded-lg bg-gray-800/80 text-xs text-slate-600 dark:text-gray-400">
+              <div className="flex h-full items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-600 dark:bg-gray-800/80 dark:text-gray-400">
                 {t("chartUnavailable")}
               </div>
             }
           >
-            <StockChart
-              data={stock.chartData}
-              lineColor="#2dd4bf"
-              height={180}
-            />
+            {chartNear ? (
+              <StockChart
+                data={stock.chartData}
+                lineColor="#2dd4bf"
+                height={180}
+              />
+            ) : (
+              <div
+                aria-hidden
+                className="h-[180px] w-full rounded-lg bg-slate-100 p-2 shadow dark:bg-gray-800/80"
+              />
+            )}
           </ErrorBoundary>
         </button>
         <button

@@ -6,6 +6,7 @@ import { useI18n } from "../../context/I18nContext";
 import ThemeToggle from "../molecules/ThemeToggle";
 import ProtectedLink from "../molecules/ProtectedLink";
 import { UI } from "../../constants";
+import { useWatchlist } from "../../hooks/useWatchlist";
 
 const Navbar: React.FC = () => {
   const { state, dispatch } = useStockContext();
@@ -14,6 +15,7 @@ const Navbar: React.FC = () => {
   const { t, toggleLang, lang } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
+  const watchlist = useWatchlist();
 
   return (
     <nav className="border-b border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:shadow-lg">
@@ -35,6 +37,19 @@ const Navbar: React.FC = () => {
               className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition duration-300 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white"
             >
               {t("navHome")}
+            </Link>
+            <Link
+              data-testid="Watchlist"
+              to="/watchlist"
+              className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition duration-300 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white"
+            >
+              {t("navWatchlist")}
+              <span
+                data-testid="watchlist-count"
+                className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold tabular-nums text-slate-700 dark:bg-gray-700 dark:text-gray-200"
+              >
+                {watchlist.length}
+              </span>
             </Link>
             {isAuthenticated && (
               <>

@@ -4,6 +4,12 @@ export const LANG_KEY = "erick-market.lang";
 
 const en = {
   navHome: "Home",
+  navWatchlist: "Watchlist",
+  watchStar: "Watch",
+  watchlistEmpty:
+    "Your watchlist is empty. Star a stock in the market to add it here.",
+  watchlistRemove: "Remove",
+  watchlistRemoveAria: "Remove {symbol} from watchlist",
   navStocks: "My Stocks",
   navFund: "My Fund",
   navPlay: "Play",
@@ -226,6 +232,12 @@ type Dict = { [K in keyof typeof en]: string };
 
 const es: Dict = {
   navHome: "Inicio",
+  navWatchlist: "Seguimiento",
+  watchStar: "Seguir",
+  watchlistEmpty:
+    "Tu lista está vacía. Marca una acción en el mercado para añadirla.",
+  watchlistRemove: "Quitar",
+  watchlistRemoveAria: "Quitar {symbol} de la lista de seguimiento",
   navStocks: "Mis acciones",
   navFund: "Mi fondo",
   navPlay: "Jugar",

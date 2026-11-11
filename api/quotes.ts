@@ -521,6 +521,24 @@ function mapStock(row: QuoteRow) {
   };
 }
 
+const MAX_SYMBOLS = 50;
+const TICKER = /^[A-Z][A-Z0-9.-]{0,9}$/;
+
+function parseSymbols(raw: unknown): string[] | "invalid" | null {
+  if (raw === undefined) return null;
+  if (typeof raw !== "string") return "invalid";
+  const list = [
+    ...new Set(
+      raw
+        .split(",")
+        .map((s) => s.trim().toUpperCase())
+        .filter(Boolean),
+    ),
+  ];
+  if (!list.length || list.length > MAX_SYMBOLS) return "invalid";
+  return list.every((s) => TICKER.test(s)) ? list : "invalid";
+}
+
 function parsePaging(req: VercelRequest) {
   const q = String(req.query.q ?? "")
     .trim()
@@ -577,6 +595,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         categories: CATEGORIES,
       });
       logRequest(req, 503, startedAt);
+      return;
+    }
+
+    const symbols = parseSymbols(req.query.symbols);
+    if (symbols === "invalid") {
+      res.status(400).json({
+        error: `symbols must be 1-${MAX_SYMBOLS} comma-separated tickers`,
+      });
+      logRequest(req, 400, startedAt);
+      return;
+    }
+    if (symbols) {
+      const known = new Map(
+        [...(universeCache?.items ?? []), ...WATCHLIST].map((w) => [
+          w.symbol,
+          w,
+        ]),
+      );
+      const items = symbols.map(
+        (symbol) =>
+          known.get(symbol) ?? {
+            symbol,
+            company: symbol,
+            tags: [] as StyleTag[],
+          },
+      );
+      const quotes = await fetchMany(items, apiKey);
+      res.status(200).json({
+        stocks: quotes.map(mapStock),
+        source: "live",
+        total: quotes.length,
+      });
+      logRequest(req, 200, startedAt);
       return;
     }
 

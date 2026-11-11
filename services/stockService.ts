@@ -260,6 +260,36 @@ export async function fetchStocks(
   return paginateMock(params);
 }
 
+export type FetchQuotesResult = {
+  stocks: EnrichedStock[];
+  source: DataSource;
+};
+
+/** Quotes for these symbols. The catalog page cannot serve a starred name that sits on another page. */
+export async function fetchQuotes(
+  symbols: string[],
+): Promise<FetchQuotesResult> {
+  if (!symbols.length) return { stocks: [], source: "live" };
+  const sp = new URLSearchParams({ symbols: symbols.join(",") });
+  try {
+    const data = (await fetchJson(
+      apiUrl(`${QUOTES_API_URL}?${sp.toString()}`),
+    )) as { stocks?: ApiStockRow[]; source?: string };
+    if (data.source === "live" && Array.isArray(data.stocks)) {
+      return { stocks: data.stocks.map(normalizeRow), source: "live" };
+    }
+  } catch {
+    /* mock */
+  }
+  const wanted = new Set(symbols.map((s) => s.toUpperCase()));
+  return {
+    stocks: mockRows()
+      .filter((row) => wanted.has(String(row.symbol)))
+      .map(normalizeRow),
+    source: "mock",
+  };
+}
+
 export function tickStockPrices(stocks: EnrichedStock[]): EnrichedStock[] {
   return stocks.map((stock) => {
     const drift = 1 + (Math.random() - 0.5) * 0.03;

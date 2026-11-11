@@ -12,6 +12,7 @@ import StatCard from "../molecules/StatCard";
 import TagList from "../molecules/TagList";
 import DetailSkeleton from "../molecules/DetailSkeleton";
 import TradePanel from "../molecules/TradePanel";
+import WatchlistStar from "../molecules/WatchlistStar";
 
 const StockDetailModal: React.FC = () => {
   const { state, dispatch } = useStockContext();
@@ -81,14 +82,17 @@ const StockDetailModal: React.FC = () => {
               {detail?.company ?? t("stockDetail")}
             </h2>
           </div>
-          <button
-            type="button"
-            onClick={() => dispatch({ type: "CLOSE_DETAIL" })}
-            className="rounded-md border border-gray-600 px-2.5 py-1 text-sm text-gray-300 hover:border-teal-500 hover:text-teal-300"
-            aria-label={t("closeDetail")}
-          >
-            {t("close")}
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <WatchlistStar symbol={symbol} />
+            <button
+              type="button"
+              onClick={() => dispatch({ type: "CLOSE_DETAIL" })}
+              className="rounded-md border border-gray-600 px-2.5 py-1 text-sm text-gray-300 hover:border-teal-500 hover:text-teal-300"
+              aria-label={t("closeDetail")}
+            >
+              {t("close")}
+            </button>
+          </div>
         </div>
 
         <div className="min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6">

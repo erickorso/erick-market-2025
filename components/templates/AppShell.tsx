@@ -2,6 +2,7 @@ import React from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useI18n } from "../../context/I18nContext";
 import HomePage from "../../pages/HomePage";
+import WatchlistPage from "../../pages/WatchlistPage";
 import MyStocksPage from "../../pages/MyStocksPage";
 import MyFundPage from "../../pages/MyFundPage";
 import LeaguePage from "../../pages/LeaguePage";
@@ -51,7 +52,10 @@ const AppShell: React.FC = () => {
         <div className="relative z-10 flex min-h-0 flex-1 flex-col lg:flex-row">
           <HotSidebar />
 
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+          <div
+            data-scroll-root
+            className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto"
+          >
             <main
               id="main"
               tabIndex={-1}
@@ -60,6 +64,7 @@ const AppShell: React.FC = () => {
               <ErrorBoundary source="route" labels={crashLabels}>
                 <Routes>
                   <Route path="/" element={<HomePage />} />
+                  <Route path="/watchlist" element={<WatchlistPage />} />
                   <Route
                     path="/league"
                     element={protectedRoute(<LeaguePage />)}

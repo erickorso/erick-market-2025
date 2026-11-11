@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/erickorso/erick-market-2025/actions/workflows/ci.yml/badge.svg)](https://github.com/erickorso/erick-market-2025/actions/workflows/ci.yml)
 
-**Paper trading** demo with live US quotes (Finnhub), **Auth0** accounts, and real persistence on **Neon Postgres** (users, trades, portfolio, and monthly league).
+**Paper trading** demo with live US quotes (Finnhub), a **local watchlist** (no account), **Auth0** accounts, and real persistence on **Neon Postgres** (users, trades, portfolio, and monthly league).
 
 By [Erick Vargas](https://github.com/erickorso) · Live: [erick-market-2025.vercel.app](https://erick-market-2025.vercel.app)
 
@@ -14,12 +14,21 @@ By [Erick Vargas](https://github.com/erickorso) · Live: [erick-market-2025.verc
 <tr>
 <td width="50%">
 
-**Stock detail** — live quote, session figures, Yahoo daily closes, and the buy panel.
+**Stock detail** — live quote, session figures, Yahoo daily closes, the buy panel, and the watchlist star.
 
 ![Stock detail modal](docs/screenshots/detail.png)
 
 </td>
 <td width="50%">
+
+**Watchlist** — symbols starred in this browser, with live quotes. No account.
+
+![Personal watchlist](docs/screenshots/watchlist.png)
+
+</td>
+</tr>
+<tr>
+<td colspan="2">
 
 **Monthly league** — mark-to-market ranking that resets every month.
 
@@ -43,8 +52,10 @@ they cannot drift from the UI.
 | ------------------- | ------------------------------------------------------------------------------ |
 | **DB**              | [Neon](https://neon.tech) Postgres                                             |
 | **Auth**            | Auth0 (Vite SPA + JWT on Vercel API)                                           |
-| **Public**          | Home, Hot, detail, quotes                                                      |
+| **Public**          | Home, Hot, detail, quotes, local watchlist (`/watchlist`)                     |
 | **Private (Auth0)** | buy / sell, portfolio (`/my-stocks`, `/my-fund`), Play / league                |
+| **Watchlist**       | Per browser, no account. Key `erick-market.watchlist`. Star on the grid and the detail |
+| **First paint**     | The home heading and filters stay up while quotes load. Catalog charts draw as their card nears the scroll column |
 | **Buy/sell UX**     | Buttons stay **visible but disabled** when logged out + login CTA (not hidden) |
 | **Portfolio nav**   | _My Stocks_ / _My Fund_ links only when authenticated                          |
 | **UI**              | Dark/light mode, i18n EN/ES, scroll only in the center column                  |
@@ -78,14 +89,14 @@ components/
   atoms/       Chart · Badge · Price · ChangePercent · Skeleton
   molecules/   TradePanel · QuantityStepper · StatCard · TagList · ChartPanel
                ComicTooltip · DetailSkeleton · Hot/Rank/StockListItem
-               ProtectedLink
+               ProtectedLink · WatchlistStar
   organisms/   StockCard · StockDetailModal · StockGrid · HotSidebar
                RankSidebar · Navbar · SellStockForm · CategoryFilter
                NoticeBanner · MarketBackground · AuthPromptModal
-               ErrorBoundary
+               ErrorBoundary · StockGridSkeleton
   templates/   AppShell
   routing/     RequireAuth
-pages/         Home · League · MyStocks · MyFund
+pages/         Home · Watchlist · League · MyStocks · MyFund
 data/          watchlist — the catalog, shared by the client and the dev server
 ```
 
@@ -108,6 +119,8 @@ version you ship.
 | [`useInertBackground`](hooks/useInertBackground.ts) | marking the page behind an overlay inert                             |
 | [`useReducedMotion`](hooks/useReducedMotion.ts)     | whether to animate at all                                            |
 | [`useHotStocks`](hooks/useHotStocks.ts)             | hot-gainers socket with poll fallback                                |
+| [`useWatchlist`](hooks/useWatchlist.ts)             | the local star list, shared by the grid, the detail and the page     |
+| [`useNearViewport`](hooks/useNearViewport.ts)       | draws a catalog chart only as its card nears the centre column       |
 
 [`StockContext`](context/StockContext.tsx) is only a composition root; the state
 transitions live in [`stockReducer`](context/stockReducer.ts) as a pure,
@@ -341,12 +354,15 @@ the board about every 60s.
 
 ## Market (public)
 
-| Feature    | Detail                                                                                              |
-| ---------- | --------------------------------------------------------------------------------------------------- |
-| Quotes     | `GET /api/quotes?limit=&offset=&q=&category=` → Finnhub, up to 500 US common stocks with pagination |
-| Hot        | Sidebar top gainers; local WS `/ws/hot` or poll `/api/hot`                                          |
-| Detail     | Modal → `/api/detail?symbol=` (quote + profile + Yahoo/Finnhub candles)                             |
-| Categories | Educational tags + day gainers/losers                                                               |
+| Feature        | Detail                                                                                                      |
+| -------------- | ----------------------------------------------------------------------------------------------------------- |
+| Quotes         | `GET /api/quotes?limit=&offset=&q=&category=` → Finnhub, up to 500 US common stocks with pagination         |
+| Symbol quotes  | `GET /api/quotes?symbols=AAPL,MSFT` — 1 to 50 tickers, live, no paging. The watchlist page uses this        |
+| Watchlist      | Personal list in this browser. Star on the card and in the detail. Public page `/watchlist`. See below     |
+| First paint    | Home keeps the title and category filters while quotes load; the grid is a skeleton. Charts mount near view |
+| Hot            | Sidebar top gainers; local WS `/ws/hot` or poll `/api/hot`                                                  |
+| Detail         | Modal → `/api/detail?symbol=` (quote + profile + Yahoo/Finnhub candles)                                     |
+| Categories     | Educational tags + day gainers/losers                                                                       |
 
 ### Public API hardening
 
@@ -359,14 +375,42 @@ the board about every 60s.
 
 `api/quotes.ts`, `api/hot.ts` and `api/detail.ts` carry an inlined copy of that
 guard: their headers document that relative imports crash Vercel's ESM cold
-start, which is the same reason the watchlist is duplicated there.
+start, which is the same reason the curated catalog (`data/watchlist.ts`) is
+duplicated there. That catalog is not the personal watchlist.
 
 Without `FINNHUB_API_KEY` the UI falls back to mock (simulated ticks).
 The `All` catalog discovers and caches up to 500 US common stocks from Finnhub
 for six hours. Only the visible page is quoted, with a maximum concurrency of
 five requests. If symbol discovery is unavailable, the API safely falls back
-to the curated 40-company watchlist; individual quote failures are shown with
+to the curated 40-company catalog; individual quote failures are shown with
 the mock quote label instead of removing the company from the page.
+
+### Personal watchlist
+
+Per browser, no account, no server row. The star on a grid card and in the
+detail modal writes upper-case tickers, in insertion order, to
+`localStorage` key `erick-market.watchlist`. An empty list deletes the key.
+[`useWatchlist`](hooks/useWatchlist.ts) shares one snapshot across the navbar
+count, the cards and [`/watchlist`](pages/WatchlistPage.tsx); other tabs of
+the same origin pick the change up through the `storage` event.
+
+The page loads live prices with `GET /api/quotes?symbols=`. One to fifty
+tickers, each matching `^[A-Z][A-Z0-9.-]{0,9}$`. A failed request falls back
+to the mock row for that symbol. Removing a star drops it from the list and
+from the navbar count immediately.
+
+On startup, [`clearLegacyStorage`](services/legacyStorage.ts) deletes
+`erick-market.player.v1` and `erick-market.league.v1`, leftovers from the old
+PIN league.
+
+### First paint
+
+While the catalog request is in flight the home title, badge and category
+filter stay mounted. Only the grid swaps for
+[`StockGridSkeleton`](components/organisms/StockGridSkeleton.tsx). A catalog
+chart is not drawn until its card nears the centre scroll column
+(`[data-scroll-root]`, 200px margin) via
+[`useNearViewport`](hooks/useNearViewport.ts). Once near, it stays drawn.
 
 ---
 

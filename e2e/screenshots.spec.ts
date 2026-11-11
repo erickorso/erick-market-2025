@@ -210,6 +210,10 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("erick-market.lang", "en");
     localStorage.setItem("erick-market.theme", "dark");
+    localStorage.setItem(
+      "erick-market.watchlist",
+      JSON.stringify(["AAPL", "NVDA"]),
+    );
   });
   await mockMarket(page);
 });
@@ -250,6 +254,19 @@ test("@screenshots monthly league", async ({ page }) => {
   await page.goto("/#/league");
   await settle(page);
   await page.screenshot({ path: `${OUT}/league.png` });
+});
+
+test("@screenshots watchlist", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/#/watchlist");
+  await expect(
+    page.getByRole("heading", { name: "Watchlist" }),
+  ).toBeVisible();
+  await expect(page.getByTestId("watchlist-symbol").first()).toHaveText(
+    "AAPL",
+  );
+  await settle(page);
+  await page.screenshot({ path: `${OUT}/watchlist.png` });
 });
 
 test("@screenshots mobile market", async ({ page }) => {

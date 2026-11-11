@@ -19,6 +19,7 @@ export default defineConfig({
       "context/**/*.test.{ts,tsx}",
       "hooks/**/*.test.{ts,tsx}",
       "components/**/*.test.tsx",
+      "pages/**/*.test.tsx",
     ],
     coverage: {
       provider: "v8",

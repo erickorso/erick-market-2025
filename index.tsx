@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import ErrorBoundary from "./components/organisms/ErrorBoundary";
+import { clearLegacyStorage } from "./services/legacyStorage";
 import { installGlobalErrorHandlers } from "./services/reporter";
 import { reportWebVitals } from "./services/vitals";
 import "./index.css";
@@ -12,6 +13,7 @@ if (!rootElement) {
 }
 
 // Install before render, so an error thrown on the first paint is still caught.
+clearLegacyStorage();
 installGlobalErrorHandlers();
 reportWebVitals();
 
